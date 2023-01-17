@@ -16,12 +16,12 @@ Here is a bit of everything, so you can check how the theme look, have fun! 👌
 ##### Level 5
 ###### Level 6
  
-# [Headers with links](http://localhost)
-## [Level 2](http://localhost)
-### [Level 3](http://localhost)
-#### [Level 4](http://localhost)
-##### [Level 5](http://localhost) 
-###### [Level 6](http://localhost)
+# [Headers with links](https://localhost)
+## [Level 2](https://localhost)
+### [Level 3](https://localhost)
+#### [Level 4](https://localhost)
+##### [Level 5](https://localhost) 
+###### [Level 6](https://localhost)
 
 ## Code highlight
 Mode specific code highlighting themes. [Kramdown](https://kramdown.gettalong.org/) which is responsible for the color highlighting may be more limited than your IDE.
