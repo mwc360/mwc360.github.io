@@ -34,6 +34,7 @@ jobs:
           echo `find . -name "*.gem" | tail -1 | awk -F"[/]" '{print $2}'`
       - name: Gems
         run: |
+          gem install sass-embedded -v 1.57.1
           gem install type-on-strap
           gem install jekyll-theme-type-on-strap
       - name: GPR
