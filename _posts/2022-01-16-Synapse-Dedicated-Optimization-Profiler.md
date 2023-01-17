@@ -2,7 +2,9 @@
 layout: post
 title: Synapse Dedicated Pool Optimization Profiler
 tags: [AzureSynapseAnalytics, Cloud, Optimization]
-categories: Demo
+categories: tools
+feature-img: "assets/img/feature-img/circuit.jpeg"
+thumbnail: "assets/img/thumbnails/feature-img/circuit.jpeg"
 ---
 
 More colors with less light. Click the **half-moon** most top-right button to turn the lights ON/OFF.
