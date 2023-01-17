@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
 
   spec.summary       = "A simple and responsive jekyll theme template"
   spec.description   = %q{A simple and responsive jekyll theme template based on type-theme. Great for blogs, easy to customize and responsive.}
-  spec.homepage      = "https://github.com/mwc360/mwc360.github.io"
+  spec.homepage      = "https://github.com/sylhare/Type-on-Strap"
   spec.license       = "MIT"
 
   spec.rdoc_options            = ["--charset=UTF-8"]
