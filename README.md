@@ -12,7 +12,7 @@ A free and open-source [Jekyll](https://jekyllrb.com) theme. Based on Rohan Chan
 * Portfolio 🗂, Gallery 🖼 pages for your projects
 * Multi comments 💬 options  
 * Tags compatibility 🏷
-* Handle _Bootstrap_'ed pages: [Get Bootstrap](http://getbootstrap.com/)
+* Handle _Bootstrap_'ed pages: [Get Bootstrap](https://getbootstrap.com/)
 * 🔎 Search feature: [Simple-Jekyll-Search](https://github.com/christian-fei/Simple-Jekyll-Search)
 * Math Rendering : [KateX](https://github.com/Khan/KaTeX)
 * Diagram Rendering: [Mermaid-js](https://github.com/mermaid-js/mermaid)
@@ -129,7 +129,7 @@ favicon: assets/favicon.ico           # Icon displayed in the tab
 color_theme: auto                     # color theme auto, dark or light
 ```
 
-You can also customize the seo tags default option following the jekyll-seo-tag plugin [documentation](http://jekyll.github.io/jekyll-seo-tag/advanced-usage/).
+You can also customize the seo tags default option following the jekyll-seo-tag plugin [documentation](https://jekyll.github.io/jekyll-seo-tag/advanced-usage/).
 The color theme can be set to dark or light (customize it in _variables.scss_). 
 Using _auto_ you'll have a tiny icon in the navbar allowing the use to manually switch from dark to light theme.
 
