@@ -50,6 +50,8 @@ pinterest:
   pre: "https://www.pinterest.com/"
 reddit:
   pre: "https://www.reddit.com/user/"
+# sessionize:
+#   pre: "https://sessionize.com/"
 soundcloud:
   pre: "https://soundcloud.com/"
 sms:
