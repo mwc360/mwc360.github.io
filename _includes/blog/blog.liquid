@@ -19,6 +19,7 @@
               </a>
             </h1>
             {% include blog/post_info.liquid author=post.author date=post.date %}
+            {% include read_time.html %}
           </header>
           {% if site.excerpt or site.theme_settings.excerpt %}
               <div class="excerpt">
