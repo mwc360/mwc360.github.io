@@ -12,7 +12,6 @@
       {{ site.data.language.str_months[x] | default: date | date: "%B" }} {{ date | date: "%d, %Y" }}
     </p>
     <p class="meta">
-      {%- if author.url -%}</a>{%- endif -%}
+      {% include read_time.html %}
     </p>
-  {% include read_time.html %}
 </div>
