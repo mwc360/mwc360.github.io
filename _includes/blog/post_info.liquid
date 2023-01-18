@@ -1,5 +1,6 @@
 {% assign author = site.data.authors[include.author] %}
 {% assign date = include.date | default: "today" | date: "%B %-d, %Y" %}
+{% include read_time.html %}
 
 <div class="post-info">
   {%- if author.url -%}<a href="{{ author.url | relative_url }}" target="_blank" rel="noopener">{%- endif -%}
@@ -12,5 +13,4 @@
       {{ site.data.language.str_months[x] | default: date | date: "%B" }} {{ date | date: "%d, %Y" }}
     </p>
   {%- if author.url -%}</a>{%- endif -%}
-  {% include read_time.html %}
 </div>
