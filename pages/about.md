@@ -19,6 +19,7 @@ I'm a husband and father of 3 and in my free time I love trail running, tennis, 
 <script type="text/javascript" src="https://sessionize.com/api/speaker/sessions/8ebd5c28-05e4-420a-a6d9-aa757a315619/0x1x0072b5x"></script>
 
 
+
 # Certifications
 
 
