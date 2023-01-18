@@ -1,11 +1,11 @@
-{% raw %}
-<span class="reading-time" title="Estimated read time">
-  {% assign words = content | strip_html | number_of_words %}
-  {% if words < 360 %}
-    1 minute to read
-  {% else %}
-    {{ words | divided_by:180 }} minutes to read
-  {% endif %}
-</span>
-
-{% endraw %}
+{% capture words %}
+{{ content | strip_html | number_of_words | minus: 180 }}
+{% endcapture %}
+{% unless words contains '-' %}
+{% assign min = words | plus: 150 | divided_by: 150 %}
+{% if min = 1 %}
+  1 minute to read
+{% else %}
+    {{ words | plus: 150 | divided_by: 150 | append: ' minutes to read' }}
+{% endif %}
+{% endunless %}
