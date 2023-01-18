@@ -11,8 +11,8 @@
       {% assign x = date | date: "%m" | minus: 1 %}
       {{ site.data.language.str_months[x] | default: date | date: "%B" }} {{ date | date: "%d, %Y" }}
     </p>
-    <br>
-    <p class="subtitle">
-      {% include read_time.html %}
-    </p>
 </div>
+<br>
+<p class="post-info">
+  {% include read_time.html %}
+</p>
