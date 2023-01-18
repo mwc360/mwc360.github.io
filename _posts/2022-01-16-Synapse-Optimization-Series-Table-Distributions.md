@@ -1,8 +1,8 @@
 ---
 layout: post
 title: "Synapse Optimization Series: Table Distributions"
-tags: [AzureSynapseAnalytics, Cloud, Optimization]
-categories: tools
+tags: [Azure Synapse, Dedicated Sql Pools, Optimization]
+categories: optimization
 feature-img: "assets/img/feature-img/circuit.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/circuit.jpeg"
 ---
