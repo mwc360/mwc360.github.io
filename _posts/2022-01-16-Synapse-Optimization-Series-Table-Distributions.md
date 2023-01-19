@@ -212,7 +212,7 @@ JOIN (
     ) ss
     ON i_item_sk = ss.ss_item_sk
 ```
-![QueryPlanAfter](/assets/img/posts/Synapse-Optimization-Series-Table-Distributions/PlanAfter2.png)
+![QueryPlanAfter](/assets/img/posts/Synapse-Optimization-Series-Table-Distributions/PlanAfter.png)
 
 >Running this statement took ~ **12 seconds** on DW100c, a 5x improvement from the prior change
 
