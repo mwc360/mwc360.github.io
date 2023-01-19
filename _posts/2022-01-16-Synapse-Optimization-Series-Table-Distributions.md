@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Synapse Optimization Series: Table Distributions"
+title: "Synapse Optimization Series: Hash Table Distributions"
 tags: [Azure Synapse, Dedicated Sql Pools, Optimization]
 categories: Optimization
 feature-img: "assets/img/feature-img/circuit.jpeg"
@@ -27,7 +27,7 @@ By default, tables created without a defined _DISTRIBUTION_ (i.e. below) are cre
 ```sql
 CREATE TABLE dbo.table1
 WITH (
-    HEAP
+    CLUSTERED COLUMNSTORE INDEX
     /*, DISTRIBUTION = ROUND_ROBIN */
     )
 AS SELECT 1
@@ -90,12 +90,45 @@ Now that we have the core concepts, lets look at a closer to real world example 
 | tpcds.inventory  | 133,110,000 |
 | tpcds.store_sales| 28,800,501  |
 | tpcds.item       | 102,000     |
+```sql
+CREATE TABLE dbo.inventory_summary
+    WITH (
+            CLUSTERED COLUMNSTORE INDEX
+            , DISTRIBUTION = ROUND_ROBIN
+            ) AS
 
+SELECT inv_item_sk
+    , inv_warehouse_sk
+    , i_product_name
+    , AVG(inv_quantity_on_hand) AS avg_on_hand_inventory
+    , MAX([ss_sales_price]) AS max_sell_price
+    , MIN([ss_sales_price]) AS min_sell_price
+FROM tpcds.inventory /*DISTRIBUTION = ROUND_ROBIN*/
+JOIN tpcds.item /*DISTRIBUTION = ROUND_ROBIN*/
+    ON inv_item_sk = i_item_sk
+JOIN [tpcds].[store_sales] /*DISTRIBUTION = ROUND_ROBIN*/
+    ON inv_item_sk = ss_item_sk
+GROUP BY i_product_name
+    , i_item_sk
+    , inv_warehouse_sk
+```
+
+While this SQL is very readable, the Synapse Optimizer tends to be very literal in terms of executing plans based on how your TSQL reads, I don't find that it is as _create_ as regular SqlServer with finding alternate and more optimal plans. This is extrmely important with the MPP architecture because depending on how your SQL is written, you could be getting worse performance when migrating from SqlServer to Synapse Dedicated Pools and a simply rewrite of some SQL could produce much better utilization of the distributed compute and the table distributions.
+
+Notice in the below query plan how the _Group by Aggregates_ transformation takes place **after** the 3 tables are shuffled and joined.
+
+![QueryPlanPrior](/assets/img/posts/Synapse-Optimization-Series-Table-Distributions/PlanPriorPrior.png)
+
+> Running this statement producing ~ 1M rows took ~ **20 minutes** on DW100c
+
+Ideally, since we are performing aggregates that are not dependent on the joining tables, I'd like to the the _Group by Aggregates_ transformation take prior **before** the 3 tables are shuffled and joined as this would result in dramatically less data being moved.
+
+In the below SQL I rewrite the aggregations to take places as sub-queries to try and force the optimizer to perform these grouping before data is joined, again - the optimizer tends to be very literal. 
 
 ```sql
 CREATE TABLE dbo.inventory_summary
     WITH (
-            HEAP
+            CLUSTERED COLUMNSTORE INDEX
             , DISTRIBUTION = ROUND_ROBIN
             ) AS
 
@@ -124,15 +157,13 @@ JOIN (
     ) ss
     ON i_item_sk = ss.ss_item_sk
 ```
-_Note that HEAP is being used instead of CCI to remove the time impact of creating the clustered columnstore index on this 133M row dataset_
+Notice that there are now multiple _Group by Aggregates_ steps taking place but they all occur **before** tables are joined and 1/2 are taking place **before** any data is shuffled... thus cutting down the total size of data moved to return results.
 
-The estimated query plan looks like the following and has an estimated cost of 35K:
+![QueryPlanPrior](/assets/img/posts/Synapse-Optimization-Series-Table-Distributions/PlanPrior2.png)
 
-{% include aligner.html images="posts/Synapse-Optimization-Series-Table-Distributions/PlanPrior.png" %}
+>Running this statement producing ~ 1M rows took **1 minute** on DWU100c, a 20x performance improvement
 
-![QueryPlanPrior](/assets/img/posts/Synapse-Optimization-Series-Table-Distributions/PlanPrior.png)
-
-The optimizer as calculated that 97% of the statement cost is related to reorganizing the 113 million rows of data in the tpcds.inventory table.
+The optimizer calculated that 81% of the statement cost is related to reorganizing the 113 million rows of data in the tpcds.inventory table.
 
 Since the tables are joining on the item_sk column we can infer that the optimizer is planning to shuffle these tables on this column. We can confirm this via looking at the D-SQL plan by putting _EXPLAIN_ at the start of the query and running it, this unfortunately outputs XML which is visually difficult to interpret.
 
@@ -146,14 +177,13 @@ The key portion of the very paired down XML plan below is the **SHUFFLE_MOVE** _
       <shuffle_columns>inv_item_sk;</shuffle_columns>
     </dsql_operation>
 ```
->Running this statement producing ~ 1M rows took **1 minute** on DWU100c
 
-If we were to change the distribution of both tables to be **HASH** distributed on the item_sk in each table we will get dramatically better results. Notice that the resulting query plan doesn't have any broadcast or shuffle move operations.
+If we were to change the distribution of all tables to be **HASH** distributed on the item_sk in each table we will continue to improve our results. Notice that the resulting query plan doesn't have any broadcast or shuffle move operations.
 
 ```sql
 CREATE TABLE dbo.inventory_summary
     WITH (
-            HEAP
+            CLUSTERED COLUMNSTORE INDEX
             , DISTRIBUTION = ROUND_ROBIN
             ) AS
 
@@ -182,16 +212,16 @@ JOIN (
     ) ss
     ON i_item_sk = ss.ss_item_sk
 ```
-![QueryPlanAfter](/assets/img/posts/Synapse-Optimization-Series-Table-Distributions/PlanAfter1.png)
-{% include aligner.html images="posts/Synapse-Optimization-Series-Table-Distributions/PlanAfter2.png" %}
->Running this statement took ~ **12 seconds** on DWU100c
+![QueryPlanAfter](/assets/img/posts/Synapse-Optimization-Series-Table-Distributions/PlanAfter2.png)
 
-Good improvement but we aren't done. We could distribute the target table (dbo.test1) on the same item_sk to completely avoid data leaving each individual distribution. While the prior query plan elimiates data movement to produce the result set, it must return the results to the compute node(s) so that the data can be **ROUND_ROBIN** distributed. The below will result in 0 data movement, all operations take place soley on each of the 60 distributions, all in parallel.
+>Running this statement took ~ **12 seconds** on DWU100c, a 5x improvement from the prior change
+
+Good improvement but we aren't done. We could distribute the target table (dbo.inventory_summary) on the same item_sk to completely avoid data leaving each individual distribution. While the prior query plan elimiates data movement to produce the result set, it must return the results to the compute node(s) so that the data can be **ROUND_ROBIN** distributed. The below will result in 0 data movement, all operations take place soley on each of the 60 distributions, all in parallel.
 
 ```sql
 CREATE TABLE dbo.inventory_summary
     WITH (
-            HEAP
+            CLUSTERED COLUMNSTORE INDEX
             , DISTRIBUTION = HASH (inv_item_sk)
             ) AS
 
@@ -221,7 +251,7 @@ JOIN (
     ON i_item_sk = ss.ss_item_sk
 ```
 _Estimated query plans do now show or calculate data movement for interting into tables (i.e. CTAS) so the plan will look identical to the prior._
->Running this statement took ~ **8 seconds** on DWU100c
+>Running this statement took ~ **8 seconds** on DWU100c, a 1.5x improvement from the prior change, overall this statement now runs **150x faster** then where we started 
 
 ## Selecting the right distribution
 Picking the ideal distribution can be difficult, especially the more complex the query is, you will have to pick and choose to eliminate the most costly data movement and consider what makes sense for your most common queries involving tables.
@@ -233,7 +263,7 @@ Here's some guidance for picking the right distribution column:
 1. When running CTAS, INSERT, or even UPDATE statements, consider the distribution of the target table you are updating, inserting into, or creating. If you can align both your source and target tables on the same distribution column 
 
 ## Quickly changing distributions
-I created the below stored procedure to simplify the process of altering the distribution of a table. It compresses ~ 9 lines of TSQL to 1.
+I created the below stored procedure to simplify the process of altering the distribution of any table. It compresses ~ 9 lines of TSQL to 1 and will maintain the re-implement the same table index.
 
 Happy tuning!
 
@@ -250,7 +280,7 @@ BEGIN
     DECLARE @index VARCHAR(200) = (
             SELECT CASE i.type
                     WHEN 0
-                        THEN 'HEAP'
+                        THEN 'CLUSTERED COLUMNSTORE INDEX'
                     WHEN 1
                         THEN CONCAT (
                                 'CLUSTERED INDEX ('
