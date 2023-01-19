@@ -64,28 +64,6 @@ Notice that in the dbo.OrderLines table ProductId 2 exists in distribution 1 whe
 
 For this particular query the optimizer will select to **Broadcast Move** or **Shuffle Move** both datasets depending on dataset sizes.
 
-Now lets look at a basic CTAS statement via TPC-DS 10x scale datasets. 
-| Table           |  Row Count  |
-|-----------------|:-----------:|
-| tpcds.item      | 102,000     |
-| tpcds.inventory | 133,110,000 |
-```sql
-CREATE TABLE dbo.test1
-    WITH (
-            CLUSTERED COLUMNSTORE INDEX
-            , DISTRIBUTION = ROUND_ROBIN
-            ) AS
-
-SELECT *
-FROM tpcds.inventory /*DISTRIBUTION = ROUND_ROBIN*/
-JOIN tpcds.item /*DISTRIBUTION = ROUND_ROBIN*/
-    ON inv_item_sk = i_item_sk
-
-```
-The estimated query plan looks like the following and has an estimated cost of 35K:
-
-!["Query Plan Prior](/assets/img/posts/Synapse-Optimization-Series-Table-Distributions/PlanPrior.png)
-
 ## Hash Distribution
 The most efficient way to return the query results would be to first alter the distribution of both dbo.OrderLines and dbo.Product tables to be **HASH** distributed on ProductId. Hash distributing a table passes the selected column (or multiple column) values through a hashing algorithm which assigns a deterministic distribution to each distinct value. This would result in the following:
 
@@ -104,3 +82,74 @@ dbo.Product (DISTRIBUTION = HASH(ProductId))
 
 Notice how ProductId 2 in both tables is now located in distribution 2. The optimizer will recognize that both tables are distributed on the same column which is present in the SELECT statement join condition (ol.ProductId = p.ProductId). This will result in a 100% local distribution level join taking place and will be incredibly fast.
 
+## TPC-DS 10x Scale Example
+Now that we have the core concepts, lets look at a closer to real world example with a CTAS (CREATE TABLE AS SELECT) statement.
+
+| Table           |  Row Count  |
+|-----------------|:-----------:|
+| tpcds.item      | 102,000     |
+| tpcds.inventory | 133,110,000 |
+```sql
+CREATE TABLE dbo.test1
+    WITH (
+            CLUSTERED COLUMNSTORE INDEX
+            , DISTRIBUTION = ROUND_ROBIN
+            ) AS
+SELECT *
+FROM tpcds.inventory /*DISTRIBUTION = ROUND_ROBIN*/
+JOIN tpcds.item /*DISTRIBUTION = ROUND_ROBIN*/
+    ON inv_item_sk = i_item_sk
+```
+The estimated query plan looks like the following and has an estimated cost of 35K:
+
+!["Query Plan Prior](/assets/img/posts/Synapse-Optimization-Series-Table-Distributions/PlanPrior.png)
+
+Since the tables are joining on the item_sk column we can infer that the optimizer is planning to shuffle these tables on this column. We can confirm this via looking at the D-SQL plan by putting _EXPLAIN_ at the start of the query and running it, this unfortunately outputs XML which is visually difficult to interpret.
+
+The key portion of the very paired down XML plan below is the **SHUFFLE_MOVE** _dsql_operation_ and the _shuffle_columns_ element:
+```xml
+    <dsql_operation operation_type="SHUFFLE_MOVE">
+      <operation_cost cost="242.352" accumulative_cost="242.352" average_rowsize="594" output_rows="102000" GroupNumber="4" />
+      <shuffle_columns>i_item_sk;</shuffle_columns>
+    <dsql_operation operation_type="SHUFFLE_MOVE">
+      <operation_cost cost="8519.04" accumulative_cost="8761.392" average_rowsize="16" output_rows="133110000" GroupNumber="3" />
+      <shuffle_columns>inv_item_sk;</shuffle_columns>
+    </dsql_operation>
+```
+>Running this statement producing 113M rows took **15 minutes** on DWU100c
+
+If we were to change the distribution of both tables to be **HASH** distributed on the item_sk in each table we will get dramatically better results. 
+
+```sql
+CREATE TABLE dbo.test1
+    WITH (
+            CLUSTERED COLUMNSTORE INDEX
+            , DISTRIBUTION = ROUND_ROBIN
+            ) AS
+SELECT *
+FROM tpcds.inventory /*DISTRIBUTION = HASH(inv_item_sk)*/
+JOIN tpcds.item /*DISTRIBUTION = HASH(i_item_sk)*/
+    ON inv_item_sk = i_item_sk
+```
+!["Query Plan Prior](/assets/img/posts/Synapse-Optimization-Series-Table-Distributions/PlanAfter1.png)
+>Running this statement took **1 minute** on DWU100c
+
+Taking this one step father we could distribute the target table (dbo.test1) on the same item_sk to completely avoid data leaving each individual distribution.
+
+```sql
+CREATE TABLE dbo.test1
+    WITH (
+            CLUSTERED COLUMNSTORE INDEX
+            , DISTRIBUTION = HASH(inv_item_sk)
+            ) AS
+SELECT *
+FROM tpcds.inventory /*DISTRIBUTION = HASH(inv_item_sk)*/
+JOIN tpcds.item /*DISTRIBUTION = HASH(i_item_sk)*/
+    ON inv_item_sk = i_item_sk
+```
+>Running this statement took **30 seconds** on DWU100c!!!
+
+## Selecting the right distribution
+Picking the ideal distribution can be difficult, especially the more complex the query is, you will have to pick and choose to eliminate the most costly data movement and consider what makes sense for your most common queries involving tables.
+
+1. Look at the join conditions for common columns 
