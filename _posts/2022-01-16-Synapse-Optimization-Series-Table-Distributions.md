@@ -105,7 +105,7 @@ _Note that HEAP is being used instead of CCI to remove the time impact of creati
 
 The estimated query plan looks like the following and has an estimated cost of 35K:
 
-![QueryPlanPrior]({{"/assets/img/posts/Synapse-Optimization-Series-Table-Distributions/PlanPrior.png" | relative_url}})
+![QueryPlanPrior](/assets/img/posts/Synapse-Optimization-Series-Table-Distributions/PlanPrior.png)
 
 The optimizer as calculated that 97% of the statement cost is related to reorganizing the 113 million rows of data in the tpcds.inventory table.
 
@@ -136,7 +136,7 @@ FROM tpcds.inventory /*DISTRIBUTION = HASH(inv_item_sk)*/
 JOIN tpcds.item /*DISTRIBUTION = HASH(i_item_sk)*/
     ON inv_item_sk = i_item_sk
 ```
-![QueryPlanAfter]({{"/assets/img/posts/Synapse-Optimization-Series-Table-Distributions/PlanAfter1.png" | relative_url}})
+![QueryPlanAfter](/assets/img/posts/Synapse-Optimization-Series-Table-Distributions/PlanAfter1.png)
 >Running this statement took **10 minutes** on DWU100c
 
 Good improvement but we aren't done. We could distribute the target table (dbo.test1) on the same item_sk to completely avoid data leaving each individual distribution. While the prior query plan elimiates data movement to produce the result set, it must return the results to the compute node(s) so that the data can be **ROUND_ROBIN** distributed. The below will result in 0 data movement, all operations take place soley on each of the 60 distributions, all in parallel.
