@@ -161,7 +161,7 @@ Notice that there are now multiple _Group by Aggregates_ steps taking place but 
 
 ![QueryPlanPrior](/assets/img/posts/Synapse-Optimization-Series-Table-Distributions/PlanPrior2.png)
 
->Running this statement producing ~ 1M rows took **1 minute** on DWU100c, a 20x performance improvement
+>Running this statement producing ~ 1M rows took **1 minute** on DW100c, a 20x performance improvement
 
 The optimizer calculated that 81% of the statement cost is related to reorganizing the 113 million rows of data in the tpcds.inventory table.
 
@@ -214,7 +214,7 @@ JOIN (
 ```
 ![QueryPlanAfter](/assets/img/posts/Synapse-Optimization-Series-Table-Distributions/PlanAfter2.png)
 
->Running this statement took ~ **12 seconds** on DWU100c, a 5x improvement from the prior change
+>Running this statement took ~ **12 seconds** on DW100c, a 5x improvement from the prior change
 
 Good improvement but we aren't done. We could distribute the target table (dbo.inventory_summary) on the same item_sk to completely avoid data leaving each individual distribution. While the prior query plan elimiates data movement to produce the result set, it must return the results to the compute node(s) so that the data can be **ROUND_ROBIN** distributed. The below will result in 0 data movement, all operations take place soley on each of the 60 distributions, all in parallel.
 
@@ -251,7 +251,7 @@ JOIN (
     ON i_item_sk = ss.ss_item_sk
 ```
 _Estimated query plans do now show or calculate data movement for interting into tables (i.e. CTAS) so the plan will look identical to the prior._
->Running this statement took ~ **8 seconds** on DWU100c, a 1.5x improvement from the prior change, overall this statement now runs **150x faster** then where we started 
+>Running this statement took ~ **8 seconds** on DW100c, a 1.5x improvement from the prior change, overall this statement now runs **150x faster** then where we started 
 
 ## Selecting the right distribution
 Picking the ideal distribution can be difficult, especially the more complex the query is, you will have to pick and choose to eliminate the most costly data movement and consider what makes sense for your most common queries involving tables.
