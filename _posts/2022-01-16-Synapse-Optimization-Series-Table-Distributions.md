@@ -119,7 +119,7 @@ Notice in the below query plan how the _Group by Aggregates_ transformation take
 
 ![QueryPlanPrior](/assets/img/posts/Synapse-Optimization-Series-Table-Distributions/PlanPriorPrior.png)
 
-> Running this statement producing ~ 1M rows took ~ **20 minutes** on DW100c
+> Running this statement producing ~ 1M rows took ~ **30 minutes** on DW100c
 
 Ideally, since we are performing aggregates that are not dependent on the joining tables, I'd like to the the _Group by Aggregates_ transformation take prior **before** the 3 tables are shuffled and joined as this would result in dramatically less data being moved.
 
@@ -161,7 +161,7 @@ Notice that there are now multiple _Group by Aggregates_ steps taking place but 
 
 ![QueryPlanPrior](/assets/img/posts/Synapse-Optimization-Series-Table-Distributions/PlanPrior2.png)
 
->Running this statement producing ~ 1M rows took **1 minute** on DW100c, a 20x performance improvement
+>Running this statement producing ~ 1M rows took **1 minute** on DW100c, a 30x performance improvement
 
 The optimizer calculated that 81% of the statement cost is related to reorganizing the 113 million rows of data in the tpcds.inventory table.
 
@@ -251,7 +251,9 @@ JOIN (
     ON i_item_sk = ss.ss_item_sk
 ```
 _Estimated query plans do now show or calculate data movement for interting into tables (i.e. CTAS) so the plan will look identical to the prior._
->Running this statement took ~ **8 seconds** on DW100c, a 1.5x improvement from the prior change, overall this statement now runs **150x faster** then where we started 
+>Running this statement took ~ **8 seconds** on DW100c, a 1.5x improvement from the prior change
+
+> ### This query now runs **225x faster** than where we started
 
 ## Selecting the right distribution
 Picking the ideal distribution can be difficult, especially the more complex the query is, you will have to pick and choose to eliminate the most costly data movement and consider what makes sense for your most common queries involving tables.
