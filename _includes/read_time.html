@@ -3,9 +3,5 @@
 {% endcapture %}
 {% unless words contains '-' %}
 {% assign min = words | plus: 150 | divided_by: 150 %}
-{% if min < 2 %}
-  1 minute to read
-{% else %}
-    {{ words | plus: 150 | divided_by: 150 | append: ' minutes to read' }}
-{% endif %}
+{{ words | plus: 150 | divided_by: 150 | append: ' minute read' }}
 {% endunless %}
