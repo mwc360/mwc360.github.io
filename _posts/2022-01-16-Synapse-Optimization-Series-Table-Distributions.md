@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Synapse Optimization Series: Table Distributions"
+author: mcole
 tags: [Azure Synapse, Dedicated Sql Pools, Optimization]
 categories: Optimization
 feature-img: "assets/img/feature-img/circuit.jpeg"
@@ -10,7 +11,7 @@ thumbnail: "assets/img/thumbnails/feature-img/circuit.jpeg"
 Proper use of table distributions in Synapse Dedicated Sql Pools is easily the #1 shortcoming in Synapse implementations. 
 
 If there's anything to remember from this post, it is the following:
-**Synapse Dedicated Sql Pools <> SqlServer**
+>**Synapse Dedicated Sql Pools <> SqlServer**
 
 Dedicated Sql Pools (formerly Azuer Sql Data Warehouse) are a massively parallel processing (MPP) implementation of Microsoft SQL built exclusively for analytical workloads (i.e. data warehouseing). Under the hood, Dedicated Sql Pools have many separate CPUs that are able to operate on their own _distribution_ of data in parallel. This is what makes Synapse Dedicated Sql Pools so fast and optimized for data warehousing workloads, potentially large operations are broken into many different parallel jobs, orchestrated by a central control node.
 
@@ -68,7 +69,7 @@ The estimated query plan looks like the following:
 QUERY PLAN
 
 ## Hash Distribution
-The most efficient way to return the query results would be to first alter the distribution of both dbo.OrderLines and dbo.Product tables to be **HASH** distributed on ProductId. Hash distributing a table passes the selected column (or multiple column) values through a hashing algorithm which assigns a deterministic distribution to each district value. This would result in the following:
+The most efficient way to return the query results would be to first alter the distribution of both dbo.OrderLines and dbo.Product tables to be **HASH** distributed on ProductId. Hash distributing a table passes the selected column (or multiple column) values through a hashing algorithm which assigns a deterministic distribution to each distinct value. This would result in the following:
 
 <table>
 <tr><th style="border-width:0px"></th><th style="border-width:0px"></th></tr>
@@ -83,4 +84,5 @@ dbo.Product (DISTRIBUTION = HASH(ProductId))
 
 </td></tr> </table>
 
-Notice how ProductId 2 in both tables is now located in distribution 2. The optimizer will recognize that both tables are distributed on the same column which is present in the SELECT statement join condition (ol.ProductId = p.ProductId). This will result in a 100% local distribution level join taking place. 
+Notice how ProductId 2 in both tables is now located in distribution 2. The optimizer will recognize that both tables are distributed on the same column which is present in the SELECT statement join condition (ol.ProductId = p.ProductId). This will result in a 100% local distribution level join taking place and will be incredibly fast.
+
