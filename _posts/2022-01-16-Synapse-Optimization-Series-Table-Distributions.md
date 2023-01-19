@@ -85,25 +85,50 @@ Notice how ProductId 2 in both tables is now located in distribution 2. The opti
 ## TPC-DS 10x Scale Example
 Now that we have the core concepts, lets look at a closer to real world example with a CTAS (CREATE TABLE AS SELECT) statement.
 
-| Table           |  Row Count  |
-|-----------------|-------------|
-| tpcds.item      | 102,000     |
-| tpcds.inventory | 133,110,000 |
+| Table            |  Row Count  |
+|------------------|-------------|
+| tpcds.inventory  | 133,110,000 |
+| tpcds.store_sales| 28,800,501  |
+| tpcds.item       | 102,000     |
+
 
 ```sql
-CREATE TABLE dbo.test1
+CREATE TABLE dbo.inventory_summary
     WITH (
             HEAP
             , DISTRIBUTION = ROUND_ROBIN
             ) AS
-SELECT *
-FROM tpcds.inventory /*DISTRIBUTION = ROUND_ROBIN*/
+
+SELECT inv.inv_item_sk
+    , inv.inv_warehouse_sk
+    , i_product_name
+    , inv.avg_on_hand_inventory
+    , ss.max_sell_price
+    , ss.min_sell_price
+FROM (
+    SELECT inv_item_sk
+        , inv_warehouse_sk
+        , AVG(inv_quantity_on_hand) AS avg_on_hand_inventory
+    FROM tpcds.inventory /*DISTRIBUTION = ROUND_ROBIN*/
+    GROUP BY inv_item_sk
+        , inv_warehouse_sk
+    ) inv
 JOIN tpcds.item /*DISTRIBUTION = ROUND_ROBIN*/
-    ON inv_item_sk = i_item_sk
+    ON inv.inv_item_sk = i_item_sk
+JOIN (
+    SELECT ss_item_sk
+        , MAX([ss_sales_price]) AS max_sell_price
+        , MIN([ss_sales_price]) AS min_sell_price
+    FROM tpcds.store_sales /*DISTRIBUTION = ROUND_ROBIN*/
+    GROUP BY ss_item_sk
+    ) ss
+    ON i_item_sk = ss.ss_item_sk
 ```
 _Note that HEAP is being used instead of CCI to remove the time impact of creating the clustered columnstore index on this 133M row dataset_
 
 The estimated query plan looks like the following and has an estimated cost of 35K:
+
+{% include aligner.html images="posts/Synapse-Optimization-Series-Table-Distributions/PlanPrior.png" %}
 
 ![QueryPlanPrior](/assets/img/posts/Synapse-Optimization-Series-Table-Distributions/PlanPrior.png)
 
@@ -121,38 +146,82 @@ The key portion of the very paired down XML plan below is the **SHUFFLE_MOVE** _
       <shuffle_columns>inv_item_sk;</shuffle_columns>
     </dsql_operation>
 ```
->Running this statement producing 113M rows took **15 minutes** on DWU100c
+>Running this statement producing ~ 1M rows took **1 minute** on DWU100c
 
 If we were to change the distribution of both tables to be **HASH** distributed on the item_sk in each table we will get dramatically better results. Notice that the resulting query plan doesn't have any broadcast or shuffle move operations.
 
 ```sql
-CREATE TABLE dbo.test1
+CREATE TABLE dbo.inventory_summary
     WITH (
             HEAP
             , DISTRIBUTION = ROUND_ROBIN
             ) AS
-SELECT *
-FROM tpcds.inventory /*DISTRIBUTION = HASH(inv_item_sk)*/
+
+SELECT inv.inv_item_sk
+    , inv.inv_warehouse_sk
+    , i_product_name
+    , inv.avg_on_hand_inventory
+    , ss.max_sell_price
+    , ss.min_sell_price
+FROM (
+    SELECT inv_item_sk
+        , inv_warehouse_sk
+        , AVG(inv_quantity_on_hand) AS avg_on_hand_inventory
+    FROM tpcds.inventory /*DISTRIBUTION = HASH(inv_item_sk)*/
+    GROUP BY inv_item_sk
+        , inv_warehouse_sk
+    ) inv
 JOIN tpcds.item /*DISTRIBUTION = HASH(i_item_sk)*/
-    ON inv_item_sk = i_item_sk
+    ON inv.inv_item_sk = i_item_sk
+JOIN (
+    SELECT ss_item_sk
+        , MAX([ss_sales_price]) AS max_sell_price
+        , MIN([ss_sales_price]) AS min_sell_price
+    FROM tpcds.store_sales /*DISTRIBUTION = HASH(i_item_sk)*/
+    GROUP BY ss_item_sk
+    ) ss
+    ON i_item_sk = ss.ss_item_sk
 ```
 ![QueryPlanAfter](/assets/img/posts/Synapse-Optimization-Series-Table-Distributions/PlanAfter1.png)
->Running this statement took **14 minutes** on DWU100c
+{% include aligner.html images="posts/Synapse-Optimization-Series-Table-Distributions/PlanAfter2.png" %}
+>Running this statement took ~ **12 seconds** on DWU100c
 
 Good improvement but we aren't done. We could distribute the target table (dbo.test1) on the same item_sk to completely avoid data leaving each individual distribution. While the prior query plan elimiates data movement to produce the result set, it must return the results to the compute node(s) so that the data can be **ROUND_ROBIN** distributed. The below will result in 0 data movement, all operations take place soley on each of the 60 distributions, all in parallel.
 
 ```sql
-CREATE TABLE dbo.test1
+CREATE TABLE dbo.inventory_summary
     WITH (
             HEAP
-            , DISTRIBUTION = HASH(inv_item_sk)
+            , DISTRIBUTION = HASH (inv_item_sk)
             ) AS
-SELECT *
-FROM tpcds.inventory /*DISTRIBUTION = HASH(inv_item_sk)*/
+
+SELECT inv.inv_item_sk
+    , inv.inv_warehouse_sk
+    , i_product_name
+    , inv.avg_on_hand_inventory
+    , ss.max_sell_price
+    , ss.min_sell_price
+FROM (
+    SELECT inv_item_sk
+        , inv_warehouse_sk
+        , AVG(inv_quantity_on_hand) AS avg_on_hand_inventory
+    FROM tpcds.inventory /*DISTRIBUTION = HASH(inv_item_sk)*/
+    GROUP BY inv_item_sk
+        , inv_warehouse_sk
+    ) inv
 JOIN tpcds.item /*DISTRIBUTION = HASH(i_item_sk)*/
-    ON inv_item_sk = i_item_sk
+    ON inv.inv_item_sk = i_item_sk
+JOIN (
+    SELECT ss_item_sk
+        , MAX([ss_sales_price]) AS max_sell_price
+        , MIN([ss_sales_price]) AS min_sell_price
+    FROM tpcds.store_sales /*DISTRIBUTION = HASH(i_item_sk)*/
+    GROUP BY ss_item_sk
+    ) ss
+    ON i_item_sk = ss.ss_item_sk
 ```
->Running this statement took ~ **3 minutes** on DWU100c
+_Estimated query plans do now show or calculate data movement for interting into tables (i.e. CTAS) so the plan will look identical to the prior._
+>Running this statement took ~ **8 seconds** on DWU100c
 
 ## Selecting the right distribution
 Picking the ideal distribution can be difficult, especially the more complex the query is, you will have to pick and choose to eliminate the most costly data movement and consider what makes sense for your most common queries involving tables.
@@ -162,3 +231,64 @@ Here's some guidance for picking the right distribution column:
 1. Look at the join conditions for common columns 
 1. Prioritize tables that have the biggest cost impact to query plans
 1. When running CTAS, INSERT, or even UPDATE statements, consider the distribution of the target table you are updating, inserting into, or creating. If you can align both your source and target tables on the same distribution column 
+
+## Quickly changing distributions
+I created the below stored procedure to simplify the process of altering the distribution of a table. It compresses ~ 9 lines of TSQL to 1.
+
+Happy tuning!
+
+```sql
+/*
+EXEC dbo.AlterTableDistribution 'dbo', 'table1', 'HASH(column1)'
+*/
+CREATE PROC dbo.AlterTableDistribution @schemaName VARCHAR(128)
+    , @tableName VARCHAR(128)
+    , @newDistribution VARCHAR(150)
+AS
+BEGIN
+    DECLARE @fullyQualifiedTableName VARCHAR(400) = '[' + @schemaName + '].[' + @tableName + ']'
+    DECLARE @index VARCHAR(200) = (
+            SELECT CASE i.type
+                    WHEN 0
+                        THEN 'HEAP'
+                    WHEN 1
+                        THEN CONCAT (
+                                'CLUSTERED INDEX ('
+                                , STRING_AGG(CONVERT(VARCHAR(MAX), c.name), ', ') WITHIN GROUP (
+                                        ORDER BY ic.key_ordinal ASC
+                                        )
+                                    , ')'
+                                )
+                    WHEN 5
+                        THEN 'CLUSTERED COLUMNSTORE INDEX'
+                    END AS TableIndex
+            FROM sys.tables t
+            LEFT JOIN sys.indexes i
+                ON t.object_id = i.object_id
+                    AND i.type IN (0, 1, 5)
+            LEFT JOIN sys.index_columns ic
+                ON i.index_id = ic.index_id
+                    AND i.object_id = ic.object_id
+            LEFT JOIN sys.columns c
+                ON ic.column_id = c.column_id
+                    AND ic.object_id = c.object_id
+            WHERE t.object_id = object_id(@fullyQualifiedTableName)
+            GROUP BY i.type
+            )
+    DECLARE @sql NVARCHAR(1000) = '
+CREATE TABLE [' + @schemaName + '].[' + @tableName + '_new]
+WITH (
+            ' + @index + '
+            , DISTRIBUTION = ' + @newDistribution + '
+            )
+AS SELECT * FROM [' + @schemaName + '].[' + @tableName + ']
+
+RENAME OBJECT [' + @schemaName + '].[' + @tableName + '] to [' + @tableName + '_old]
+RENAME OBJECT [' + @schemaName + '].[' + @tableName + '_new] to [' + @tableName + ']
+DROP TABLE [' + @schemaName + '].[' + @tableName + '_old]'
+
+    PRINT (@sql)
+
+    EXEC sp_executesql @sql
+END
+```
