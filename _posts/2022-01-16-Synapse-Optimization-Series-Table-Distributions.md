@@ -27,7 +27,7 @@ By default, tables created without a defined _DISTRIBUTION_ (i.e. below) are cre
 ```sql
 CREATE TABLE dbo.table1
 WITH (
-    CLUSTERED COLUMNSTORE INDEX
+    HEAP
     /*, DISTRIBUTION = ROUND_ROBIN */
     )
 AS SELECT 1
@@ -86,13 +86,14 @@ Notice how ProductId 2 in both tables is now located in distribution 2. The opti
 Now that we have the core concepts, lets look at a closer to real world example with a CTAS (CREATE TABLE AS SELECT) statement.
 
 | Table           |  Row Count  |
-|-----------------|:-----------:|
+|-----------------|-------------|
 | tpcds.item      | 102,000     |
 | tpcds.inventory | 133,110,000 |
+
 ```sql
 CREATE TABLE dbo.test1
     WITH (
-            CLUSTERED COLUMNSTORE INDEX
+            HEAP
             , DISTRIBUTION = ROUND_ROBIN
             ) AS
 SELECT *
@@ -100,9 +101,13 @@ FROM tpcds.inventory /*DISTRIBUTION = ROUND_ROBIN*/
 JOIN tpcds.item /*DISTRIBUTION = ROUND_ROBIN*/
     ON inv_item_sk = i_item_sk
 ```
+_Note that HEAP is being used instead of CCI to remove the time impact of creating the clustered columnstore index on this 133M row dataset_
+
 The estimated query plan looks like the following and has an estimated cost of 35K:
 
 !["Query Plan Prior](/assets/img/posts/Synapse-Optimization-Series-Table-Distributions/PlanPrior.png)
+
+The optimizer as calculated that 97% of the statement cost is related to reorganizing the 113 million rows of data in the tpcds.inventory table.
 
 Since the tables are joining on the item_sk column we can infer that the optimizer is planning to shuffle these tables on this column. We can confirm this via looking at the D-SQL plan by putting _EXPLAIN_ at the start of the query and running it, this unfortunately outputs XML which is visually difficult to interpret.
 
@@ -123,7 +128,7 @@ If we were to change the distribution of both tables to be **HASH** distributed 
 ```sql
 CREATE TABLE dbo.test1
     WITH (
-            CLUSTERED COLUMNSTORE INDEX
+            HEAP
             , DISTRIBUTION = ROUND_ROBIN
             ) AS
 SELECT *
@@ -139,7 +144,7 @@ Good improvement but we aren't done. We could distribute the target table (dbo.t
 ```sql
 CREATE TABLE dbo.test1
     WITH (
-            CLUSTERED COLUMNSTORE INDEX
+            HEAP
             , DISTRIBUTION = HASH(inv_item_sk)
             ) AS
 SELECT *
