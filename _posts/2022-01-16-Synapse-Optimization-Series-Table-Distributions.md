@@ -14,7 +14,7 @@ If there's anything to remember from this post, it is the following:
 
 Dedicated Sql Pools (formerly Azuer Sql Data Warehouse) are a massively parallel processing (MPP) implementation of Microsoft SQL built exclusively for analytical workloads (i.e. data warehouseing). Under the hood, Dedicated Sql Pools have many separate CPUs that are able to operate on their own _distribution_ of data in parallel. This is what makes Synapse Dedicated Sql Pools so fast and optimized for data warehousing workloads, potentially large operations are broken into many different parallel jobs, orchestrated by a central control node.
 
-!["SynapseArchitecture](/assets/img/posts/SynapseArchitecture.png)
+!["SynapseArchitecture](/assets/img/posts/Synapse-Optimization-Series-Table-Distributions/SynapseArchitecture.png)
 _Synapse Dedicated Sql Pool Architecture_
 
 The biggest architectural differentiator compared to SqlServer is also not so coincidentally the biggest driver of performance compared to SqlServer: **Table Distributions**.
@@ -62,10 +62,29 @@ Notice that in the dbo.OrderLines table ProductId 2 exists in distribution 1 whe
 1. Two **Shuffle Move** operations could take place to create temporary tables reorganizing all dbo.Product and dbo.OrderLines data to be HASH distributed on ProductId, thus allowing data to be joined locally at each of the 60 distributions.
 1. A compute node join could take place in which all data to produce the results are returned to each compute node (1 until you get to DW1000c).
 
-For this particular query the optimizer will select to **Broadcast Move** the smaller of the two datasets, likely the dbo.Product table.
+For this particular query the optimizer will select to **Broadcast Move** or **Shuffle Move** both datasets depending on dataset sizes.
 
-The estimated query plan looks like the following:
-QUERY PLAN
+Now lets look at a basic CTAS statement via TPC-DS 10x scale datasets. 
+| Table           |  Row Count  |
+|-----------------|:-----------:|
+| tpcds.item      | 102,000     |
+| tpcds.inventory | 133,110,000 |
+```sql
+CREATE TABLE dbo.test1
+    WITH (
+            CLUSTERED COLUMNSTORE INDEX
+            , DISTRIBUTION = ROUND_ROBIN
+            ) AS
+
+SELECT *
+FROM tpcds.inventory /*DISTRIBUTION = ROUND_ROBIN*/
+JOIN tpcds.item /*DISTRIBUTION = ROUND_ROBIN*/
+    ON inv_item_sk = i_item_sk
+
+```
+The estimated query plan looks like the following and has an estimated cost of 35K:
+
+!["Query Plan Prior](/assets/img/posts/Synapse-Optimization-Series-Table-Distributions/PlanPrior.png)
 
 ## Hash Distribution
 The most efficient way to return the query results would be to first alter the distribution of both dbo.OrderLines and dbo.Product tables to be **HASH** distributed on ProductId. Hash distributing a table passes the selected column (or multiple column) values through a hashing algorithm which assigns a deterministic distribution to each distinct value. This would result in the following:
