@@ -118,7 +118,7 @@ The key portion of the very paired down XML plan below is the **SHUFFLE_MOVE** _
 ```
 >Running this statement producing 113M rows took **15 minutes** on DWU100c
 
-If we were to change the distribution of both tables to be **HASH** distributed on the item_sk in each table we will get dramatically better results. 
+If we were to change the distribution of both tables to be **HASH** distributed on the item_sk in each table we will get dramatically better results. Notice that the resulting query plan doesn't have any broadcast or shuffle move operations.
 
 ```sql
 CREATE TABLE dbo.test1
@@ -132,9 +132,9 @@ JOIN tpcds.item /*DISTRIBUTION = HASH(i_item_sk)*/
     ON inv_item_sk = i_item_sk
 ```
 !["Query Plan Prior](/assets/img/posts/Synapse-Optimization-Series-Table-Distributions/PlanAfter1.png)
->Running this statement took **1 minute** on DWU100c
+>Running this statement took **10 minutes** on DWU100c
 
-Taking this one step father we could distribute the target table (dbo.test1) on the same item_sk to completely avoid data leaving each individual distribution.
+Good improvement but we aren't done. We could distribute the target table (dbo.test1) on the same item_sk to completely avoid data leaving each individual distribution. While the prior query plan elimiates data movement to produce the result set, it must return the results to the compute node(s) so that the data can be **ROUND_ROBIN** distributed. The below will result in 0 data movement, all operations take place soley on each of the 60 distributions, all in parallel.
 
 ```sql
 CREATE TABLE dbo.test1
@@ -152,4 +152,8 @@ JOIN tpcds.item /*DISTRIBUTION = HASH(i_item_sk)*/
 ## Selecting the right distribution
 Picking the ideal distribution can be difficult, especially the more complex the query is, you will have to pick and choose to eliminate the most costly data movement and consider what makes sense for your most common queries involving tables.
 
+Here's some guidance for picking the right distribution column:
+
 1. Look at the join conditions for common columns 
+1. Prioritize tables that have the biggest cost impact to query plans
+1. When running CTAS, INSERT, or even UPDATE statements, consider the distribution of the target table you are updating, inserting into, or creating. If you can align both your source and target tables on the same distribution column 
