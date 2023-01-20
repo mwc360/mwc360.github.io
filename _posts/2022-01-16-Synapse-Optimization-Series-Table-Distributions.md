@@ -85,11 +85,12 @@ Notice how ProductId 2 in both tables is now located in distribution 2. The opti
 ## TPC-DS 10x Scale Example
 Now that we have the core concepts, lets look at a closer to real world example with a CTAS (CREATE TABLE AS SELECT) statement.
 
-| Table            |  Row Count  |
-|------------------|-------------|
-| tpcds.inventory  | 133,110,000 |
-| tpcds.store_sales| 28,800,501  |
-| tpcds.item       | 102,000     |
+| Table             |  Row Count  |
+|-------------------|-------------|
+| tpcds.inventory   | 133,110,000 |
+| tpcds.store_sales | 28,800,501  |
+| tpcds.item        | 102,000     |
+
 ```sql
 CREATE TABLE dbo.inventory_summary
     WITH (
@@ -178,7 +179,12 @@ The key portion of the very paired down XML plan below is the **SHUFFLE_MOVE** _
     </dsql_operation>
 ```
 
-If we were to change the distribution of all tables to be **HASH** distributed on the item_sk in each table we will continue to improve our results. Notice that the resulting query plan doesn't have any broadcast or shuffle move operations.
+If we were to change the distribution of all tables to be **HASH** distributed on the item_sk in each table we will continue to improve our results. We can use the below Sql to make these changes, the proc to perform this change is at the end of the post.
+```sql
+EXEC dbo.AlterTableDistribution 'tpcds', 'item', 'HASH(i_item_sk)'
+EXEC dbo.AlterTableDistribution 'tpcds', 'inventory', 'HASH(inv_item_sk)'
+EXEC dbo.AlterTableDistribution 'tpcds', 'store_sales', 'HASH(ss_item_sk)'
+```
 
 ```sql
 CREATE TABLE dbo.inventory_summary
@@ -212,6 +218,8 @@ JOIN (
     ) ss
     ON i_item_sk = ss.ss_item_sk
 ```
+Notice that the resulting query plan below doesn't have any broadcast or shuffle move operations.
+
 ![QueryPlanAfter](/assets/img/posts/Synapse-Optimization-Series-Table-Distributions/PlanAfter.png)
 
 >Running this statement took ~ **12 seconds** on DW100c, a 5x improvement from the prior change
