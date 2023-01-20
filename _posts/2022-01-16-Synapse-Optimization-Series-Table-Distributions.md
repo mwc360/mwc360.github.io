@@ -301,7 +301,7 @@ Happy tuning!
 
 {% highlight html %}
 {% raw %}
-   <script src="https://gist.github.com/AzureSynapseUtilities/a2ce5f7c05b02921e44abf3f1156b8e994f77c89.js">
+   <script src="https://gist.github.com/mwc360/a2ce5f7c05b02921e44abf3f1156b8e994f77c89.js">
    </script>
 {% endraw %}
 {% endhighlight %}
