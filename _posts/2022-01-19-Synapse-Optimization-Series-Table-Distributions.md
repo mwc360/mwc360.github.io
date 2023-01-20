@@ -37,7 +37,7 @@ The key disadvantage of **ROUND_ROBIN** distribution is that join operations inv
 
 Joining a **ROUND_ROBIN** distributed table with any other table will result in data movement to complete the operation because there is no guarantee (or even likelihood) that the common data required to perform the join exists on the same distribution, therefore the optimizer must choose to each broadcast or shuffle the data.
 
-Synapse Dedicated Sql Pools use a cost based query optimizer, where the cost of different methods to return the results is calculated and the lowest cost plan is selected to run.
+Synapse Dedicated Sql Pools use a cost-based query optimizer, where the cost of different methods to return the results is calculated and the lowest cost plan is selected to run.
 
 ```sql
 SELECT *
