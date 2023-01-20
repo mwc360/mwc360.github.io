@@ -12,7 +12,7 @@ Proper use of table distributions in Synapse Dedicated Sql Pools is easily the #
 I regularly see large queries that take hours to run (and potentially never even finish) and can almost always get them down to under a few minutes. Table distributions are the #1 thing I look at when tuning Synapse SQL.
 
 # Synapse Dedicated Sql Pool Architecture
-Dedicated Sql Pools (formerly Azuer Sql Data Warehouse) are a massively parallel processing (MPP) implementation of Microsoft SQL built exclusively for analytical workloads (i.e. data warehouseing). Under the hood, Dedicated Sql Pools have many separate CPUs that are able to operate on their own _distribution_ of data in parallel. This is what makes Synapse Dedicated Sql Pools so fast and optimized for data warehousing workloads: potentially large operations are broken into many different parallel jobs, orchestrated by a central control node.
+Dedicated Sql Pools (formerly Azuer Sql Data Warehouse) are a massively parallel processing (MPP) implementation of Microsoft SQL built exclusively for analytical workloads (i.e. data warehousing). Under the hood, Dedicated Sql Pools have many separate CPUs that are able to operate on their own _distribution_ of data in parallel. This is what makes Synapse Dedicated Sql Pools so fast and optimized for data warehousing workloads: potentially large operations are broken into many different parallel jobs, orchestrated by a central control node.
 
 !["SynapseArchitecture"](/assets/img/posts/Synapse-Optimization-Series-Table-Distributions/SynapseArchitecture.png)
 _Synapse Dedicated Sql Pool Architecture_
@@ -20,7 +20,7 @@ _Synapse Dedicated Sql Pool Architecture_
 The biggest architectural differentiator compared to SqlServer is also not so coincidentally the biggest driver of performance compared to SqlServer: **Table Distributions**.
 
 # Table Distributions
-The distribution of a table defines how it is phyically stored across the 60 distributions (think 60 Sql Databases) that make up Synapse Dedicated Sql Pools. The massive distribution of data across 60 phyical storage layers in which compute can operate on independently allows for a potential parallelism of 60. While every job levelerages parallel processing, the efficiency in doing so heavily relies on the method in which data is distributed.
+The distribution of a table defines how it is physically stored across the 60 distributions (think 60 Sql Databases) that make up Synapse Dedicated Sql Pools. The massive distribution of data across 60 physical storage layers in which compute can operate on independently allows for a potential parallelism of 60. While every job leverages parallel processing, the efficiency in doing so heavily relies on the method in which data is distributed.
 
 ## Round Robin Distribution
 By default, tables created without a defined _DISTRIBUTION_ (i.e. below) are created w/ **ROUND_ROBIN** distribution. This means that data is written randomly and evenly distributed across the 60 storage layers. This has the advantage of fast writes, an absence of data skew, and having no need to understand the underlying data and related query patterns.
@@ -37,7 +37,7 @@ The key disadvantage of **ROUND_ROBIN** distribution is that join operations inv
 
 Joining a **ROUND_ROBIN** distributed table with any other table will result in data movement to complete the operation because there is no guarantee (or even likelihood) that the common data required to perform the join exists on the same distribution, therefore the optimizer must choose to each broadcast or shuffle the data.
 
-Synapse Dedicated Sql Pools use a cost based query optimizer, where the cost of different methods to return the results is calcualted and the lowest cost plan is selected to run.
+Synapse Dedicated Sql Pools use a cost based query optimizer, where the cost of different methods to return the results is calculated and the lowest cost plan is selected to run.
 
 ```sql
 SELECT *
@@ -58,14 +58,14 @@ dbo.Product (DISTRIBUTION = ROUND_ROBIN)
 
 </td></tr> </table>
 
-Notice that in the dbo.OrderLines table ProductId 2 exists in distribution 1 whereas in the dbo.Product table, ProductId 2 exists in distribution 2, it cannot return the result of the join at the distribution level. To return the results when data is not colocated, it will do one or multiple of 2 operations:
+Notice that in the dbo.OrderLines table ProductId 2 exists in distribution 1 whereas in the dbo.Product table, ProductId 2 exists in distribution 2, it cannot return the result of the join at the distribution level. To return the results when data is not collocated, it will do one or multiple of 2 operations:
 1. A **Broadcast Move** operation could take place to create a temporary table replicating all dbo.Product data to each of the 60 distributions. This effectively will temporarily multiply your dbo.Product storage footprint by 60x to meet the needs of this query. The larger the dataset being broadcasted the most expensive this operation is.
 1. Two **Shuffle Move** operations could take place to create temporary tables reorganizing all dbo.Product and dbo.OrderLines data to be HASH distributed on ProductId, thus allowing data to be joined locally at each of the 60 distributions.
 
 For this particular query the optimizer will select to **Broadcast Move** or **Shuffle Move** both datasets depending on table sizes.
 
 ## Hash Distribution
-The most efficient way to return the query results in this example would be to first alter the distribution of both dbo.OrderLines and dbo.Product tables to be **HASH** distributed on ProductId. Hash distributing a table passes the selected column (or multiple column) values through a hashing algorithm which assigns a deterministic distribution to each distinct value. Every row that has the same hash column value is guaranteed to be physically stored on the same distribution, even for the same value contatined if multiple tables. This would result in the following:
+The most efficient way to return the query results in this example would be to first alter the distribution of both dbo.OrderLines and dbo.Product tables to be **HASH** distributed on ProductId. Hash distributing a table passes the selected column (or multiple column) values through a hashing algorithm which assigns a deterministic distribution to each distinct value. Every row that has the same hash column value is guaranteed to be physically stored on the same distribution, even for the same value contained in multiple tables. This would result in the following:
 
 <table>
 <tr><th style="border-width:0px"></th><th style="border-width:0px"></th></tr>
@@ -132,7 +132,7 @@ GROUP BY i_product_name
     , inv_warehouse_sk
 ```
 
-While this SQL is very readable, the Synapse Optimizer tends to be very literal in terms of executing plans based on how your TSQL reads, I don't find that it is as _creative_ as regular SqlServer with finding alternate and more optimal plans. This is extrmely important with the MPP architecture because depending on how your SQL is written, you could be getting worse performance when migrating from SqlServer to Synapse Dedicated Pools and a simple reorganization of some SQL could produce much better utilization of the distributed compute and the table distributions.
+While this SQL is very readable, the Synapse Optimizer tends to be very literal in terms of executing plans based on how your TSQL reads, I don't find that it is as _creative_ as regular SqlServer with finding alternate and more optimal plans. This is extremely important with the MPP architecture because depending on how your SQL is written, you could be getting worse performance when migrating from SqlServer to Synapse Dedicated Pools and a simple reorganization of some SQL could produce much better utilization of the distributed compute and the table distributions.
 
 Notice in the below query plan how the _Group by Aggregates_ transformation takes place **after** the 3 tables are shuffled and joined.
 
@@ -201,7 +201,7 @@ The key portion of the very paired down XML plan below is the **SHUFFLE_MOVE** _
     </dsql_operation>
 ```
 
-If we were to change the distribution of all tables to be **HASH** distributed on the item_sk in each table before running our statement we will continue to improve our results. We can use the below stored procedure to easily make these changes, the procedure can be found in my [AzureSynapseUtilities Repo](https://github.com/mwc360/AzureSynapseUtilities/blob/main/SynapseDedicatedScripts/AlterTableDistribution.sql)
+If we were to change the distribution of all tables to be **HASH** distributed on the item_sk in each table before running our statement, we will continue to improve our results. We can use the below stored procedure to easily make these changes, the procedure can be found in my [AzureSynapseUtilities Repo](https://github.com/mwc360/AzureSynapseUtilities/blob/main/SynapseDedicatedScripts/AlterTableDistribution.sql)
 ```sql
 EXEC dbo.AlterTableDistribution 'tpcds', 'item', 'HASH(i_item_sk)'
 EXEC dbo.AlterTableDistribution 'tpcds', 'inventory', 'HASH(inv_item_sk)'
@@ -246,7 +246,7 @@ Notice that the resulting query plan below doesn't have any broadcast or shuffle
 
 >Running this statement took ~ **12 seconds** on DW100c, a 5x improvement from the prior change
 
-Good improvement but we aren't done. We could distribute the target table (dbo.inventory_summary) on the same item_sk to completely avoid data leaving each individual distribution. While the prior query plan elimiates data movement to produce the result set, it must return the results to the compute node(s) so that the data can be **ROUND_ROBIN** distributed. The below will result in 0 data movement, all operations take place soley on each of the 60 distributions, all in parallel.
+Good improvement but we aren't done. We could distribute the target table (dbo.inventory_summary) on the same item_sk to completely avoid data leaving each individual distribution. While the prior query plan eliminates data movement to produce the result set, it must return the results to the compute node(s) so that the data can be **ROUND_ROBIN** distributed. The below will result in 0 data movement, all operations take place solely on each of the 60 distributions, all in parallel.
 
 ```sql
 CREATE TABLE dbo.inventory_summary
@@ -280,7 +280,7 @@ JOIN (
     ) ss
     ON i_item_sk = ss.ss_item_sk
 ```
-_Estimated query plans do now show or calculate data movement for interting into tables (i.e. CTAS) so the plan will look identical to the prior._
+_Estimated query plans do now show or calculate data movement for inserting into tables (i.e. CTAS) so the plan will look identical to the prior._
 >Running this statement took ~ **8 seconds** on DW100c, a 1.5x improvement from the prior change
 
 >  This query now runs **862x faster** than where we started!
