@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Synapse Optimization Series: Hash Table Distributions"
+title: "Synapse Optimization Series: Table Distributions"
 tags: [Azure Synapse, Dedicated Sql Pools, Optimization]
 categories: Optimization
 feature-img: "assets/img/feature-img/circuit.jpeg"
