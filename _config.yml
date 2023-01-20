@@ -6,7 +6,7 @@ url: "https://mwc360.github.io"
 title: Miles Cole                                      # site's title
 description: "An Azure data & analytics blog"      # used by search engines
 avatar: # assets/img/Untitled.png                         # Empty for no avatar in navbar
-favicon: assets/Untitled.ico                             # Icon displayed in the tab
+favicon: assets/mcole.ico                             # Icon displayed in the tab
 
 # Header and footer text
 header_text: an azure data platform blog  # Change Blog header text
