@@ -101,7 +101,7 @@ Notice how ProductId 2 in both tables is now located in distribution 2. The opti
 
 # TPC-DS 10x Scale Example
 Now that we have the core concepts, lets look at a closer to real world example with a CTAS (CREATE TABLE AS SELECT) statement. 
-> See my [TPC-DS DataGen for Synapse GitHub repo]() for scripts used to create the TPC-DS datasets for Synapse Dedicated Pools.
+> See my [AzureSynapseUtilities Repo](https://github.com/mwc360/AzureSynapseUtilities/tree/main) for scripts used to create the TPC-DS datasets for Synapse Dedicated Pools.
 
 | Table             |  Row Count  |
 |-------------------|-------------|
@@ -201,7 +201,7 @@ The key portion of the very paired down XML plan below is the **SHUFFLE_MOVE** _
     </dsql_operation>
 ```
 
-If we were to change the distribution of all tables to be **HASH** distributed on the item_sk in each table before running our statement we will continue to improve our results. We can use the below Sql to make these changes, the proc to perform this change is at the end of the post and in my [Synapse Utilities GitHub Repo]()
+If we were to change the distribution of all tables to be **HASH** distributed on the item_sk in each table before running our statement we will continue to improve our results. We can use the below stored procedure to easily make these changes, the procedure can be found in my [AzureSynapseUtilities Repo](https://github.com/mwc360/AzureSynapseUtilities/blob/main/SynapseDedicatedScripts/AlterTableDistribution.sql)
 ```sql
 EXEC dbo.AlterTableDistribution 'tpcds', 'item', 'HASH(i_item_sk)'
 EXEC dbo.AlterTableDistribution 'tpcds', 'inventory', 'HASH(inv_item_sk)'
@@ -299,58 +299,9 @@ I created the below stored procedure to simplify the process of altering the dis
 
 Happy tuning!
 
-```sql
-/*
-EXEC dbo.AlterTableDistribution 'dbo', 'table1', 'HASH(column1)'
-*/
-CREATE PROC dbo.AlterTableDistribution @schemaName VARCHAR(128)
-    , @tableName VARCHAR(128)
-    , @newDistribution VARCHAR(150)
-AS
-BEGIN
-    DECLARE @fullyQualifiedTableName VARCHAR(400) = '[' + @schemaName + '].[' + @tableName + ']'
-    DECLARE @index VARCHAR(200) = (
-            SELECT CASE i.type
-                    WHEN 0
-                        THEN 'CLUSTERED COLUMNSTORE INDEX'
-                    WHEN 1
-                        THEN CONCAT (
-                                'CLUSTERED INDEX ('
-                                , STRING_AGG(CONVERT(VARCHAR(MAX), c.name), ', ') WITHIN GROUP (
-                                        ORDER BY ic.key_ordinal ASC
-                                        )
-                                    , ')'
-                                )
-                    WHEN 5
-                        THEN 'CLUSTERED COLUMNSTORE INDEX'
-                    END AS TableIndex
-            FROM sys.tables t
-            LEFT JOIN sys.indexes i
-                ON t.object_id = i.object_id
-                    AND i.type IN (0, 1, 5)
-            LEFT JOIN sys.index_columns ic
-                ON i.index_id = ic.index_id
-                    AND i.object_id = ic.object_id
-            LEFT JOIN sys.columns c
-                ON ic.column_id = c.column_id
-                    AND ic.object_id = c.object_id
-            WHERE t.object_id = object_id(@fullyQualifiedTableName)
-            GROUP BY i.type
-            )
-    DECLARE @sql NVARCHAR(1000) = '
-CREATE TABLE [' + @schemaName + '].[' + @tableName + '_new]
-WITH (
-            ' + @index + '
-            , DISTRIBUTION = ' + @newDistribution + '
-            )
-AS SELECT * FROM [' + @schemaName + '].[' + @tableName + ']
-
-RENAME OBJECT [' + @schemaName + '].[' + @tableName + '] to [' + @tableName + '_old]
-RENAME OBJECT [' + @schemaName + '].[' + @tableName + '_new] to [' + @tableName + ']
-DROP TABLE [' + @schemaName + '].[' + @tableName + '_old]'
-
-    PRINT (@sql)
-
-    EXEC sp_executesql @sql
-END
-```
+{% highlight html %}
+{% raw %}
+   <script src="https://gist.github.com/AzureSynapseUtilities/a2ce5f7c05b02921e44abf3f1156b8e994f77c89.js">
+   </script>
+{% endraw %}
+{% endhighlight %}
