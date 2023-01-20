@@ -299,9 +299,4 @@ I created the below stored procedure to simplify the process of altering the dis
 
 Happy tuning!
 
-{% highlight html %}
-{% raw %}
-   <script src="https://raw.githubusercontent.com/mwc360/AzureSynapseUtilities/main/SynapseDedicatedScripts/AlterTableDistribution.sql">
-   </script>
-{% endraw %}
-{% endhighlight %}
+<script src="https://raw.githubusercontent.com/mwc360/AzureSynapseUtilities/main/SynapseDedicatedScripts/AlterTableDistribution.sql"></script>
