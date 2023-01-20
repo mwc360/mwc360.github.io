@@ -299,4 +299,4 @@ I created the below stored procedure to simplify the process of altering the dis
 
 Happy tuning!
 
-<script src="https://raw.githubusercontent.com/mwc360/AzureSynapseUtilities/main/SynapseDedicatedScripts/AlterTableDistribution.sql"></script>
+<script src="https://gist.github.com/mwc360/d7f6d1e9e05a7c3155dec3ee88b1b722.js"></script>
