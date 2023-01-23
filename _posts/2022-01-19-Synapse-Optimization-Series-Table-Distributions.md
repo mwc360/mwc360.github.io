@@ -83,13 +83,19 @@ dbo.Product (DISTRIBUTION = HASH(ProductId))
 Notice how ProductId 2 in both tables is now located in distribution 2. The optimizer will recognize that both tables are distributed on the same column which is present in the SELECT statement join condition (ol.ProductId = p.ProductId). This will result in a 100% local distribution level join taking place and will be incredibly fast.
 
 ## Replicate Distribution
-**REPLICATE** distribution is stored at the distribution level as **ROUND_ROBIN**, however the data is replicated to each compute node after the first time the data is accessed or after a change in scale affecting the number of compute nodes. Think of this as a persisted compute node cache that can eliminate the need to _broadcast move_ data in order to perform joins. See the [Synapse Service Levels Documentation](https://learn.microsoft.com/en-us/azure/synapse-analytics/sql-data-warehouse/memory-concurrency-limits#service-levels) for details on how many compute nodes exist per Synapse SKU. 
+**REPLICATE** distribution is stored at the distribution level as **ROUND_ROBIN**, however the data is replicated to each compute node after the first time the data is accessed. Think of this as a persisted compute node cache that can eliminate the need to _broadcast move_ data in order to perform joins. See the [Synapse Service Levels Documentation](https://learn.microsoft.com/en-us/azure/synapse-analytics/sql-data-warehouse/memory-concurrency-limits#service-levels) for details on how many compute nodes exist per Synapse SKU. 
 
 **REPLICATE** distribution is typically appropriate for dimension tables which can't be HASH distributed on the same column as fact tables. Since each compute node will have the full table needed to perform the join, operations to _broadcast move_ the table to join with larger facts can typically be eliminated.
 
+### Rebuilding Replicated Tables
+Replicated tables are rebuilt asynchronously by the first query against the table after:
+- DML operations (INSERT/UPDATE/DELETE)
+- The Synapse SQL instance is scaled a level with a different number of compute nodes
+- The table definition is updated
+
 > ⚠️ **REPLICATE** distribution should be avoided in the following cases:
 > - Tables w/ more than 1M rows or 2GB of compressed data (the less frequently the underlying data changes the more you can exceed this threshold).
-> - Tables w/ frequent DML operations (i.e. DELETE/INSERT/UPDATE). Only one replicated table can be rebuilt at a given time so frequent table updates can lead to queuing of tables waiting to be rebuilt.
+> - Tables w/ frequent DML operations (i.e. DELETE/INSERT/UPDATE). Only one replicated table can be rebuilt at a given time so frequent table updates can lead to queuing of tables waiting to be rebuilt.  
 > - SQL Pools with frequent scale operations changing the number of compute nodes.
 > - Tables with a large number of columns where only a small subset are typically accessed.
 
