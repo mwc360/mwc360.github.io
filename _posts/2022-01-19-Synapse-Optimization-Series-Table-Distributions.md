@@ -292,7 +292,7 @@ Here's some guidance for picking the right distribution column:
 
 1. Look at the join conditions for common columns 
 1. Prioritize tables that have the biggest cost impact to query plans
-1. When running CTAS, INSERT, or even UPDATE statements, consider the distribution of the target table you are updating, inserting into, or creating. If you can align both your source and target tables on the same distribution column 
+1. When running CTAS, INSERT, or even UPDATE statements, consider the distribution of the target table you are updating, inserting into, or creating. If you can align both your source table(s) and target table on the same distribution column you will minimize data movement to transform and land your data.
 
 # Quickly changing distributions
 I created the stored procedure below to simplify the process of altering the distribution of any table. It compresses ~ 9 lines of TSQL to 1 and will re-implement the same table index.
