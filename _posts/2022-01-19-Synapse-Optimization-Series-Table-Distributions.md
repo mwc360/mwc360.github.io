@@ -83,21 +83,15 @@ dbo.Product (DISTRIBUTION = HASH(ProductId))
 Notice how ProductId 2 in both tables is now located in distribution 2. The optimizer will recognize that both tables are distributed on the same column which is present in the SELECT statement join condition (ol.ProductId = p.ProductId). This will result in a 100% local distribution level join taking place and will be incredibly fast.
 
 ## Replicate Distribution
-**REPLICATE** distribution stores one copy of the table on each compute node aligned set of distributions. I.e. in the below table of [Synapse Service Levels](https://learn.microsoft.com/en-us/azure/synapse-analytics/sql-data-warehouse/memory-concurrency-limits#service-levels) we can see that DW100c through DW500c all have only 1 compute node which manages 60 distributions, in this case data is technically not replicated, this would be no different than **ROUND_ROBIN**. However, once we get to DW1000c we now have 2 compute nodes, each managing 30 distributions, data is now replicated.
+**REPLICATE** distribution is stored at the distribution level as **ROUND_ROBIN**, however the data is replicated to each compute node after the first time the data is accessed or after a change in scale affecting the number of compute nodes. Think of this as a persisted compute node cache that can eliminate the need to _broadcast move_ data in order to perform joins. See the [Synapse Service Levels Documentation](https://learn.microsoft.com/en-us/azure/synapse-analytics/sql-data-warehouse/memory-concurrency-limits#service-levels) for details on how many compute nodes exist per Synapse SKU. 
 
-| SKU     | Compute Nodes | Distributions per Compute node | Memory per dedicated pool (GB) |
-|---------|---------------|--------------------------------|--------------------------------|
-| DW100c  | 1             | 60                             | 60                             |
-| DW200c  | 1             | 60                             | 120                            |
-| DW300c  | 1             | 60                             | 180                            |
-| DW400c  | 1             | 60                             | 240                            |
-| DW500c  | 1             | 60                             | 300                            |
-| DW1000c | 2             | 30                             | 600                            |
-| DW1500c | 3             | 20                             | 900                            |
+**REPLICATE** distribution is typically appropriate for dimension tables which can't be HASH distributed on the same column as fact tables. Since each compute node will have the full table needed to perform the join, operations to _broadcast move_ the table to join with larger facts can typically be eliminated.
 
-**REPLICATE** distribution is typically appropriate for dimension tables as this ensures that each compute node has the full dataset in its underlying distributions which allows for potentially avoiding needing to move data from node to node to produce result sets involving joins with large fact tables.
-
-> ⚠️ Unless you are expecting to be using a Synapse SKU of DW1000c or higher in the future, I wouldn't use **REPLICATE** distribution as even though there is only one copy of the data (i.e. with DW500c and below), there is a slight overhead to maintain the replicated table cache which supports the ability to replicate the data if you did have multiple compute nodes. 
+> ⚠️ **REPLICATE** distribution should be avoided in the following cases:
+> - Tables w/ more than 1M rows or 2GB of compressed data (the less frequently the underlying data changes the more you can exceed this threshold).
+> - Tables w/ frequent DML operations (i.e. DELETE/INSERT/UPDATE). Only one replicated table can be rebuilt at a given time so frequent table updates can lead to queuing of tables waiting to be rebuilt.
+> - SQL Pools with frequent scale operations changing the number of compute nodes.
+> - Tables with a large number of columns where only a small subset are typically accessed.
 
 # TPC-DS 10x Scale Example
 Now that we have the core concepts, lets look at a closer to real world example with a CTAS (CREATE TABLE AS SELECT) statement. 
