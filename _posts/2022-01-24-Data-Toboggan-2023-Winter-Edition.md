@@ -6,7 +6,9 @@ categories: Events
 feature-img: "assets/img/feature-img/toboggan.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/toboggan.jpeg"
 ---
-{% include aligner.html images="posts\Data-Toboggan-Winter-2023\toboggan-banner.png" %}
+
+{% include aligner.html images="posts/Data-Toboggan-Winter-2023/toboggan-banner.png" %}
+
 # My Session: Designing Dedicated Sql Pools for Scale and Performance
 Deploying a Dedicated SQL Pool in the cloud is easy, however so is misusing its distributed SQL engine. How do you know you're getting the most DWUs for your Azure spend, could queries run faster, am I writing optimized SQL, how does Synapse even work under the hood?
 
