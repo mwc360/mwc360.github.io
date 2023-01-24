@@ -20,5 +20,5 @@ A lot of great topics and speaks covering everything Synapse. [Check out the Dat
 
 Register here: [Data Toboggan Winter Edition - 1/28/2023](https://www.meetup.com/data-toboggan/events/290572181/)
 
-<iframe style="background: #FFFFFF;" src="https://sessionize.com/api/v2/pzob13hi/view/GridSmart?under=True" height="2000px" width="100%" style="border:none;"></iframe>
+<iframe style="background-color: #FFFFFF;" src="https://sessionize.com/api/v2/pzob13hi/view/GridSmart?under=True" height="2000px" width="100%" style="border:none;"></iframe>
 
