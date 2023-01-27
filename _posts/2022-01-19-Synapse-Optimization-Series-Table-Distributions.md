@@ -23,13 +23,13 @@ The biggest architectural differentiator compared to SQL Server is also not so c
 The distribution of a table defines how it is physically stored across the 60 distributions (think 60 SQL Databases) that makeup Synapse Dedicated SQL Pools. The massive distribution of data across 60 physical storage layers in which compute can operate on independently allows for potential parallelism of 60. While every job leverages parallel processing, the efficiency in doing so heavily relies on the method in which data is distributed.
 
 ## Round Robin Distribution
-By default, tables created without a defined _DISTRIBUTION_ (i.e. below) are created w/ **ROUND_ROBIN** distribution. This means that data is written randomly and evenly distributed across the 60 storage layers. This has the advantage of fast writes, an absence of data skew, and no need to understand the underlying data and related query patterns.
+**ROUND_ROBIN** distribution randomly and evenly distributed data across the 60 distributions. This has the advantage of fast writes, an absence of data skew, and no need to understand the underlying data and related query patterns.
 
 ```sql
 CREATE TABLE dbo.table1
 WITH (
     CLUSTERED COLUMNSTORE INDEX
-    /*, DISTRIBUTION = ROUND_ROBIN */
+    , DISTRIBUTION = ROUND_ROBIN
     )
 AS SELECT 1
 ```
