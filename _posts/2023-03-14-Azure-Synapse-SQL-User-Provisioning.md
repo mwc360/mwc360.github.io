@@ -3,8 +3,8 @@ layout: post
 title: "Azure Synapse / SQL User Provisioning the Right Way"
 tags: [Azure Synapse, Dedicated SQL Pools, Security, Automation, RBAC]
 categories: Automation
-feature-img: "assets/img/feature-img/circuit.jpeg"
-thumbnail: "assets/img/thumbnails/feature-img/circuit.jpeg"
+feature-img: "assets/img/feature-img/pexels-scott-webb-cameras.jpeg"
+thumbnail: "assets/img/thumbnails/feature-img/pexels-scott-webb-cameras.jpeg"
 ---
 
 Data engineers and architects will often spend many hundreds of hours building a complex and fully automated solution for delivering data analysis capabilities to end users but will often forget or overlook the step of provisioning user access to said capabilities. 
@@ -28,7 +28,7 @@ CREATE USER [userName@domain.com] FROM EXTERNAL PROVIDER
 
 The trick to creating a AD user from a SQL Auth users is to do some pre-work to get the client ID and then SID of the users you want to create and use the below syntax:
 ```sql
-CREATE USER [userName@domain.com] WITH SID = XXXX-XXXX-XXXX-XXXX, TYPE = E
+CREATE USER [userName@domain.com] WITH SID = 0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX, TYPE = E
 ```
 Type E = Individual users and applications
 
@@ -46,6 +46,9 @@ function ConvertTo-Sid {
     }
     return "0x" + $byteGuid
 }
+
+ConvertTo-Sid 591e0c96-532e-4264-8046-f7d14fc5f2bf
+# returns: 0x960C1E592E5364428046F7D14FC5F2BF
 ```
 I don't believe it's possible to parse a SID from a client ID via SQL, please leave a comment if you've figured this out.
 
@@ -79,15 +82,15 @@ Depending on the time you want to invest up front to make life easy for your fut
 
 1. Hardcode something like the below in a DACPAC post deployment script. - **_This is a good starting point but isn't very dynamic_**.
    ```sql
-   EXEC sp_executeSql N'CREATE USER [EDW_SqlUsers_Operations_Contributor_DEV] WITH SID = XXXX-XXXX-XXXX-XXXX, TYPE = X'
+   EXECUTE sp_executeSql N'CREATE USER [EDW_SqlUsers_Operations_Contributor_DEV] WITH SID = 0x960C1E592E5364428046F7D14FC5F2BF, TYPE = X'
    ```
    _This would need to be a post deploy script since the USER object in SqlPackage/SSDT doesn't support the SID syntax_
 
 1. Generate the SID as part of your release pipeline and dynamically pass the SID into your DACPAC deploy via a SQLCMD variable - **_Getting better, still not very dynamic_**.
    ```sql
-   EXEC sp_executeSql N'CREATE USER [EDW_SqlUsers_Operations_Contributor_DEV] WITH SID = $(sid), TYPE = X'
+   EXECUTE sp_executeSql N'CREATE USER [EDW_SqlUsers_Operations_Contributor_DEV] WITH SID = $(sid), TYPE = X'
    ```
-1. Store users and groups to be provisioned per environment in a JSON config file in GIT and then use PowerShell in your release pipeline to loop through and provision access - **_PERFECT_**.
+1. Store users and groups to be provisioned per environment in a JSON config file in GIT and then use PowerShell in your release pipeline to loop through, generate SIDs, and provision access - **_PERFECT_**.
 ```json
 {
     "roleAssignments": [
