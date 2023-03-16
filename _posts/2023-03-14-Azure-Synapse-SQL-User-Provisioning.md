@@ -116,3 +116,5 @@ Depending on the time you want to invest upfront to make life easy for your futu
 }
 ```
 Yes, the PowerShell to idempotently create users and assign role membership based on a JSON config file is not a small effort, however, once you script it out (maybe with the help of ChatGPT) your future self will thank you as no one wants to spend time provisioning database users. 
+
+In all the Azure data platforms I've built I've been able to 100% avoid executing TSQL to create all types of users and assign role membership... it's completely worth it, come join me.
