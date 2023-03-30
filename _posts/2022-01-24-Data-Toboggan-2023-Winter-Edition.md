@@ -14,7 +14,7 @@ Deploying a Dedicated SQL Pool in the cloud is easy, however so is misusing its 
 
 In this session I'll guide you through the key tenants of building a lightning fast Synapse Dedicated SQL Pool. From table distributions, indexes, statistics, database settings, data movement patterns, to SQL constructs, this session will teach you the options available, pitfalls to avoid, and showcase the impact via industry standard benchmarks.
 
-<iframe width="420" height="315" src="http://www.youtube.com/embed/d_0OiDokKyw" frameborder="0" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/d_0OiDokKyw" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
 ------------------
 
