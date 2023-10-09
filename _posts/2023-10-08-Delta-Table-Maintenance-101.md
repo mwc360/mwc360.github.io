@@ -98,9 +98,10 @@ Liquid Clustering has many advantages over Z-order (explained later):
 
 The below SparkSql would create liquid clustered table:
 ```sql
-CREATE TABLE gold.fact_sales CLUSTER BY (SalesOrderId, SalesOrderDate)```
+CREATE TABLE gold.fact_sales CLUSTER BY (SalesOrderId, SalesOrderDate)
+```
 
-To trigger clustering of a liquid clustered table, simply run the following:
+To incrementally rebuild the cluster of a liquid clustered table, simply run the following:
 ```sql
 OPTIMIZE table_name
 ```
