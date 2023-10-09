@@ -132,4 +132,6 @@ To Z-order your data, run the following:
 ```sql
 OPTIMIZE gold.fact_sales ZORDER BY (SalesOrderId, SalesOrderDate)
 ```
-> Whether you are using liquid clustering, Z-Order, or are storing your data uncluster: **Consider DML (i.e. INSERT/UPDATE/DELETE) and DQL (SELECT) query patterns on top of your Delta tables before blindly applying a data storage strategy**.
+--------------------
+
+Whether you are using liquid clustering, Z-Order, or are storing your data uncluster: Consider DML (i.e. INSERT/UPDATE/DELETE) and DQL (SELECT) query patterns on top of your Delta tables before blindly applying a data storage strategy.
