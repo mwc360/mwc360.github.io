@@ -3,8 +3,8 @@ layout: post
 title: "Delta Table Maintenance 101"
 tags: [Azure Synapse, Azure Databricks, Lakehouse, Fabric, Delta Lake]
 categories: Optimization
-feature-img: "assets/img/feature-img/pexels-suntorn-somtong.jpeg"
-thumbnail: "assets/img/thumbnails/feature-img/pexels-suntorn-somtong.jpeg"
+feature-img: "assets/img/feature-img/pexels-suntorn-somtong-delta.jpeg"
+thumbnail: "assets/img/thumbnails/feature-img/pexels-suntorn-somtong-delta.jpeg"
 published: true
 ---
 
