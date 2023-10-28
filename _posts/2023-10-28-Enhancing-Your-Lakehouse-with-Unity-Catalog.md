@@ -3,11 +3,11 @@ layout: post
 title: "Enhancing Your Lakehouse with Unity Catalog"
 tags: [Azure Databricks, Data Governance]
 categories: Architecture
-feature-img: "assets/img/feature-img/unifiedLakehouseDALLE.png"
-thumbnail: "assets/img/thumbnails/feature-img/pexels-google-deepmind-17483874-small.jpeg"
+feature-img: "assets/img/feature-img/unifiedLakehouseDALLE.jpeg"
+thumbnail: "assets/img/thumbnails/feature-img/unifiedLakehouseDALLE-small.jpeg"
 published: true
 ---
-pexels-google-deepmind-17483874.jpeg
+
 Since its introduction, Unity Catalog has been creating significant buzz in the data community. But what exactly is it, and why is enabling it in your Databricks workspace so important? This article dives into the essence of Unity Catalog, demonstrating how it revolutionizes data engineering in lakehouses and provides guidelines for enabling it in your existing Databricks Workspace.
 
 # Understanding Unity Catalog
