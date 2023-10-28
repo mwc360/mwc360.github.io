@@ -47,7 +47,7 @@ With Unity Catalog, these processes are automated:
 - **Data Dictionary**: Unity Catalog leverages generative AI to provide initial descriptions for data objects and fields, simplifying data documentation.
 ![AI Generated Descriptions](/assets/img/posts/Enhancing-Your-Lakehouse-with-Unity-Catalog/unityCatalogAiGeneratedDescriptions.png)
 > You must enable Generative AI features at the Databricks Account level for this to show up.
-![Enable AI Assist](/assets/img/posts/Enhancing-Your-Lakehouse-with-Unity-Catalog/enableAiAssist.PNG)
+![Enable AI Assist](/assets/img/posts/Enhancing-Your-Lakehouse-with-Unity-Catalog/enableAIAssist.PNG)
 
 
 ## Quick Takeaway
