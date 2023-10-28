@@ -42,12 +42,12 @@ Without Unity Catalog, tracking data lineage and maintaining data dictionaries i
 
 With Unity Catalog, these processes are automated:
 - **Lineage**: Unity Catalog captures and retains data flow lineage automatically for 90 days, irrespective of the programming language used.
-![Unity Catalog Lineage](/assets/img/posts/Enhancing-Your-Lakehouse-with-Unity-Catalog/unityCatalogLineage.png)
+![Unity Catalog Lineage](/assets/img/posts/Enhancing-Your-Lakehouse-with-Unity-Catalog/unityCatalogLineage.PNG)
 
 - **Data Dictionary**: Unity Catalog leverages generative AI to provide initial descriptions for data objects and fields, simplifying data documentation.
 ![AI Generated Descriptions](/assets/img/posts/Enhancing-Your-Lakehouse-with-Unity-Catalog/unityCatalogAiGeneratedDescriptions.png)
 > You must enable Generative AI features at the Databricks Account level for this to show up.
-![Enable AI Assist](/assets/img/posts/Enhancing-Your-Lakehouse-with-Unity-Catalog/enableAiAssist.png)
+![Enable AI Assist](/assets/img/posts/Enhancing-Your-Lakehouse-with-Unity-Catalog/enableAiAssist.PNG)
 
 
 ## Quick Takeaway
