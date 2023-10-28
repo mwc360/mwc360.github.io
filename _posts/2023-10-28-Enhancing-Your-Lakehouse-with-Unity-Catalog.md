@@ -3,11 +3,11 @@ layout: post
 title: "Enhancing Your Lakehouse with Unity Catalog"
 tags: [Azure Databricks, Data Governance]
 categories: Architecture
-feature-img: "assets/img/feature-img/pexels-google-deepmind-17483874.jpeg"
+feature-img: "assets/img/feature-img/unifiedLakehouseDALLE.png"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-google-deepmind-17483874-small.jpeg"
 published: true
 ---
-
+pexels-google-deepmind-17483874.jpeg
 Since its introduction, Unity Catalog has been creating significant buzz in the data community. But what exactly is it, and why is enabling it in your Databricks workspace so important? This article dives into the essence of Unity Catalog, demonstrating how it revolutionizes data engineering in lakehouses and provides guidelines for enabling it in your existing Databricks Workspace.
 
 # Understanding Unity Catalog
@@ -43,6 +43,7 @@ Without Unity Catalog, tracking data lineage and maintaining data dictionaries i
 With Unity Catalog, these processes are automated:
 - **Lineage**: Unity Catalog captures and retains data flow lineage automatically for 90 days, irrespective of the programming language used.
 ![Unity Catalog Lineage](/assets/img/posts/Enhancing-Your-Lakehouse-with-Unity-Catalog/unityCatalogLineage.png)
+
 - **Data Dictionary**: Unity Catalog leverages generative AI to provide initial descriptions for data objects and fields, simplifying data documentation.
 ![AI Generated Descriptions](/assets/img/posts/Enhancing-Your-Lakehouse-with-Unity-Catalog/unityCatalogAiGeneratedDescriptions.png)
 > You must enable Generative AI features at the Databricks Account level for this to show up.
