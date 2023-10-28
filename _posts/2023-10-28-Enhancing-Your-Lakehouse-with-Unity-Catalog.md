@@ -13,7 +13,7 @@ Since its introduction, Unity Catalog has been creating significant buzz in the 
 # Understanding Unity Catalog
 Unity Catalog brings a new era of centralized control in Databricks, streamlining access management, user governance, and data lake authentication across multiple workspaces. Beyond its primary role in data governance, Unity Catalog paves the way to cutting-edge lakehouse features, such as automated data lineage and AI-powered data discovery.
 
-!["Unity Catalog"](/assets/img/posts/Enhancing-Your-Lakehouse-with-Unity-Catalog/unityCatalogHighLevel.PNG)
+![Unity Catalog](/assets/img/posts/Enhancing-Your-Lakehouse-with-Unity-Catalog/unityCatalogHighLevel.png)
 
 For comprehensive insights into Unity Catalog and its functionalities, I recommend these resources:
 - [Databricks Documentation: What is Unity Catalog](https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/).
@@ -42,11 +42,11 @@ Without Unity Catalog, tracking data lineage and maintaining data dictionaries i
 
 With Unity Catalog, these processes are automated:
 - **Lineage**: Unity Catalog captures and retains data flow lineage automatically for 90 days, irrespective of the programming language used.
-!["Unity Catalog Lineage"](/assets/img/posts/Enhancing-Your-Lakehouse-with-Unity-Catalog/unityCatalogLineage.PNG)
+![Unity Catalog Lineage](/assets/img/posts/Enhancing-Your-Lakehouse-with-Unity-Catalog/unityCatalogLineage.png)
 - **Data Dictionary**: Unity Catalog leverages generative AI to provide initial descriptions for data objects and fields, simplifying data documentation.
-!["AI Generated Descriptions"](/assets/img/posts/Enhancing-Your-Lakehouse-with-Unity-Catalog/unityCatalogAiGeneratedDescriptions.PNG)
+![AI Generated Descriptions](/assets/img/posts/Enhancing-Your-Lakehouse-with-Unity-Catalog/unityCatalogAiGeneratedDescriptions.png)
 > You must enable Generative AI features at the Databricks Account level for this to show up.
-!["Enable AI Assist"](/assets/img/posts/Enhancing-Your-Lakehouse-with-Unity-Catalog/enableAiAssist.PNG)
+![Enable AI Assist](/assets/img/posts/Enhancing-Your-Lakehouse-with-Unity-Catalog/enableAiAssist.png)
 
 
 ## Quick Takeaway
