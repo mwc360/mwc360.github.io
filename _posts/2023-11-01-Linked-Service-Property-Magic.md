@@ -24,7 +24,7 @@ Some practical applications of this include:
 Both ADF and Azure Synapse UIs offer the _Advanced_ dropdown within the Linked Service configuration pane, enabling you to specify additional properties.
 
 Choose **Specify dynamic contents in JSON format**, and you can insert dynamic content like expressions or even reference Azure Key Vault secrets.
-![Advanced Options Dropdown](/_posts/2023-11-01-Linked-Service-Property-Magic/advancedOptions.png)
+![Advanced Options Dropdown](/assets/img/posts/Linked-Service-Property-Magic/advancedOptions.png)
 
 When you enable this feature for a Linked Service, it enhances the connection's attributes and dynamic content beyond the GUI's capabilities.
 
@@ -41,16 +41,16 @@ Here's how we can figure out the JSON synax for one of these unexposed propertie
 1. Go the the [Azure SDK for .NET](https://learn.microsoft.com/en-us/dotnet/api/microsoft.azure.management.datafactory.models.linkedservice?view=azure-dotnet) documentation
 1. Click the **More...** section to unveil all Linked Service classes
 
-    ![All Linked Service Classes](/_posts/2023-11-01-Linked-Service-Property-Magic/image.png)
+    ![All Linked Service Classes](/assets/img/posts/Linked-Service-Property-Magic/image.png)
 
 1. Upon exploring the AzureDatabricksLinkedService class, you'll encounter a table labeled _Properties_. These properties can be specified in JSON, even if not listed in the GUI.
 
     Interestingly, towards the table's end, you'll spot the elusive PolicyId property, missing from the GUI.
-    ![PolicyId in the Properties Table](/_posts/2023-11-01-Linked-Service-Property-Magic/image-1.png)
+    ![PolicyId in the Properties Table](/assets/img/posts/Linked-Service-Property-Magic/image-1.png)
 
 1. Drilling into the desired Property reveals the path necessary for creating a valid JSON data structure.
 
-    ![Property Path Details](/_posts/2023-11-01-Linked-Service-Property-Magic/image-3.png)
+    ![Property Path Details](/assets/img/posts/Linked-Service-Property-Magic/image-3.png)
 
 1. This informs us that the Linked Service properties' path is **typeProperties.policyId**, represented in the following JSON:
 
@@ -65,7 +65,7 @@ Here's how we can figure out the JSON synax for one of these unexposed propertie
 ```
 Incorporate this JSON into the Linked Service Advanced section to expand the GUI's capabilities.
 
-![The JSON added to our Linked Service](/_posts/2023-11-01-Linked-Service-Property-Magic/image-4.png)
+![The JSON added to our Linked Service](/assets/img/posts/Linked-Service-Property-Magic/image-4.png)
 
 Voilà! We've successfully parameterized the cluster policy used when creating a job cluster through this Linked Service.
 
@@ -87,7 +87,7 @@ Let's revise our input parameter, switching from policyId to policyName. The syn
 
 In this scenario, the secret's name in the Azure Key Vault should match the policy's name. For flexibility, you could append or prepend names and employ the same logic in an expression that defines the secretName.
 
-![Key Vault Secret parameterization](/_posts/2023-11-01-Linked-Service-Property-Magic/image-6.png)
+![Key Vault Secret parameterization](/assets/img/posts/Linked-Service-Property-Magic/image-6.png)
 
 Finally, our Key Vault can house both environment-specific and policy-specific GUIDs. In our pipelines, referencing policies by name allows the associated policy to be invoked dynamically based on various conditions.
 
