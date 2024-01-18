@@ -46,7 +46,7 @@ Software I frequently use:
 
 This might take me a couple hours to get everything installed properly and I'd probably forget a few things in the process (i.e. .NET Framework) leading me later to question why an app may be erroring out or a database project may not load.
 
-With Chocolately, once you have it installed, you could simply run the below via _Command Prompt_ or _PowerShell_, that's it!
+Using Chocolatey, you simply run the below via _Command Prompt_ or _PowerShell_, that's it!
 ```shell
 choco install <package-name> -y
 ```
