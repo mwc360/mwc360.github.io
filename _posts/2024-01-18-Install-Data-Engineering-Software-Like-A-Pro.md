@@ -70,8 +70,9 @@ choco install azure-cli -y
 > `-y` or `--yes` is an command option used to programatically confirm all prompts as part of the download process. Otherwise, you will be prompted in the command line to approve all prompts [A], step through and approve individual prompts [Y], or reject the prompt [N].
 
 Once a package is installed via Chocolately you can easily update packages that may become out of date via the below maintenance commands:
+
 | Command                        |  Description                           |
-|-----------------------         |----------------------------------------|
+|--------------------------------|----------------------------------------|
 | `choco list`                   | List packages installed via Chocolatey |
 | `choco outdated`               | List upgradable packages               |
 | `choco update all -y`          | Upgrade all packages                   |
