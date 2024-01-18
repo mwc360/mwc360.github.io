@@ -71,12 +71,12 @@ choco install azure-cli -y
 
 Once a package is installed via Chocolately you can easily update packages that may become out of date via the below maintenance commands:
 
-| Command                        |  Description                           |
-|--------------------------------|----------------------------------------|
-| `choco list`                   | List packages installed via Chocolatey |
-| `choco outdated`               | List upgradable packages               |
-| `choco update all -y`          | Upgrade all packages                   |
-| `choco update <packageName> -y`| Upgrade a single package               |
+| Command                         |  Description                           |
+|---------------------------------|----------------------------------------|
+| `choco list`                    | List packages installed via Chocolatey |
+| `choco outdated`                | List upgradable packages               |
+| `choco upgrade all -y`          | Upgrade all packages                   |
+| `choco upgrade <packageName> -y`| Upgrade a single package               |
 
 ## Install Chococlatey
 Chocolatey is installed via a PowerShell script referenced in  
