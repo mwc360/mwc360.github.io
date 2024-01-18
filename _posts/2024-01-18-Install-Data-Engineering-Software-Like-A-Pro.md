@@ -78,6 +78,12 @@ Once a package is installed via Chocolately you can easily update packages that 
 | `choco upgrade all -y`          | Upgrade all packages                   |
 | `choco upgrade <packageName> -y`| Upgrade a single package               |
 
+Yes, that's right, upgrading all of your Chocolately managed software that is outdated is as easy as running the single line of code below:
+```shell
+choco upgrade all -y
+```
+
+
 ## Install Chococlatey
 Chocolatey is installed via a PowerShell script referenced in  
 [this link](https://chocolatey.org/install#individual).
@@ -86,6 +92,7 @@ To simplify the process you can use the PowerShell commands run via _Administrat
 
 ```powershell
 Set-ExecutionPolicy Bypass -Scope Process -Force
+
 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 ```
 ## Benefits of Chocolatey
