@@ -79,8 +79,8 @@ Once a package is installed via Chocolately you can easily update packages that 
 | `choco update <packageName> -y`| Upgrade a single package               |
 
 ## Install Chococlatey
-Chocolatey is installed via a PowerShell script referenced in this link: 
-https://chocolatey.org/install#individual
+Chocolatey is installed via a PowerShell script referenced in  
+[this link](https://chocolatey.org/install#individual).
 
 To simplify the process you can use the PowerShell commands run via _Administrator_ to download the remote script and then execute it.
 
