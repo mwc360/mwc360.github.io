@@ -102,7 +102,7 @@ json_record['InvoiceID']
 ### Which was easier to code?
 **Pandas-on-Spark**. In this case it required fewer lines of code while using the same simple `read_sql_query()` method as regular Pandas. However, since it uses a JDBC driver instead of ODBC like regular Pandas, you don't need to use SQLAlchemy and PyODBC for the database connection object. This can be somewhat complicated to learn and requires importing extra libraries that may not always come pre-installed on your cluster.
 
-PANDAS FOR THE WIN!!!
+**PANDAS FOR THE WIN!!!**
 <div style="width:100%;height:0;padding-bottom:69%;position:relative;"><iframe src="https://giphy.com/embed/EPcvhM28ER9XW" width="100%" height="100%" style="position:absolute" frameBorder="0" class="giphy-embed" allowFullScreen></iframe></div><p><a href="https://giphy.com/gifs/panda-angry-breaking-EPcvhM28ER9XW"></a></p>
 
 > Database connections were made via standard SQL authentication (username and password). In my next blog post, I'll show how you can use token-based authentication for Service Principals.
