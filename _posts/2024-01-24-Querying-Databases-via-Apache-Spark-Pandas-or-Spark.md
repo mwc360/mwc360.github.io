@@ -118,14 +118,6 @@ Repeat executions within the same Spark session, with only a change to the SQL s
 ## Where Spark and Pandas-on-Spark are Fast
 I'm not going to repeat what many in the community have already demonstrated. _Effectively any task that is large enough to benefit from distributed processing will be faster with Spark or Pandas-on-Spark. Think million-row-plus tables, complex transformations, etc. The larger the size of your data the more you can benefit for distributing the workload across many workers/cores._
 
-# Summary
-Get to know your data workloads and evaluate the size before you commit to a specific dataframe API.
-
-_General guidelines:_
-- If you aren't familiar with Pandas, start with the Spark API.
-- If you have steps in your process that do singleton lookups or run very low-volume queries, use regular Pandas.
-- If you know Pandas already, you have options :)
-
 # Practical Guidance
 It’s essential to understand your data workloads and evaluate the size before committing to a specific dataframe API. The key to efficient data processing in Apache Spark lies in understanding the strengths and limitations of each tool as your disposal and applying them appropriately to your specific data tasks.
 
