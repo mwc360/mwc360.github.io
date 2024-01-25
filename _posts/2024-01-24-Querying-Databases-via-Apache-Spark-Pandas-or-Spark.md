@@ -102,9 +102,6 @@ json_record['InvoiceID']
 ### Which was easier to code?
 **Pandas-on-Spark**. In this case it required fewer lines of code while using the same simple `read_sql_query()` method as regular Pandas. However, since it uses a JDBC driver instead of ODBC like regular Pandas, you don't need to use SQLAlchemy and PyODBC for the database connection object. This can be somewhat complicated to learn and requires importing extra libraries that may not always come pre-installed on your cluster.
 
-**PANDAS FOR THE WIN!!!**
-<div style="width:100%;height:0;padding-bottom:69%;position:relative;"><iframe src="https://giphy.com/embed/EPcvhM28ER9XW" width="100%" height="100%" style="position:absolute" frameBorder="0" class="giphy-embed" allowFullScreen></iframe></div><p><a href="https://giphy.com/gifs/panda-angry-breaking-EPcvhM28ER9XW"></a></p>
-
 > Database connections were made via standard SQL authentication (username and password). In my next blog post, I'll show how you can use token-based authentication for Service Principals.
 
 ### Repeat Executions
@@ -114,6 +111,9 @@ Repeat executions within the same Spark session, with only a change to the SQL s
 - Pandas-on-Spark completes in 900ms
 
 >This appears to be due to the overhead of establishing a connection to the source database in each API. As long as the Spark session is active, the connection remains alive.
+
+**PANDAS FOR THE WIN!!!**
+<div style="width:100%;height:0;padding-bottom:69%;position:relative;"><iframe src="https://giphy.com/embed/EPcvhM28ER9XW" width="100%" height="100%" style="position:absolute" frameBorder="0" class="giphy-embed" allowFullScreen></iframe></div><p><a href="https://giphy.com/gifs/panda-angry-breaking-EPcvhM28ER9XW"></a></p>
 
 ## Where Spark and Pandas-on-Spark are Fast
 I'm not going to repeat what many in the community have already demonstrated. _Effectively any task that is large enough to benefit from distributed processing will be faster with Spark or Pandas-on-Spark. Think million-row-plus tables, complex transformations, etc. The larger the size of your data the more you can benefit for distributing the workload across many workers/cores._
