@@ -69,11 +69,11 @@ Since I am in the admin group, I now see data related to all supplier categories
 ### User and Group Related Functions
 | Function                        |  Description                                                                                             |  Unity Catalog Only |
 |---------------------------------|----------------------------------------------------------------------------------------------------------|---------------------|
-| `is_member()`                   | Returns `true` if the user is a direct or indirect member of the specified group. at the workspace level | No |
-| `is_account_group_member()`     | Returns `true` if the user is a direct or indirect member of the specified group. at the account level | Yes |
-| `session_user()`                | Returns the email address or id of the user executing the statement. Recommended for DBR 14.1 and above. | No |
-| `current_user()`                | Returns the email address or id of the user executing the statement. Alias for `user()`. | No |
-| `user()`                        | Returns the email address or id of the user executing the statement. | No |
+| `is_member()`                   | Returns `true` if the user is a direct or indirect member of the specified group. at the workspace level | No                  |
+| `is_account_group_member()`     | Returns `true` if the user is a direct or indirect member of the specified group. at the account level   | Yes                 |
+| `session_user()`                | Returns the email address or id of the user executing the statement. Recommended for DBR 14.1 and above. | No                  |
+| `current_user()`                | Returns the email address or id of the user executing the statement. Alias for `user()`.                 | No                  |
+| `user()`                        | Returns the email address or id of the user executing the statement.                                     | No                  |
 
 >**is_account_group_member() vs. is_member():** if you have Unity Catalog enabled, you should use `is_account_group_member()` instead of `is_member()`. This supports scenarios where you may want to check for membership in groups that have not been added to your workspace since you may not want those users to have workspace access. For example, for our Executives group, they might technically need to access the data in the event of using Direct Query for reporting, however we don't want to add the Account Group into our workspace as they shouldn't get access to the workspace itself.
 
