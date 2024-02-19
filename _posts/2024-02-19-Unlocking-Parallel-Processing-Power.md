@@ -52,14 +52,14 @@ Having implemented the above methods, there's some clear lessons to be learned h
 
 This now brings us to the last method I'll discuss...
 
-## 3. Multi-Threading for Concurrent Job Execution in Clusters
+## 3. Multithreading for Concurrent Job Execution in Clusters
 This approach, which certainly not free from disadvantages, can be the most efficient for executing multiple jobs in parallel.
 
-The concept involves utilizing one or several job clusters to execute numerous jobs concurrently through multi-threading. This can be achieved by either statically or dynamically setting the number of threads (concurrency), all operating under a single Spark session.
+The concept involves utilizing one or several job clusters to execute numerous jobs concurrently through multithreading. This can be achieved by either statically or dynamically setting the number of threads (concurrency), all operating under a single Spark session.
 
 The primary disadvantage here is the barrier to entry as you have to learn the fundamentals of one of the threading libraries in python or scala. If you're using Microsoft Fabric, there is a new mssparkutils command (mssparkutils.notebook.runMultiple()) that can simplify some uses cases for concurrent processing, my colleague over at [Fabric.guru has an excellent blog post](https://fabric.guru/using-runmultiple-to-orchastrate-notebook-execution-in-microsoft-fabric) on this command. Note that this requires some initialization time for each notebook so there is still overhead to this approach.
 
-Before we dive in to some ways to implement and key things to know about each, let's be clear why we are only talking about multi-threading rather than multi-processing. 
+Before we dive in to some ways to implement and key things to know about each, let's be clear why we are only talking about multithreading rather than multi-processing. 
 
 ### Why Multithreading Over Multiprocessing?
 Multithreading shares resources within the compute environment, constrained by mechanisms like the Python Global Interpreter Lock (GIL), which allows only one Python task to execute at a time. This approach is compatible with Spark's architecture, unlike multiprocessing, which creates resource boundaries that are incompatible with Spark's processing framework.
@@ -166,7 +166,7 @@ Cons:
 - Still subject to the limitations of the GIL; not ideal for CPU-bound tasks.
 - No built-in support for canceling threads that have already started.
 
-## Import Considerations When Using Multi-Threading
+## Important Considerations When Using Multithreading
 Whether you use Threading or Concurrent.Futures (I recommend the latter), it is important to consider the lifecycle management of threads.
 1. **Canceling jobs:** Suppose you execute a notebook cell with a `time.sleep(3600)` command (waiting for 1 hour) in each thread and attempt to cancel the cell execution. In that case, the operation will continue until each thread completes. _Concurrent.Futures_ supports canceling threads that haven't started yet, provided your code invokes the `cancel()` method on all futures upon a KeyboardInterruption event. However, all active threads will persist until the `time.sleep(3600)` concludes—either after an hour or when you terminate or detach the notebook. As an alternative, consider implementing a flagging mechanism that periodically checks within each thread if a _KeyboardInterruption_ (cancel button) has been activated externally, subsequently raising an exception if triggered.
 
@@ -207,4 +207,4 @@ Dedicated Job Clusters vs. Multithreading
 > For the multithreading tests I used the default max_workers setting `min(32, os.cpu_count() + 4)` which returns 8 on a 4 core single node cluster. This enabled 8 concurrent threads.
 
 ## Final Thoughts
-Multi-Threading is certainly not a one size fit all approach, however when it comes to orchestrating a high volume of lakehouse processes, if you can integrate robust logging, monitoring, and metadata-driven orchestration, it can definately be the most efficient and cost effective mechanism to use.
+Multithreading is certainly not a one size fit all approach, however when it comes to orchestrating a high volume of lakehouse processes, if you can integrate robust logging, monitoring, and metadata-driven orchestration, it can definately be the most efficient and cost effective mechanism to use.
