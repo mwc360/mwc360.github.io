@@ -68,7 +68,7 @@ In computing, a thread can be likened to a section of musicians within an orches
 
 In contrast, a process operates like an entire orchestra, complete with its own stage, instruments, and conductor. Each process is a self-contained unit with dedicated resources, such as memory and CPUs, allowing it to perform independently of others. This independence means that resources are not shared between processes, mirroring how separate orchestras do not share their musicians or conductors. While each orchestra (process) can produce a magnificent performance on its own, the lack of shared resources means they operate in isolation, without the intertwined coordination found within the sections of a single orchestra (threads within a process).
 
-![Thread vs. Process](/assets/img/posts/Adventures-in-Spark-Compute-Optimization/processing_types.png)
+![Thread vs. Process](/assets/img/posts/Unlocking-Parallel-Processing-Power/processing_types.png)
 Mulithreading vs. Multiprocessing
 
 ### Threading Library
@@ -179,7 +179,7 @@ To demonstrate the potential efficiency gains, I conducted a simple experiment i
 
 This test was not performed on High-Concurrency clusters, as high-concurrency cannot be enabled on single-node clusters.
 
-![Thread vs. Process](/assets/img/posts/Adventures-in-Spark-Compute-Optimization/execution_duration.png)
+![Dedicated Job Clusters vs. Multithreading: Efficiency Comparison](/assets/img/posts/Unlocking-Parallel-Processing-Power/execution_duration.png)
 Dedicated Job Clusters vs. Multithreading
 
 **When running 48 jobs, multithreading took 9.5% of to total cluster execution duration compared to running dedicated job clusters for each job!** This test  highlights how there is considerable overhead to starting a spark application even after the compute is already allocated.
