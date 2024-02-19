@@ -174,7 +174,27 @@ Whether you use Threading or Concurrent.Futures (I recommend the latter), it is 
     > ⚠️ Rich.Progress and Microsoft Fabric notebooks are currently not compatible. If you are using Databricks notebooks, Rich.Progress works flawlessly.
 
 ## Efficiency Comparison
-To demonstrate the potential efficiency gains, I conducted a simple experiment involving the reading of 1M rows from a large Delta table and subsequently writing the dataframe to a new Delta table, utilizing a single-node, 4-core cluster (with 1 core dedicated to the driver and the remaining 3 as workers).
+To demonstrate the potential efficiency gains, I conducted a simple experiment involving the reading of 1M rows a Databricks sample Delta table and subsequently writing the dataframe to a new Delta table, utilizing a single-node, 4-core cluster (with 1 core dedicated to the driver and the remaining 3 as workers).
+
+```python
+import uuid
+import concurrent.futures
+
+job_count = 12
+
+def read_and_write_table():
+    uid = str(uuid.uuid4())
+    uid = uid.replace('-','')
+
+    df = spark.sql("SELECT * FROM sample.tpcs.lineitem limit 1000000")
+    df.write.format("delta").saveAsTable(f"test.{uid}")
+
+with concurrent.futures.ThreadPoolExecutor() as executor:
+    futures = [executor.submit(read_and_write_table) for i in range(job_count)]
+    
+    for future in concurrent.futures.as_completed(futures):
+        print(future.result())
+```
 
 
 This test was not performed on High-Concurrency clusters, as high-concurrency cannot be enabled on single-node clusters.
