@@ -46,6 +46,7 @@ display(df)
 ```
 
 ![Get view definitions](/assets/img/posts/Fabric-Lakehouse-Information-Schema/results.png)
+
 While this approach is admittedly more cumbersome than a straightforward _Information Schema_ query, encapsulating it within a function or utility class method simplifies future metadata retrieval efforts.
 
 ```python
