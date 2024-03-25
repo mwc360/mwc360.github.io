@@ -2,7 +2,7 @@
 layout: post
 title: "Decoding Delta Lake Compatibility Between Fabric and Databricks"
 tags: [Fabric, Databricks, Delta Lake, Spark]
-categories: Tips and Tricks
+categories: Integration
 feature-img: "assets/img/feature-img/pexels-google-deepmind-17483874.jpeg"
 thumbnail: "assets/img/feature-img/pexels-google-deepmind-17483874.jpeg"
 published: true
