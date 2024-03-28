@@ -88,11 +88,11 @@ The below table contains the Delta table features which not all [Apache Spark Ru
 
 
 # Bulk Evaluating Delta Tables for Compatibility
-No we have somewhat of a decoder ring, although still pretty nuanced to understand. Since every business using Power BI and Delta Lake should be evaluating migrating to use Direct Lake over Import/DirectQuery/Dual storage mode, I created a [PySpark library](https://pypi.org/project/onelake-shortcut-tools/) that can be used to evaluate your existing Delta Tables. It will return a dataframe report with information highlighting your Delta Tables with boolean indicators showing whether or not they can be read or written to from the different Fabric runtimes.
+Now that we have somewhat of a decoder ring, although still pretty nuanced to understand. Since every business using Power BI and Delta Lake should be evaluating migrating to use Direct Lake over Import/DirectQuery/Dual storage mode, I created a [PySpark library](https://pypi.org/project/onelake-shortcut-tools/) that can be used to evaluate your existing Delta Tables in Databricks. It will return a dataframe report with information highlighting your Delta Tables with boolean indicators showing whether or not they can be read or written to from the different Fabric runtimes.
 
 In a future release I plan to integrate some form of support for automatically creating from resulting data via the [Shortcuts REST API](https://learn.microsoft.com/en-us/fabric/onelake/onelake-shortcuts-rest-api).
 
-Simply install the library on your cluster via the `%pip` magic command:
+Simply install the library on your cluster from PyPi via the `%pip` magic command:
 ```
 %pip install onelake_shortcut_tools
 ```
