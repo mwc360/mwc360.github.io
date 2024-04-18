@@ -2,7 +2,7 @@
 layout: post
 title: "Beyond Information Schema: Metadata Mastery in a Fabric Lakehouse"
 tags: [Fabric, Spark]
-categories: Tips and Tricks
+categories: Data-Engineering
 feature-img: "assets/img/pexels/search-map.jpeg"
 thumbnail: "assets/img/pexels/search-map.jpeg"
 published: true
