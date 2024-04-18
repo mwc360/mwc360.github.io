@@ -4,12 +4,12 @@ url: "https://mwc360.github.io"
 
 # THEME-SPECIFIC CONFIGURATION
 title: Miles Cole                                      # site's title
-description: "An Azure data & analytics blog"      # used by search engines
+description: "A Microsoft data & analytics blog"      # used by search engines
 avatar: # assets/img/Untitled.png                         # Empty for no avatar in navbar
 favicon: assets/mcole.ico                             # Icon displayed in the tab
 
 # Header and footer text
-header_text: an azure data platform blog  # Change Blog header text
+header_text: a microsoft data platform blog  # Change Blog header text
 header_feature_image: assets/img/header/triangular.jpeg
 header_feature_image_responsive: true
 footer_text: >
