@@ -18,7 +18,6 @@ Accessing this vital metadata in a Fabric Notebook, however, presents its challe
 This error is returned because _Information Schema_ is exclusive to the SQL Endpoint, designed as a gateway for SQL queries atop your Lakehouse (e.g., for use with SSMS, Power BI, Fabric Warehouses, etc.). You might think to bypass this by querying the SQL Endpoint directly from your Notebook via JDBC `spark.read`, but this path too is fraught with limitations — attempting to query the SQL Endpoint in a Fabric Notebook will return a pesky port error.
 
 ### Embracing SparkSQL Metadata Commands
-
 Despite these hurdles, SparkSQL offers a lifeline through its array of metadata commands. These commands, while not as streamlined as _Information Schema_ queries, can provide similar results via a more programatic approach. Unlike the system-wide sweep of _Information Schema_, SparkSQL's commands tend to focus on individual objects, which can be less efficient but equally effective with the right strategy.
 
 For instance, while there's no single command to extract all view definitions at once, we can iteratively gather all views within a database and subsequently loop through them to capture each definition and append to a singular dataframe.
