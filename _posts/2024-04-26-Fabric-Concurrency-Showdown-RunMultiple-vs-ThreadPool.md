@@ -19,7 +19,8 @@ To compare the performance of the two methods, I ran the N instances of a synthe
 ## Setting up the Benchmark
 There were three primary things I did to set this up:
 1. Configure Spark Pool to have have sufficient nodes (5 for 1 driver and 4 executors) and disable _Dynamic Allocation_ to ensure that a fixed number of executors is used for each cluster config. Enabling _Dynamic Allocation_ with a min and max of 4 executors still results in the having potentially less than 4 executors allocated to the session.
-![Dataframe Results](/assets/img/posts/RunMultiple-vs-ThreadPools/cluster-config.png)
+
+    ![Dataframe Results](/assets/img/posts/RunMultiple-vs-ThreadPools/cluster-config.png)
 
 1. Create Parent Notebook for executing both RunMultiple and ThreadPoolExecutor jobs.
 1. Create Child Notebook with simple parquet write operation which the RunMultiple command will call.
@@ -83,12 +84,16 @@ I did test concurrency at all concurreny levels on both 2x8 and 4x8 clusters and
 ### Performance
 To add context interpreting performance...
 
-### UI / UX
+### Monitoring UI / UX
 RunMultiple provides a **significantly** better user experience and interface for monitoring jobs. As seen in the GIF below, the UI has improved a lot lately to now include Fabric custom monitoring to show the progress of each task in addition to the ability to click into each to see the Notebook snapshot.
 
 These Notebook snapshots also show up in the spark monitoring experience.
 
 ThreadPools on the otherhand require the user to code logging functionality from scratch. Of course, this is entirely expected, `Concurrent.Futures`` is nothing more than a super powerful library for concurrent thread and process management. Building similar progress bar tracking capabilities as well as the ability to cancel in-progress or not yet stated _futures_ requires advanced Python coding skills and significant time for building and testing the framework.
+
+### Development Pattern
+- I like being able to programmatically generate a DAG
+- I don't like that the code has to be in another notebook.
 
 # Closing Thoughts
 
