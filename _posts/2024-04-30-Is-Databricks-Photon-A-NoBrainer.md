@@ -11,7 +11,7 @@ Photon is a native vectorized execution engine within Databricks, entirely writt
 
 Sounds like a no-brainer, right? However, unless your CIO doesn't care about reducing cloud costs, it's advisable to consider the TCO (Total Cost of Ownership) of Photon when executing your Lakehouse strategy in Databricks. Databricks applies a 2x DBU multiplier when Photon is enabled, meaning you will pay twice as much per second in licensing costs. Ideally, this cost should be offset by at least a 2x performance improvement to make it cost effective.
 
-In this post, I'll detail benchmarks that illuminate the TCO implications of enabling Photon in Databricks.
+In this post, I'll detail benchmarks that illuminate the TCO implications of enabling Photon in Databricks and scenarios where you may not want to enable it.
 
 # How Does Photon Work?
 For those interested in the technical details, Databricks has published a comprehensive [whitepaper](https://people.eecs.berkeley.edu/~matei/papers/2022/sigmod_photon.pdf) on the Photon engine.
