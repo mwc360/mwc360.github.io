@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Cluster Configuration Secrets for Spark: Unlocking Parallel Processing Power"
-tags: [Fabric, Databricks, Spark, Optimization]
+tags: [Fabric, Databricks, Spark, Optimization, Benchmark], 
 categories: Optimization
 feature-img: "assets/img/feature-img/pexels-kelly-2544989.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-kelly-2544989.jpeg"

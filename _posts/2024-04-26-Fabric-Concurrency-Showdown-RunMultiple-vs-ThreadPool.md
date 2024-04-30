@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "The Fabric Concurrency Showdown: RunMultiple vs. ThreadPools"
-tags: [Fabric, Spark, Lakehouse]
+tags: [Fabric, Spark, Lakehouse, Benchmark]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-gratisography-4417.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-gratisography-4417.jpeg"

@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Querying Databases in Apache Spark: Pandas vs. Spark API vs. Pandas-on-Spark"
-tags: [Microsoft Fabric, Azure Databricks, Lakehouse]
+tags: [Microsoft Fabric, Azure Databricks, Lakehouse, Benchmark]
 categories: Optimization
 feature-img: "assets/img/feature-img/pexels-suki-lee-16200703.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-suki-lee-16200703.jpeg"
