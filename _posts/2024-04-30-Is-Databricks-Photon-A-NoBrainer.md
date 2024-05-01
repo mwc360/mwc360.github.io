@@ -27,7 +27,7 @@ improve the performance of queries that are IO or network bound._
 
 # The Benchmark
 ## Configuration
-To assess the performance enhancements provided by Photon, I had ChatGPT whip me up six OLAP queries using varrying SparkSQL transformations. These queries were run on a synthetic database that reflects data volumes typical of small to medium-sized enterprises (approximately 100M rows in transaction tables). Delta Tables with Liquid Clustering enabled showed greater performance improvements with Photon compared to unclustered tables. I will discuss this further and compare Liquid Clustering with Hive-style partitioning in a future post.
+To assess the performance enhancements provided by Photon, I had ChatGPT whip me up six OLAP queries using varying SparkSQL transformations. These queries were run on a synthetic database that reflects data volumes typical of small to medium-sized enterprises (approximately 100M rows in transaction tables). Delta Tables with Liquid Clustering enabled showed greater performance improvements with Photon compared to unclustered tables. I will discuss this further and compare Liquid Clustering with Hive-style partitioning in a future post.
 
 I conducted all tests on a single-user cluster with two worker nodes, each an E8ds_v5 VM (64 GB Memory, 8 Cores), comparing results with Photon enabled and disabled. I repeated the tests after restarting the cluster to clear any caches and averaged the results.
 
