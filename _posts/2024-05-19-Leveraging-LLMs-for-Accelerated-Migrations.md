@@ -7,7 +7,6 @@ feature-img: "assets/img/feature-img/pexels-googledeepmind-17485743.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-googledeepmind-17485743.jpeg"
 published: true
 ---
-
 LLMs like ChatGPT and CoPilot are transforming every industry, so why not use them as a data engineer to free up time for more complex tasks? One thing every data engineer—and most humans—are revolted by is repetitive tasks. Thankfully, we don't live in the world of iRobot and all we need are tokens to pay the LLM masters to get our work done.
 
 How about the scenario of a replatform from Synapse Dedicated (or any other non-Spark-based environment) to Spark? Typically, this would involve an army of developers with competency in both SQL dialects and plenty of time to work through refactoring or rewriting scripts. Sound fun? Let's get smarter about how we work and leverage AI to make us more productive and available for higher-value tasks.
