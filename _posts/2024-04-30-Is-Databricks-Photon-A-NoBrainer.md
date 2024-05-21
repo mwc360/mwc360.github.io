@@ -74,7 +74,7 @@ Photon does not enhance performance for certain Lakehouse operations:
 > ⚠️ Enabling Photon for any of the above tasks will likely result in double the licensing costs without any performance benefit.
 
 # Should You Always Enable Photon?
-I advise against enabling Photon for all jobs across all user clusters in Databricks. Photon does not improve performance for simple DML operations that only involve a single table. Thus, it may be wise to strategically organize and execute jobs based on whether Photon provides a significant performance improvement and/or results in net lower job cost.
+I advise against enabling Photon for all jobs across all user clusters in Databricks. Photon generally does not improve performance for simple DML operations that only involve a single table. Thus, it may be wise to strategically organize and execute jobs based on whether Photon provides a significant performance improvement and/or results in net lower job cost.
 
 Ultimately, understanding your workload and recognizing when to use Photon can lead to more efficiently configured development, UAT, and production clusters, as well as grouped jobs based on workload type.
 
