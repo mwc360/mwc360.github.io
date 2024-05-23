@@ -10,9 +10,7 @@ tags: [Page]
   <img src="/assets/img/milesPicSmall.PNG" />
 </p>
 
-My name is Miles, I'm a full-stack cloud data architect: from MPP data warehouse / lakehouse design and implementation to CI/CD pipeline and API development, I build modern data solutions in Microsoft Azure.
-
-I'm a Managing Architect at Hitachi Solutions, which is where I got my intro to the wonderful world of consulting. I started off my career writing VB script to automate business processes and reporting then eventually Power BI was released and I quickly became rouge IT. After successfully implementing Power BI and starting a BI center of excellence, I was  on-boarded into IT and given the opportunity of building my companies' first cloud data warehouse. Now after dozens of implementations, I love to share what I've learned and talk modern data architectures.
+My name is Miles, I currently serve as Director of Data and AI at Hitachi Solutions. I’m a technology leader with deep knowledge and experience with everything spark and lakehouse to data warehouse design, tuning, CI/CD automation, and API development. I started off my career writing VB script to automate business processes and reporting then eventually Power BI was released and I quickly became shadow IT. After successfully implementing Power BI and starting a BI center of excellence, I was on-boarded into IT and given the opportunity of building my companies' first cloud data warehouse. Now after dozens of implementations, I love to share what I've learned and talk modern data architectures.
 
 I'm a husband and father of 3 and in my free time I love trail running, tennis, homebrewing, baking sourdough, sausage making, reading, and home remodeling.
 
