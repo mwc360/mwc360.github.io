@@ -34,18 +34,18 @@ The table below contains the three Delta table features (plus one that requires 
 
 > ⚠️ Seeing `Yes` in the table **does not** necessarily mean you can enable that feature via the Fabric Runtime, just that your can read from a table that already has it enabled by another platform using Delta Lake.
 
-| Table Feature              | Runtime 1.1 (Delta Lake 2.2.0)      | Runtime 1.2 (Delta Lake 2.4.0)      | Runtime 1.3 (Delta Lake 3.0.0)      | Future Runtime 1.x (Delta Lake 3.1.0) |
-|----------------------------|-------------------------------------|-------------------------------------|-------------------------------------|---------------------------------------|
-| Default Columns            | Yes†                                | Yes†                                | Yes†                                | Yes                                  |
-| V2 Checkpoints             | No                                  | No                                  | Yes                                 | Yes                                   |
-| Liquid Clustering          | Yes if v2Checkpoints are dropped††  | Yes if v2Checkpoints are dropped††  | Yes                                 | Yes                                   |
-| Deletion Vectors           | No                                  | Yes                                 | Yes                                 | Yes                                   |
+| Table Feature              | Runtime 1.1 (Delta Lake 2.2.0)      | Runtime 1.2 (Delta Lake 2.4.0)      | Runtime 1.3 Preview (Delta Lake 3.1)|
+|----------------------------|-------------------------------------|-------------------------------------|-------------------------------------|
+| Default Columns            | Yes†                                | Yes†                                | Yes†                                |
+| V2 Checkpoints             | No                                  | No                                  | Yes                                 |
+| Liquid Clustering          | Yes if v2Checkpoints are dropped††  | Yes if v2Checkpoints are dropped††  | Yes                                 |
+| Deletion Vectors           | No                                  | Yes                                 | Yes                                 |
 
-The next Fabric Spark Runtime will presumably include Delta Lake 3.1.0, which means we'll finally get ⚡**Liquid Clustering**⚡. Sure, it was only announced by Databricks last June, however I'm anxiously looking forward to it because it is arguably one of the most exciting Detla Lake features in version 3. It completely eliminates Hive-style partitioning and Z-ORDER indexing, it's that revolutionary. The good news is that the next Fabric Runtime after 1.3 should unblock all of the four table features which could currently prevent you from enabling a hybrid architecture with Fabric, depending on what Delta table features are required.
+> **UPDATE 6/13/24**: Fabric Spark Runtime 1.3 was upgraded to Preview status (from Experimental) and now includes Delta 3.1 which means we finally get ⚡**Liquid Clustering**⚡!!. It is arguably one of the most exciting Detla Lake features in version 3. It completely eliminates Hive-style partitioning and Z-ORDER indexing, it's that revolutionary.
 
 > † Default Columns is a writer table feature, however it currently prevents the detla table from being registered in the Lakehouse Delta table metastore when you create a shortcut. For now you can reference the path to the shortcut using `df = spark.read.format('delta').load(<path>)` to read from the table in Fabric.
 
-> †† Liquid Clustering enables V2 Checkpoints by default. However, Liquid Clustering by itself is a writer table protocol and not a reader protocol, that means we can drop V2 Checkpoints after enabling Liquid Clustering to allow Fabric Runtimes prior to 1.3 to read from Liquid Clustered tables. This not a straightforward process, see [how to drop V2 Checkpoints](#How-to-Drop-V2-Checkpoints).
+> †† Databricks currently enables V2 Checkpoints by default when using Liquid Clustering. However, Liquid Clustering by itself is a writer table protocol and not a reader protocol, that means we can drop V2 Checkpoints after enabling Liquid Clustering to allow Fabric Runtimes prior to 1.3 to read from Liquid Clustered tables. This not a straightforward process, see [how to drop V2 Checkpoints](#How-to-Drop-V2-Checkpoints).
 
 ### Dropping Table Features to Enable Read OR Write Compatibility
 There are currently two Delta table features that can be dropped:
@@ -75,16 +75,18 @@ At this time it is not possible to disable V2 Checkpoints on creation of a Liqui
 # Delta Writer Feature Compatability
 The below table contains the Delta table features which not all [Apache Spark Runtimes in Fabric](https://learn.microsoft.com/en-us/fabric/data-engineering/runtime) can write to.
 
-| Table Feature              | Runtime 1.1 (Delta Lake 2.2.0)      | Runtime 1.2 (Delta Lake 2.4.0)      | Runtime 1.3 (Delta Lake 3.0.0)      | Future Runtime 1.x (Delta Lake 3.1.0) |
-|----------------------------|-------------------------------------|-------------------------------------|-------------------------------------|---------------------------------------|
-| Default Columns            | No                                  | No                                  | No                                  | Yes                                   |
-| V2 Checkpoints             | No                                  | No                                  | Yes                                 | Yes                                   |
-| Liquid Clustering          | No                                  | No                                  | No                                  | Yes                                   |
-| Identity Columns           | No                                  | No                                  | No                                  | No                                    |
-| Row Tracking               | No                                  | No                                  | No                                  | Yes                                   |
-| Domain Metadata            | No                                  | No                                  | Yes                                 | Yes                                   |
-| Iceberg Compatibility V1   | No                                  | No                                  | No                                  | Yes                                   |
-| Deletion Vectors           | No                                  | Yes                                 | Yes                                 | Yes                                   |
+| Table Feature              | Runtime 1.1 (Delta Lake 2.2)        | Runtime 1.2 (Delta Lake 2.4)        | Runtime 1.3 Preview (Delta Lake 3.1)|
+|----------------------------|-------------------------------------|-------------------------------------|-------------------------------------|
+| Default Columns            | No                                  | No                                  | Yes                                 |
+| V2 Checkpoints             | No                                  | No                                  | Yes                                 |
+| Liquid Clustering          | No                                  | No                                  | Yes                                 |
+| Identity Columns           | No                                  | No                                  | No                                  |
+| Row Tracking               | No                                  | No                                  | No                                  |
+| Domain Metadata            | No                                  | No                                  | Yes                                 |
+| Iceberg Compatibility V1   | No                                  | No                                  | No, TBD for GA†                     |
+| Deletion Vectors           | No                                  | Yes                                 | Yes                                 |
+
+> † Iceberg Compatibility V1 is enabled via Delta 3.1, however it appears that Fabric Runtime 1.3 Preview is missing a class to support the Iceberg metadata, hopefully this will be fixed before GA.
 
 
 # Bulk Evaluating Delta Tables for Compatibility
