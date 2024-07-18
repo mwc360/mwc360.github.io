@@ -7,7 +7,6 @@ feature-img: "assets/img/feature-img/pexels-koprivakart-5914531.jpeg"
 thumbnail: "assets/img/feature-img/pexels-koprivakart-5914531.jpeg"
 published: true
 ---
-
 How do you develop a python library in Microsoft Fabric while maintaining the full ability to test code prior to packaging? 
 
 This topic is something that I've been challenged with for the last year and the internet, community, ChatGPT, etc., no once is talking about it, therefore, for the longest time I didn't even think it was possible.
