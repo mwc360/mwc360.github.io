@@ -39,7 +39,7 @@ SET `spark.microsoft.delta.optimizeWrite.enabled` = true
 ```
 
 ## When Should I Use It?
-While improving read and potentially DML operations is fantastic, it comes at the cost of shuffling all data before writing it. Given that the feature is entirely designed to improve data written to partitioned tables, **you should only ever consider using it for partitioned tables**.
+While improving reads and DML operations that involve reading the source table, i.e. MERGE, is fantastic, it comes at the cost of shuffling all data before writing it. Given that the feature is entirely designed to improve data written to partitioned tables, **you should only ever consider using it for partitioned tables**.
 
 If you are using partitioned tables, consider the number of distinct partitions that you have. If you have a small number of partitions (i.e., less than 10), you may not see much benefit from using Optimized Writes given the large overhead involved in shuffling the data.
 
