@@ -1,15 +1,17 @@
 ---
 layout: post
-title: "Write vs. Read Prioritization: Navigating V-Order Optimization in Fabric Spark"
+title: "To V-Order or Not: A Primer on Why and When V-Order Optimization Should be Used"
 tags: [Fabric, Spark, Lakehouse, Delta Lake]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-googledeepmind-17483907.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-googledeepmind-17483907.jpeg"
 published: false
 ---
-Microsoft Fabric Spark enables V-Order compression by default as a Spark configuration. Said simply, V-Order is a parquet write optimization that seeks to further compress data and improve scan performance of columnar parquet data via applying Power BI VertiPaq type compression algorithms. 
+Optimizing Spark: A Deep Dive into V-Order in Microsoft Fabric
 
-The goal of this blog post is to explore V-Order compression and the impliciations is has on various workloads to help inform the decision of whether it should always be enabled.
+Fabric Spark Runtimes current enable V-Order optimization by default as a Spark configuration. Said simply, V-Order is a parquet write optimization that seeks to logically organize data for optimized Power BI Direct Lake read performance. 
+
+The goal of this blog post is to explore V-Order optimization and the impliciations is has on various workloads to help inform the decision of whether it should always be enabled.
 
 # What is V-Order
 
