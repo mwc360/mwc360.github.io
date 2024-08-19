@@ -45,7 +45,7 @@ Considering that this feature results in consolidating data into less files (tar
 
 If you are using partitioned tables, consider the number of distinct partitions that you have. If you have a small number of partitions (i.e., less than 10), you may not see much benefit from using Optimized Write given the large overhead involved in shuffling the data.
 
-> ⚠️ ~~Do not use Optimized Writes if using non-partitioned tables!~~ Only consider using Optimized Write if using paritioned tables or if a critical consumption engine benefits from less files, i.e. Power BI Direct Lake Semantic Models.
+> ⚠️ ~~Do not use Optimized Writes if using non-partitioned tables!~~ Only consider using Optimized Write if using partitioned tables or if a critical consumption engine benefits from less files, i.e. Power BI Direct Lake Semantic Models.
 
 ### Can I use it with Liquid Clustering?
 Optimized Write is functionally incompatible with the idea of Liquid Clustering, <u>when both are enabled you'll find that Optimized Write has no bearing on the number of files written</u>.
