@@ -50,7 +50,7 @@ While starter pools are fantastic for development and prototyping work, once you
 You'll notice that a Spark Pools do not allow you to set the Runtime version, libraries, spark configs, etc. This is where Environments come into play. 
 
 ## Fabric Environments: Personalized Virtual Cluster Configurations
-Environments in Fabric allow you to further customize how a cluster is created by configure software settings like libraries, Spark configurations, the Fabric Runtime version, and even fine tuning the size and scale settings defined in Spark Pools. This separation between Spark Pools which focus on compute and Environments which focus on software allows for a more modular approach to managing Spark clusters.
+Environments in Fabric allow you to further customize how a cluster is created by configure software settings like libraries, Spark configurations, the Fabric Runtime version, and even fine tuning the size and scale settings defined in Spark Pools. This separation between Spark Pools which focus on hardware and Environments which focus on software allows for a more modular approach to managing Spark clusters.
 
 This separation means that as a workspace admin, you can define a few Spark Pools that fit your users' needs, and then users can then apply different environment configurations as needed, such as installing specific libraries, setting cluster configurations, and/or choosing a specific Fabric Runtime.
 
@@ -119,5 +119,5 @@ For workspace pools, it's the same: you are only billed once your Spark Session 
 In Databricks, you start paying for VMs as soon as they are provisioned, which is reasonable given that the VM is active. Additionally, once the Spark context is initiated (which typically takes 40+ seconds), Databricks charges licensing fees (DBUs). If you have a pool of VMs sitting idle, you are billed for them every second they remain in the pool, regardless of whether they are actively being used.
 
 # Closing Thoughts
-Understanding the differences in how compute works between Fabric and Databricks is essential for making informed decisions about your architecture. Fabric’s approach of separating compute templates (Spark Pools) from software customization (Environments) offers a flexible and modular system that can adapt to various needs and with the opportunity for greatly improved developer productivity via access to low latency starter pools.
+Understanding the differences in how compute works between Fabric and Databricks is essential for making informed decisions about your architecture. Fabric’s approach of separating hardware configuration (Spark Pools) from software customization (Environments) offers a flexible and modular system that can adapt to various needs and with the opportunity for greatly improved developer productivity via access to low latency starter pools.
 
