@@ -78,15 +78,15 @@ People often want to know which is cheaper. The answer however, is extremely com
 ### Cost per vCore Hour
 To evaluate the cost of each, I prefer to look at an atomical job and compare the effective cost of that single job. After understanding this cost, I then extrapolate it as part of an all-up platform cost. To do this we need to know the job duration, cluster size, and the vCore cost per hour including any licensing fees. The follow rates are from the West Central US Azure region, using my go-to VM SKU family in Databricks as the benchmark: Edsv5. Microsoft doesn't publish the VM SKU used in Fabric as it can vary by region and will change over time (which is reflected in the Fabric F SKU pricing), however the Edsv5 or Easv5 VM families match most of the VM specs.
 
-| Workload                                 | Total Cost per vCore Hour | Hardware Cost per vCore Hour (Edsv5) | Licensing Cost per vCore Hour (Edsv5) |
-|------------------------------------------|---------------------------|--------------------------------------|---------------------------------------|
-| Fabric Spark                             | $0.10                     | $0.09                                | $0.01                                 |
-| Databricks Jobs Compute                  | $0.19                     | $0.09                                | $0.10                                 |
-| Databricks Jobs Compute w/ Photon        | $0.34                     | $0.09                                | $0.25                                 |
-| Databricks All-Purpose Compute           | $0.28                     | $0.09                                | $0.19                                 |
-| Databricks All-Purpose Compute w/ Photon | $0.46                     | $0.09                                | $0.37                                 |
+| Workload                                 | Total Cost per vCore Hour | Hardware Cost per vCore Hour (Edsv5) | Licensing Cost per vCore Hour |
+|------------------------------------------|---------------------------|--------------------------------------|-------------------------------|
+| Fabric Spark                             | $0.10                     | $0.09                                | $0.01                         |
+| Databricks Jobs Compute                  | $0.19                     | $0.09                                | $0.10                         |
+| Databricks Jobs Compute w/ Photon        | $0.34                     | $0.09                                | $0.25                         |
+| Databricks All-Purpose Compute           | $0.28                     | $0.09                                | $0.19                         |
+| Databricks All-Purpose Compute w/ Photon | $0.46                     | $0.09                                | $0.37                         |
 
-> ⚠️ These are point-in-time costs at the time this blog was written, subject to change, and for illustration only. Neither Microsoft Fabric nor Databricks advertise costs per vCore hour, this is an attempt to standardize billing models for comparison purposes at the lowest compute grain, 1 vCore.
+> ⚠️ These are point-in-time costs at the time this blog was written, rounded to the nearest hundreth of a cent, subject to change, and for illustration only. Neither Microsoft Fabric nor Databricks advertise costs per vCore hour, this is an attempt to standardize billing models for comparison purposes at the lowest compute grain, 1 vCore.
 
 ### Interactive vs. Scheduled Rates
 As illustrated above, your vCore cost per hour is dependent on various factors, some of which I didn't consider for sake of not boiling the ocean (DLT, interactive serverless compute, automated serverless compute, serverless SQL, etc.). However, a major billing difference between the platforms comes down to how the code is being executed.
