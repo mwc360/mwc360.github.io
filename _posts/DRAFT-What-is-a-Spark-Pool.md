@@ -10,7 +10,7 @@ published: false
 
 Every software platform has its own terminology, and when terms overlap but don't mean the same thing, it can be quite confusing. For example, coming from my years as a developer in Databricks land, I initially assumed that Fabric Spark Pools were just like Pools in Databricks. However, as I discovered, this assumption was completely wrong—and understanding this distinction is key to designing the right architecture.
 
-In this post, I'll cover the key differences between Spark compute in each platform in hopes that those coming from Databricks will get tripped up a bit less than I did.
+In this post, I'll cover the key differences between Spark compute in each platform in hopes that those with a Databricks background won't get tripped up like I did.
 
 > _TL/DR:_ Fabric Spark Pools <> Databricks Pools
 <br>Fabric Spark Pool = Hardware size and scale template
@@ -24,8 +24,8 @@ In Databricks, Pools (formerly Instance Pools) are designed to reduce cluster st
 
 ![](image-2.png)
 
-## Fabric Spark Pools: Compute Templates
-In contrast, Fabric Spark Pools act as compute size and scale templates. They are more like hardware templates that define the resources (like the number and size of nodes) available for running Spark jobs. This means you can attach multiple notebooks or job definitions to the same Spark Pool without hitting concurrency constraints, aside from what your chosen Fabric SKU specifies.
+## Fabric Spark Pools: Virtual Cluster Configurations
+In contrast, Fabric Spark Pools act as virtual cluster configurations that are defined at the workspace level. Since these are virtual clusters, unless using high-concurrency mode, each Notebook or SDJ that runs targeting a specific spark pool will create its own instance of that cluster configuration. This means that your can run many notebooks or job definitions referencing the same Spark Pool without hitting concurrency constraints, aside from what your chosen Fabric SKU specifies.
 
 The following can be configured:
 1. **Spark pool name** (of course)
@@ -39,12 +39,20 @@ The following can be configured:
 
 ![alt text](image.png)
 
-You'll notice that a Spark Pool does not allow you to set the Runtime version, libraries, spark configs, etc. This is where Environments come into play. 
+Now that we understand what a Spark Pool is, there are actually two types of Spark Pools in Fabric, _Workspace Pools_ and _Starter Pools_. 
+1. **Starter Pools**: allows for consuming nodes from a pool of Microsoft managed VMs that have the Fabric Runtime and Spark already running. This allows for a cluster startup time of about 15 seconds. This dramatically boosts developer productivity. Two key limitations exist with Starter Pools today:
+  - They are not available in workspaces that have a managed vNet enabled.
+  - Autoscale and Dynamic Allocation cannot be disabled.
+1. **Workspace Pools**: cluster nodes are provisioned on-demand, and therefore the startup time is between 2-3 minutes on average.
 
-## Fabric Environments: Personalized Compute
-Environments in Fabric allow you to further customize the hardware template provided by a Spark Pool and configure software settings like libraries, Spark configurations, and even the Fabric Runtime version. This separation between compute and environment allows for a more modular approach to managing Spark clusters.
+While starter pools are fantastic for development and prototyping work, once you get to the point of needing to productionalize a workload, particularly if using custom or public libraries, it is recommended to use Workspace Pools.
 
-This separation means that as a workspace admin, you can define a few compute sizes that fit your users' needs, and users can then apply different environment configurations as needed, such as installing specific libraries, setting cluster configurations, and/or choosing a specific Fabric Runtime.
+You'll notice that a Spark Pools do not allow you to set the Runtime version, libraries, spark configs, etc. This is where Environments come into play. 
+
+## Fabric Environments: Personalized Virtual Cluster Configurations
+Environments in Fabric allow you to further customize how a cluster is created by configure software settings like libraries, Spark configurations, the Fabric Runtime version, and even fine tuning the size and scale settings defined in Spark Pools. This separation between Spark Pools which focus on compute and Environments which focus on software allows for a more modular approach to managing Spark clusters.
+
+This separation means that as a workspace admin, you can define a few Spark Pools that fit your users' needs, and then users can then apply different environment configurations as needed, such as installing specific libraries, setting cluster configurations, and/or choosing a specific Fabric Runtime.
 
 ![alt text](image-1.png)
 
@@ -99,12 +107,12 @@ In Fabric, there's no deliniating between an interactive and scheduled job, both
 Another key difference between Fabric and Databricks Spark is when billing meters start to run.
 
 ### Fabric’s Approach to Billing Meters
-In Fabric, if you're using a workspace that isn’t part of a managed vNet, you can access starter pools that allow code execution to begin within about 15 seconds. This dramatically boosts developer productivity. Microsoft achieves this low latency by keeping nodes in a warm state, with the Fabric Runtime and Spark already running.
+If the fact that starter pools starting in about 15 seconds isn't just the bees knees, consider that these pools don't consume capacity units (CUs) when not in use, CUs are only consumed once your Spark Session starts. That's right, even when the starter pool nodes are being personalized with custom libraries, etc., CUs are not consumed/billed. 
 
-If this alone isn't just the bees knees, consider that these start pools don't consume capacity units (CUs) when not in use, CUs are only consumed once your Spark Session starts. That's right, even when the starter pool nodes are being personalized with custom libraries, etc., CUs are not consumed/billed. The documentation has a great illustration for this:
+The documentation has a great illustration for this:
 ![Starter Pool Billing](https://learn.microsoft.com/en-us/fabric/data-engineering/media/spark-compute/starter-pool-billing-states-high-level.png)
 
-For custom pools, it's the same: you are only billed once your Spark Session begins:
+For workspace pools, it's the same: you are only billed once your Spark Session begins:
 ![Starter Pool Billing](https://learn.microsoft.com/en-us/fabric/data-engineering/media/spark-compute/custom-pool-billing-states-high-level.png)
 
 ### Databricks’ Approach to Billing Meters
