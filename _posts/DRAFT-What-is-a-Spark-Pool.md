@@ -13,8 +13,8 @@ Every software platform has its own terminology, and when terms overlap but don'
 In this post, I'll cover the key differences between Spark compute in each platform in hopes that those with a Databricks background won't get tripped up like I did.
 
 > _TL/DR:_ Fabric Spark Pools <> Databricks Pools
-<br>Fabric Spark Pool = Virtual cluster configurations w/ workspace default software
-<br>Fabric Environment = Personalized virtual cluster configurations w/ custom software
+<br>Fabric Spark Pool = Virtual clusters with workspace default software
+<br>Fabric Environment = Personalized virtual clusters with custom software
 
 # Spark Pools in Fabric vs. Databricks
 It’s easy to assume that Fabric Spark Pools are similar to Databricks Pools, which would be a reasonable guess based on the name. However, this is not the case, and understanding the difference is vital. While Databricks Pools focus on speeding up cluster startup by keeping a managed cache of VMs, Fabric Spark Pools serve a completely different purpose.
