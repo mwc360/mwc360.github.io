@@ -22,6 +22,8 @@ It’s easy to assume that Fabric Spark Pools are similar to Databricks Pools, w
 ## Databricks Pools: Managed VM Cache
 In Databricks, Pools (formerly Instance Pools) are designed to reduce cluster startup latency by maintaining a warm pool of VMs. This allows for quick provisioning of clusters by repurposing the same VMs across different clusters. Essentially, the focus here is on efficiency in starting clusters and reusing resources.
 
+![](image-2.png)
+
 ## Fabric Spark Pools: Compute Templates
 In contrast, Fabric Spark Pools act as compute size and scale templates. They are more like hardware templates that define the resources (like the number and size of nodes) available for running Spark jobs. This means you can attach multiple notebooks or job definitions to the same Spark Pool without hitting concurrency constraints, aside from what your chosen Fabric SKU specifies.
 
@@ -44,10 +46,14 @@ Environments in Fabric allow you to further customize the hardware template prov
 
 This separation means that as a workspace admin, you can define a few compute sizes that fit your users' needs, and users can then apply different environment configurations as needed, such as installing specific libraries, setting cluster configurations, and/or choosing a specific Fabric Runtime.
 
+![alt text](image-1.png)
+
 ## Databricks Clusters: Personalized Compute
 Lastly, we have Cluster in Databricks. Clusters can contain all hardware and software configuration settings OR you can use them in conjunction with Pools so that the nodes of the Cluster come from the managed pool of VMs. Using Cluters with Pools is typically useful for decreasing latency between jobs in production scenarios since the 2-4 minute cluster start up time can be reduced to ~ 40 seconds if you have warm nodes in your pool.
 
 To enforce the use of specific compute sizes, similar to Spark Pools, Databricks provides Policies which can be used to enforce that new clusters are created per the defined specs or limits. The downside of Policies is that they only apply to new compute, pre-existing cluster configurations don't evaluate the Policy until they are edited.
+
+![alt text](image-3.png)
 
 # VM SKU Options
 In Databricks, you have to select which Virtual Machine (VM) SKU to use for your driver and executors, while having this option is _nice for the those well versed in VM specs_, there's a very strategic reason why there's no VM SKU option beyond the Node Type when configuring Fabric Spark Pools: most developers are not experts in the specs and price/performance metrics of various different VM options. However, Microsoft is, and therefore keeps Fabric Spark running on VM SKUs by region that provide the best price/performance mix.  
@@ -61,16 +67,16 @@ There are 3 primary differences between Fabric and Databricks that should be con
 
 ## 1. Billing Model
 ### Fabric Capacities
-This one obvious and well known. Fabric operates on a Capacity model where you purchase an amount of potential compute to be used measured as Capacity Units (CUs), these CUs can be used across any Fabric Workload in the converged data platform (Spark, data warehousing, real-time streaming, reporting, machine learning, custom APIs, etc.). Overtime, more features have been and are continuing to be added to make the capacity model more flexible and provide controls for managing consumption. 
+This one is obvious and well known. Coming from it's Power BI platform lineage, Fabric operates on a Capacity model where you purchase an amount of potential compute to be used measured as Capacity Units (CUs), these CUs can be used across any Fabric Workload in the converged data platform (Spark, data warehousing, real-time streaming, reporting, machine learning, custom APIs, etc.). While admittedly this model tends to be less intuitive for data engineering practitioners coming from Azure services, overtime, more features have been and are continuing to be added to make the capacity model more flexible and provide additional controls for managing consumption. 
 
 ## Databricks
-Databricks operates on a pure serverless model, you pay for the compute used plus a licensing multiplier. Depending on the feature used the multiplier will vary. As a general rule of thumb, anytime you deviate from open source capabilities and use Databricks propriatary tech (i.e. Photon and Delta Live Tables), the licensing multiplier is significantly higher. Licensing multipliers are important to consider in designing a solution as it may change how you actually organize and orchestrate your processes, see my post on [the TCO of Photon in Databricks](https://milescole.dev/data-engineering/2024/04/30/Is-Databricks-Photon-A-NoBrainer.html) for more details.
+Databricks operates on a pure serverless model, you pay for the compute used plus a licensing multiplier. Depending on the feature used the multiplier will vary. As a general rule of thumb, anytime you deviate from open source capabilities and use Databricks propriatary tech (i.e. Photon, Delta Live Tables, and Serverless Compute), the licensing multiplier is significantly higher. Licensing multipliers are important to consider in designing a solution as it may change how you actually organize and orchestrate your processes, see my post on [the TCO of Photon in Databricks](https://milescole.dev/data-engineering/2024/04/30/Is-Databricks-Photon-A-NoBrainer.html) for more details.
 
 ## 2. Billing Rates
 People often want to know which is cheaper. The answer however, is extremely complicated because both operate on completely different billing models and each has it's situational nuances. 
 
 ### Cost per vCore Hour
-To evaluate the cost of each, I prefer to look at an atomical job and compare the effective cost of that single job. After understanding this cost, I then extrapolate as part of an all-up platform cost. To do this we need to know the job duration, cluster size, and the vCore cost per hour including any licensing fees. The follow rates are from the West Central US Azure region, using my go-to VM SKU family in Databricks as the benchmark: Edsv5. Microsoft doesn't publish the VM SKU used in Fabric as it can vary by region and will change over time (which is reflected in the Fabric F SKU pricing), however the Edsv5 or Easv5 VM families match most core specs.
+To evaluate the cost of each, I prefer to look at an atomical job and compare the effective cost of that single job. After understanding this cost, I then extrapolate it as part of an all-up platform cost. To do this we need to know the job duration, cluster size, and the vCore cost per hour including any licensing fees. The follow rates are from the West Central US Azure region, using my go-to VM SKU family in Databricks as the benchmark: Edsv5. Microsoft doesn't publish the VM SKU used in Fabric as it can vary by region and will change over time (which is reflected in the Fabric F SKU pricing), however the Edsv5 or Easv5 VM families match most of the VM specs.
 
 | Workload                                 | Total Cost per vCore Hour | Hardware Cost per vCore Hour (Edsv5) | Licensing Cost per vCore Hour (Edsv5) |
 |------------------------------------------|---------------------------|--------------------------------------|---------------------------------------|
