@@ -95,7 +95,7 @@ To evaluate the cost of each, I prefer to look at an atomical job and compare th
 | Databricks All-Purpose Compute           | $0.28                     | $0.09                                | $0.19                         |
 | Databricks All-Purpose Compute w/ Photon | $0.46                     | $0.09                                | $0.37                         |
 
-> ⚠️ These are point-in-time costs at the time this blog was written, rounded to the nearest hundreth of a cent, subject to change, and for illustration only. Neither Microsoft Fabric nor Databricks advertise costs per vCore hour, this is an attempt to standardize billing models for comparison purposes at the lowest compute grain, 1 vCore use for 1 hour.
+> ⚠️ These are point-in-time costs at the time this blog was written, rounded to the nearest hundreth of a cent, subject to change, and for illustration only. Neither Microsoft Fabric nor Databricks advertise costs per vCore hour, this is an attempt to standardize billing models for comparison purposes at the lowest compute grain, 1 vCore used for 1 hour.
 
 ### Interactive vs. Scheduled Rates
 As illustrated above, your vCore cost per hour is dependent on various factors, some of which I didn't consider for sake of not boiling the ocean (DLT, interactive serverless compute, automated serverless compute, serverless SQL, etc.). However, a major billing difference between the platforms comes down to how the code is being executed.
