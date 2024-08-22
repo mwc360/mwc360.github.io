@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "From Databricks to Fabric: A Deep Dive into Spark Cluster Differences"
-tags: [Fabric, Spark, Lakehouse, Delta Lake]
+tags: [Fabric, Databricks, Spark, Lakehouse, Delta Lake]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-alex-andrews-271121-1203808.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-alex-andrews-271121-1203808.jpeg"
