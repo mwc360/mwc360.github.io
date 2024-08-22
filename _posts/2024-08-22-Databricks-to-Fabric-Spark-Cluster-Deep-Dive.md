@@ -10,7 +10,7 @@ published: true
 
 Every software platform has its own terminology, and when terms overlap but don't mean the same thing, it can be quite confusing. For example, coming from my years as a developer in Databricks land, I initially assumed that Fabric Spark Pools were just like Pools in Databricks. However, as I discovered, this assumption was completely wrong—and understanding this distinction is key to designing the right architecture.
 
-In this post, I'll cover the key differences between Spark compute in each platform in hopes that those with a Databricks background won't get tripped up like I did.
+In this post, I'll cover the key differences between Spark clusters in each platform in hopes that those with a Databricks background won't get tripped up like I did.
 
 > **TL/DR:** Fabric Spark Pools <> Databricks Pools
 <br>Fabric Spark Pools = Virtual clusters with workspace default software
