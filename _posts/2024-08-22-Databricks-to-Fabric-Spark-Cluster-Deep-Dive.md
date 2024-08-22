@@ -19,12 +19,12 @@ In this post, I'll cover the key differences between Spark compute in each platf
 # Spark Pools in Fabric vs. Databricks
 It’s easy to assume that Fabric Spark Pools are similar to Databricks Pools, this is a reasonable guess based on the name. However, this is not the case, and understanding the difference is vital. While Databricks Pools focus on speeding up cluster startup times by keeping a managed cache of VMs, Fabric Spark Pools serve a completely different purpose.
 
-## Databricks Pools: Managed VM Cache
+## Databricks Pools: _Managed VM Cache_
 In Databricks, Pools (formerly Instance Pools) are designed to reduce cluster startup latency by maintaining a warm pool of VMs. This allows for quick provisioning of clusters by repurposing the same VMs across different clusters. Essentially, the focus here is on efficiency in starting clusters and reusing resources.
 
 ![Databricks Pool Config](/assets/img/posts/Databricks-v-Fabric-Spark-Pools/db-pool.png)
 
-## Fabric Spark Pools: Virtual Cluster Configurations
+## Fabric Spark Pools: _Virtual Cluster Configurations_
 In contrast, Fabric Spark Pools act as virtual cluster configurations that are defined at the workspace or capacity level. Since these are virtual clusters, unless using high-concurrency mode, each Notebook or SDJ that runs targeting a specific Spark Pool will create its own instance of that cluster configuration. This means that you can run many notebooks or job definitions referencing the same Spark Pool without hitting concurrency constraints, aside from what your chosen Fabric SKU specifies.
 
 Within the Spark Pool category, there are two types of Spark Pools in Fabric today, _Custom Pools_ (which can be created at the Workspace or Capacity level) and _Starter Pools_. 
@@ -49,14 +49,14 @@ The following can be configured:
 
 You'll notice that Spark Pools do not allow you to set the Runtime version, libraries, spark configs, etc. This is where Environments come into play. 
 
-## Fabric Environments: Personalized Virtual Cluster Configurations
+## Fabric Environments: _Personalized Virtual Cluster Configurations_
 Environments in Fabric allow you to further customize how a cluster is created by configuring software settings like libraries, Spark configurations, the Fabric Runtime version, and even fine tuning the size and scale settings defined in Spark Pools. This separation between Spark Pools, which focus on hardware, and Environments, which focus on software, allows for a more modular approach to managing Spark clusters.
 
 This separation means that as a workspace admin, you can define a few Spark Pools that fit your users' needs, and then users can apply different environment configurations as needed, such as installing specific libraries, setting cluster configurations, and/or choosing a specific Fabric Runtime.
 
 ![Fabric Environment Config](/assets/img/posts/Databricks-v-Fabric-Spark-Pools/fabric-environment.png)
 
-## Databricks Clusters: Personalized Compute
+## Databricks Clusters: _Personalized Clusters_
 Lastly, we have Cluster in Databricks. Clusters can contain all hardware and software configuration settings OR you can use them in conjunction with Pools so that the nodes of the Cluster come from the managed pool of VMs. Using Cluters with Pools is typically useful for decreasing latency between jobs in production scenarios since the 2-4 minute cluster start up time can be reduced to ~ 40 seconds if you have warm nodes in your pool.
 
 To enforce the use of specific compute sizes, similar to Spark Pools, Databricks provides Policies which can be used to enforce that new clusters are created per the defined specs or limits. The downside of Policies is that they only apply to new clusters, pre-existing cluster configurations don't evaluate the Policy until they are edited.
