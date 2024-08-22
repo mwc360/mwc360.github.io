@@ -1,20 +1,20 @@
 ---
 layout: post
-title: "From Databricks to Fabric: A Deep Dive into Spark Compute Differences"
+title: "From Databricks to Fabric: A Deep Dive into Spark Cluster Differences"
 tags: [Fabric, Spark, Lakehouse, Delta Lake]
 categories: Data-Engineering
-feature-img: "assets/img/feature-img/pexels-googledeepmind-17483907.jpeg"
-thumbnail: "assets/img/thumbnails/feature-img/pexels-googledeepmind-17483907.jpeg"
-published: false
+feature-img: "assets/img/feature-img/pexels-alex-andrews-271121-1203808.jpeg"
+thumbnail: "assets/img/thumbnails/feature-img/pexels-alex-andrews-271121-1203808.jpeg"
+published: true
 ---
 
 Every software platform has its own terminology, and when terms overlap but don't mean the same thing, it can be quite confusing. For example, coming from my years as a developer in Databricks land, I initially assumed that Fabric Spark Pools were just like Pools in Databricks. However, as I discovered, this assumption was completely wrong—and understanding this distinction is key to designing the right architecture.
 
 In this post, I'll cover the key differences between Spark compute in each platform in hopes that those with a Databricks background won't get tripped up like I did.
 
-> _TL/DR:_ Fabric Spark Pools <> Databricks Pools
-<br>Fabric Spark Pool = Virtual clusters with workspace default software
-<br>Fabric Environment = Personalized virtual clusters with custom software
+> **TL/DR:** Fabric Spark Pools <> Databricks Pools
+<br>Fabric Spark Pools = Virtual clusters with workspace default software
+<br>Fabric Environments = Personalized virtual clusters with custom software
 
 # Spark Pools in Fabric vs. Databricks
 It’s easy to assume that Fabric Spark Pools are similar to Databricks Pools, this is a reasonable guess based on the name. However, this is not the case, and understanding the difference is vital. While Databricks Pools focus on speeding up cluster startup times by keeping a managed cache of VMs, Fabric Spark Pools serve a completely different purpose.
@@ -22,10 +22,18 @@ It’s easy to assume that Fabric Spark Pools are similar to Databricks Pools, t
 ## Databricks Pools: Managed VM Cache
 In Databricks, Pools (formerly Instance Pools) are designed to reduce cluster startup latency by maintaining a warm pool of VMs. This allows for quick provisioning of clusters by repurposing the same VMs across different clusters. Essentially, the focus here is on efficiency in starting clusters and reusing resources.
 
-![](image-2.png)
+![Databricks Pool Config](/assets/img/posts/Databricks-v-Fabric-Spark-Pools/db-pool.png)
 
 ## Fabric Spark Pools: Virtual Cluster Configurations
-In contrast, Fabric Spark Pools act as virtual cluster configurations that are defined at the workspace level. Since these are virtual clusters, unless using high-concurrency mode, each Notebook or SDJ that runs targeting a specific Spark Pool will create its own instance of that cluster configuration. This means that you can run many notebooks or job definitions referencing the same Spark Pool without hitting concurrency constraints, aside from what your chosen Fabric SKU specifies.
+In contrast, Fabric Spark Pools act as virtual cluster configurations that are defined at the workspace or capacity level. Since these are virtual clusters, unless using high-concurrency mode, each Notebook or SDJ that runs targeting a specific Spark Pool will create its own instance of that cluster configuration. This means that you can run many notebooks or job definitions referencing the same Spark Pool without hitting concurrency constraints, aside from what your chosen Fabric SKU specifies.
+
+Within the Spark Pool category, there are two types of Spark Pools in Fabric today, _Custom Pools_ (which can be created at the Workspace or Capacity level) and _Starter Pools_. 
+1. **[Starter Pools](https://learn.microsoft.com/en-us/fabric/data-engineering/configure-starter-pools)**: allow for consuming nodes from a pool of Microsoft managed VMs that have the Fabric Runtime and Spark already running. This allows for a cluster startup time of about 5 to 10 seconds. This dramatically boosts developer productivity. Two key limitations exist with Starter Pools today:
+  - They are not available in workspaces that have a managed vNet enabled.
+  - Autoscale and Dynamic Allocation cannot be disabled.
+  - Starter Pools only use the Medium node size.
+  - Additional Starter Pools cannot be created, there is one Starter Pool created by default for every Fabric Workspace.
+1. **[Custom Pools](https://learn.microsoft.com/en-us/fabric/data-engineering/create-custom-spark-pools)**: cluster nodes are provisioned on-demand, and therefore the startup time is between 2-4 minutes on average.
 
 The following can be configured:
 1. **Spark pool name**
@@ -37,16 +45,7 @@ The following can be configured:
     - Setting the node count to 1 makes it a single node cluster where 1 core on the node acts as the driver, and the rest of the cores act as individual workers.
 1. **Dynamic Allocation**: allows the number of executors allocated to a Spark application to be dynamically adjusted based on the workload. When enabled, Spark can automatically add or remove executors during the runtime of a Spark job based on the stage of the job and the resource requirements at any given time.
 
-![alt text](image.png)
-
-Now that we understand what a Spark Pool is, there are actually two types of Spark Pools in Fabric, _Custom Pools_ and _Starter Pools_. 
-1. **Starter Pools**: allow for consuming nodes from a pool of Microsoft managed VMs that have the Fabric Runtime and Spark already running. This allows for a cluster startup time of about 15 seconds. This dramatically boosts developer productivity. Two key limitations exist with Starter Pools today:
-  - They are not available in workspaces that have a managed vNet enabled.
-  - Autoscale and Dynamic Allocation cannot be disabled.
-  - Additional Starter Pools cannot be created, there is one Starter Pool created by default for every Fabric Workspace.
-1. **Custom Pools**: cluster nodes are provisioned on-demand, and therefore the startup time is between 2-4 minutes on average.
-
-While Starter Pools are fantastic for development and prototyping work, once you get to the point of needing to productionalize a workload, particularly if using custom or public libraries not pre-installed as part of the Fabric Runtime, it is recommended to use Custom Pools.
+![Fabric Pool Config](/assets/img/posts/Databricks-v-Fabric-Spark-Pools/fabric-pool.png)
 
 You'll notice that Spark Pools do not allow you to set the Runtime version, libraries, spark configs, etc. This is where Environments come into play. 
 
@@ -55,24 +54,24 @@ Environments in Fabric allow you to further customize how a cluster is created b
 
 This separation means that as a workspace admin, you can define a few Spark Pools that fit your users' needs, and then users can apply different environment configurations as needed, such as installing specific libraries, setting cluster configurations, and/or choosing a specific Fabric Runtime.
 
-![alt text](image-1.png)
+![Fabric Environment Config](/assets/img/posts/Databricks-v-Fabric-Spark-Pools/fabric-environment.png)
 
 ## Databricks Clusters: Personalized Compute
 Lastly, we have Cluster in Databricks. Clusters can contain all hardware and software configuration settings OR you can use them in conjunction with Pools so that the nodes of the Cluster come from the managed pool of VMs. Using Cluters with Pools is typically useful for decreasing latency between jobs in production scenarios since the 2-4 minute cluster start up time can be reduced to ~ 40 seconds if you have warm nodes in your pool.
 
 To enforce the use of specific compute sizes, similar to Spark Pools, Databricks provides Policies which can be used to enforce that new clusters are created per the defined specs or limits. The downside of Policies is that they only apply to new clusters, pre-existing cluster configurations don't evaluate the Policy until they are edited.
 
-![alt text](image-3.png)
+![Databricks Cluster Config](/assets/img/posts/Databricks-v-Fabric-Spark-Pools/db-cluster.png)
 
 # VM SKU Options
-In Databricks, you have to select which Virtual Machine (VM) SKU to use for your driver and executors, while having this option is _nice for the those well versed in VM specs_, there's a very strategic reason why there's no VM SKU option beyond the Node Type when configuring Fabric Spark Pools: most developers are not experts in the specs and price/performance metrics of various different VM options. However, Microsoft is, and therefore keeps Fabric Spark running on VM SKUs by region that provide the best price/performance mix.  
+In Databricks, you select which Virtual Machine (VM) SKU to use for your driver and executors, while having this option is _nice for the those well versed in VM specs_, there's a very strategic reason why there's no VM SKU option beyond the Node Type when configuring Fabric Spark Pools: most developers are not experts in the specs and price/performance metrics of various different VM options. However, Microsoft is, and therefore keeps Fabric Spark running on VM SKUs by region that provide the best price/performance mix.  
 
 In today's fast changing world of compute, I much prefer having this managed and maintained automatically for a few reasons:
 1. **Keeping up with new chip performance improvements**: Every year there's a newer generation of Intel and AMD chips, this potentially leaves you with 2 times a year that you might need to test your workloads, request vCore Family specific quota increases, and update source code (or potentially manually update deployed clusters and job schedules) to ensure that the newest and fastest chip is being used. In Fabric, this isn't something you need to worry about and your can't fall into the scenario where you're just too busy with new business priorities to update the configuration of a bunch of stable jobs you haven't touched in ages. 
-1. **Keeping up with SKUs that get deprecated or have limited capacity**: With next generation hardware being available, naturally, prior-generation hardware typically stops being deployed, and old hardware gets replaced. If you are running workloads on prior-generation hardware there's a good chance you'll run into capacity limits at some point, and as every year goes by, the chances of hardware retirement increases. Again, in Fabric you don't have to worry about this.
+1. **Keeping up with SKUs that get deprecated, retired, or have limited capacity**: With next generation hardware being available, naturally, prior-generation hardware typically stops being deployed, and old hardware gets replaced. If you are running workloads on prior-generation hardware there's a good chance you'll run into capacity limits at some point, and as every year goes by, the chances of hardware retirement increases. Again, in Fabric you don't have to worry about this.
 
 # Cost Differences
-There are 3 primary differences between Fabric and Databricks that should be considered when budgeting or comparing each:
+There are 4 primary differences between Fabric and Databricks that should be considered when budgeting or comparing each:
 
 ## 1. Billing Model
 ### Fabric Capacities
@@ -119,6 +118,11 @@ For Custom Pools, it's the same: you are only billed once your Spark Session beg
 ### Databricks’ Approach to Billing Meters
 In Databricks, you start paying for VMs as soon as they are provisioned, which is reasonable given that the VM is active. Additionally, once the Spark context is initiated (which typically takes 40+ seconds), Databricks charges licensing fees (DBUs). If you have a pool of VMs sitting idle, you are billed for the hardware every second they remain in the pool, regardless of whether they are actively being used.
 
+## 4. Billing Reservations
+Fabric currently offers one year reservations on Fabric SKUs that provides a 40% discount on pay as you go pricing. 
+
+With Databricks you can separately purchase one or three year virtual machine reservations (~41% and ~62% respective savings), however this really only makes sense if you have VMs running 24/7. For Databricks licensings fees known as DBUs (Databricks Units), you can prepurchase DBUs with volume discounting that is valid for a one or three years.
+
 # Closing Thoughts
-Understanding the differences in how compute works between Fabric and Databricks is essential for making informed decisions about your architecture. Fabric’s approach of separating hardware configuration (Spark Pools) from software customization (Environments) offers a flexible and modular system that can adapt to various needs and with the opportunity for greatly improved developer productivity via access to low latency starter pools.
+Understanding the differences in how Spark clusters works between Fabric and Databricks is essential for making informed decisions about your architecture. Fabric’s approach of separating hardware configuration (Spark Pools) from software customization (Environments) offers a flexible and modular system that can adapt to various needs and with the opportunity for greatly improved developer productivity via access to low latency starter pools.
 
