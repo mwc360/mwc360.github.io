@@ -28,14 +28,14 @@ In Databricks, Pools (formerly Instance Pools) are designed to reduce cluster st
 In contrast, Fabric Spark Pools act as virtual cluster configurations that are defined at the workspace or capacity level. Since these are virtual clusters, unless using high-concurrency mode, each Notebook or SDJ that runs targeting a specific Spark Pool will create its own instance of that cluster configuration. This means that you can run many notebooks or job definitions referencing the same Spark Pool without hitting concurrency constraints, aside from what your chosen Fabric SKU specifies.
 
 Within the Spark Pool category, there are two types of Spark Pools in Fabric today, _Custom Pools_ (which can be created at the Workspace or Capacity level) and _Starter Pools_. 
-1. **[Starter Pools](https://learn.microsoft.com/en-us/fabric/data-engineering/configure-starter-pools)**: allow for consuming nodes from a pool of Microsoft managed VMs that have the Fabric Runtime and Spark already running. This allows for a cluster startup time of about 5 to 10 seconds. This dramatically boosts developer productivity. Two key limitations exist with Starter Pools today:
+1. **[Starter Pools](https://learn.microsoft.com/en-us/fabric/data-engineering/configure-starter-pools)**: allow for consuming nodes from a pool of Microsoft managed VMs that have the Fabric Runtime and Spark already running. This allows for a cluster startup time of about 5 to 10 seconds. This dramatically boosts developer productivity. A few key limitations exist with Starter Pools today:
   - They are not available in workspaces that have a managed vNet enabled.
   - Autoscale and Dynamic Allocation cannot be disabled.
   - Starter Pools only use the Medium node size.
   - Additional Starter Pools cannot be created, there is one Starter Pool created by default for every Fabric Workspace.
 1. **[Custom Pools](https://learn.microsoft.com/en-us/fabric/data-engineering/create-custom-spark-pools)**: cluster nodes are provisioned on-demand, and therefore the startup time is between 2-4 minutes on average.
 
-The following can be configured:
+The following settings exist for Spark Pools (some of which cannot be changed for Starter Pools):
 1. **Spark pool name**
 1. **Node family**: right now the only option is memory optimized, in the future I expect that there will be other options such as compute optimized.
 1. **Node size**: T-shirt size of node from Small, Medium, Large, XL, and XXL.
@@ -57,7 +57,7 @@ This separation means that as a workspace admin, you can define a few Spark Pool
 ![Fabric Environment Config](/assets/img/posts/Databricks-v-Fabric-Spark-Pools/fabric-environment.png)
 
 ## Databricks Clusters: _Personalized Clusters_
-Lastly, we have Cluster in Databricks. Clusters can contain all hardware and software configuration settings OR you can use them in conjunction with Pools so that the nodes of the Cluster come from the managed pool of VMs. Using Cluters with Pools is typically useful for decreasing latency between jobs in production scenarios since the 2-4 minute cluster start up time can be reduced to ~ 40 seconds if you have warm nodes in your pool.
+Lastly, we have Clusters in Databricks. Clusters can contain all hardware and software configuration settings OR you can use them in conjunction with Pools so that the nodes of the Cluster come from the managed pool of VMs. Using Cluters with Pools is typically useful for decreasing latency between jobs in production scenarios since the 2-4 minute cluster start up time can be reduced to ~ 40 seconds if you have warm nodes in your pool.
 
 To enforce the use of specific compute sizes, similar to Spark Pools, Databricks provides Policies which can be used to enforce that new clusters are created per the defined specs or limits. The downside of Policies is that they only apply to new clusters, pre-existing cluster configurations don't evaluate the Policy until they are edited.
 
@@ -75,7 +75,7 @@ There are 4 primary differences between Fabric and Databricks that should be con
 
 ## 1. Billing Model
 ### Fabric Capacities
-This one is obvious and well known. Coming from it's Power BI platform lineage, Fabric operates on a Capacity model where you purchase an amount of potential compute to be used measured as Capacity Units (CUs), these CUs can be used across any Fabric Workload in the converged data platform (Spark, data warehousing, real-time streaming, reporting, machine learning, custom APIs, etc.). While admittedly this model tends to be less intuitive for data engineering practitioners coming from Azure services, overtime, more features have been and are continuing to be added to make the capacity model more flexible and provide additional controls for managing consumption. 
+This one is obvious and well known. Building on its Power BI platform heritage, Fabric uses a Capacity model. In this model, you purchase a certain amount of compute power, measured in Capacity Units (CUs). These CUs can be utilized across any Fabric workload within the converged data platform, including Spark, data warehousing, real-time streaming, reporting, machine learning, custom APIs, and more.
 
 ## Databricks
 Databricks operates on a pure serverless model, you pay for the compute used plus a licensing multiplier. Depending on the feature used the multiplier will vary. As a general rule of thumb, anytime you deviate from open source capabilities and use Databricks propriatary tech (i.e. Photon, Delta Live Tables, and Serverless Compute), the licensing multiplier is significantly higher. Licensing multipliers are important to consider in designing a solution as it may change how you actually organize and orchestrate your processes, see my post on [the TCO of Photon in Databricks](https://milescole.dev/data-engineering/2024/04/30/Is-Databricks-Photon-A-NoBrainer.html) for more details.
