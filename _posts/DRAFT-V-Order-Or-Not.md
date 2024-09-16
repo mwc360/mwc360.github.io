@@ -98,7 +98,7 @@ What about non-Lakehouse-centric patterns? For use cases where the SQL Endpoint 
 ## What About Optimized Write?
 It's worth mentioning Optimized Write here since it is enabled by default for the same reason that V-Order is—it helps improve performance of select downstream workloads. I blogged about [Optimized Write](https://milescole.dev/data-engineering/2024/08/16/A-Deep-Dive-into-Optimized-Write-in-Microsoft-Fabric.html) back in August; if you haven't read the post, it's worth a read. Optimized Write can be a godsend but can also plague you with unnecessary slower writes. Knowing what it does and when to use it is critical.
 
-Optimized Write is important for both Power BI Direct Lake and Fabric Warehouse / SQL Endpoint performance, as both data readers prefer larger Parquet files than Spark does. Optimized Write generates the optimal number of files to improve performance of both of these workloads but can have a negative impact on Spark unless you are partitioning your Delta tables.
+Optimized Write is important for both Power BI Direct Lake and Fabric Warehouse / SQL Endpoint performance, as both data readers prefer larger Parquet files than Spark does. The default Bin Size setting of Optimized Write generates the optimal file size to improve performance of both of these workloads but can have a negative impact on Spark unless you are partitioning your Delta tables.
 
 My general guidance here is to evaluate Optimized Write just like you'd evaluate V-Order: learn what it is, form a hypothesis, and test on your own data.
 
