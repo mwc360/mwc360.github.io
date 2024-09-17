@@ -91,7 +91,7 @@ As noted above, if using Lakehouses for all zones in Fabric, there's arguably on
 
 To help decide whether to enable V-Order, consider the following:
 
-<div class="mermaid">
+```mermaid
 graph LR
     A[Are you using Direct Lake Semantic Models?]
         A -->|Yes| B{What is your priority?}
@@ -104,7 +104,38 @@ graph LR
                 D -->|10% Read Perf Boost| H
     classDef red stroke:#f00
     classDef green stroke:#0f0
-</div>
+```
+---
+
+```mermaid
+graph LR
+    A[Are you using Direct Lake Semantic Models?]
+    A -->|Yes| B{What is your priority?}
+    B -->|Data Timeliness| F[Disable V-Order]:::red
+    B -->|User Experience| H[Enable V-Order]:::green
+    A -->|No| C[Are you using Fabric Warehouse or SQL Endpoint extensively?]
+    C -->|No| F
+    C -->|Yes| D{What is your priority?}
+    D -->|Data Timeliness| F
+    D -->|10% Read Perf Boost| H
+    classDef red stroke:#f00
+    classDef green stroke:#0f0
+```
+---
+
+```mermaid
+graph LR
+    A[Are you using Direct Lake Semantic Models?]
+    A -->|Yes| B{What is your priority?}
+    B -->|Data Timeliness| F[Disable V-Order]
+    B -->|User Experience| H[Enable V-Order]
+    A -->|No| C[Are you using Fabric Warehouse or SQL Endpoint extensively?]
+    C -->|No| F
+    C -->|Yes| D{What is your priority?}
+    D -->|Data Timeliness| F
+    D -->|10% Read Perf Boost| H
+```
+
 > The V-Order decision tree applies just the same for Optimized Write with the exception that it is generally beneficial for partitioned Delta tables. That said, they do NOT have to be enabled together, one might choose to enable V-Order to improve performance for VertiPaq optimized engines but disable Optimized Write due to the high cost of data shuffle on write and potential decreased parallelism when reading via Spark.
 
 What about non-Lakehouse-centric patterns? For use cases where the SQL Endpoint is heavily used or data is loaded from your Bronze Lakehouse into a Silver/Gold Warehouse, the decision becomes one of prioritizing data production versus data consumption. If you have thousands of ad-hoc queries run against your Fabric Warehouse, a 10% ad-hoc query performance improvement via V-Ordered tables could be entirely worth the performance hit of up to 33% slower writes in Fabric Spark or 10-20% in Fabric Warehouse. However, you may prefer to prioritize making data available for querying in your Silver/Gold Warehouse as fast as possible, accepting a small performance hit for your data consumers in exchange for data being available sooner.
