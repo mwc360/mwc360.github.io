@@ -30,7 +30,7 @@ Understanding when to apply V-Order is easier when we explore its origins and id
 
 ## The Lineage of V-Order
 
-Before Microsoft Fabric introduced the concept of Direct Lake, data was either imported or direct queried (or both) into what was then called a *Dataset*. Possibly my favorite and most appropriate terminology name change by Microsoft, Datasets are now called **Semantic Models**.
+Before Microsoft Fabric introduced the concept of Direct Lake, data was either imported or direct queried (or both) into what was then called a *Dataset*. Possibly my favorite and most appropriate terminology name change by Microsoft, Datasets are now called _Semantic Models_.
 
 When importing data into the Analysis Services database—the backend of Semantic Models—data is sorted and compressed into the VertiPaq columnar format. This format is similar to other columnar formats like Parquet but is highly optimized for the low-latency lookups and aggregations that Power BI is known for.
 
@@ -44,16 +44,16 @@ While these well-architected Import and Direct Query models can be the pinnacle 
 
 To address these drawbacks, the idea of having Semantic Models natively surface data from Delta tables—**without the user needing to explicitly import the data**—was born. To ensure the data remained in a Power BI-optimized format, V-Order was created as a Parquet file optimization. This allowed VertiPaq sorting, encoding, and other optimizations to be included natively as Parquet data is written to Delta tables.
 
-By pushing Power Query transformations and VertiPaq optimizations back to the lake, Direct Lake Semantic Models can directly query Power BI-optimized data in the lake and quickly hydrate Analysis Services models to cache data for faster results. A common misconception is that when a Direct Lake model caches data in the Analysis Services database, VertiPaq sorting and encoding are reapplied. This is not the case. If a Delta table does not have V-Order enabled, the data cached in the Analysis Services database will **not** have VertiPaq sorting and encoding applied.
+By pushing Power Query transformations and VertiPaq optimizations back to the lake, Direct Lake Semantic Models can directly query Power BI-optimized data in the lake and quickly hydrate Analysis Services models to cache data for faster results. A common misconception is that when a Direct Lake model caches data in the Analysis Services database, VertiPaq sorting and encoding are reapplied. This is not the case. If a Delta table does not have V-Order enabled, the data cached in the Analysis Services database will _not_ have VertiPaq sorting and encoding applied.
 
-This explains **why** V-Order is enabled by default in Fabric today. Power BI optimizations need to be pushed back to the lake to:
+This explains _why_ V-Order is enabled by default in Fabric today. Power BI optimizations need to be pushed back to the lake to:
 - Partially eliminate data redundancy.
 - Eliminate the need for Semantic Model refreshes.
 - Empower business logic to be consistently stored in the lake for multi-workload use cases.
 
 ## Which Workloads Benefit from V-Order?
 
-To understand **when to enable or disable V-Order**, we need to identify which workloads are optimized to leverage the VertiPaq optimizations. Currently, the following workloads are designed at a low level to benefit from V-Order:
+To understand _when to enable or disable V-Order_, we need to identify which workloads are optimized to leverage the VertiPaq optimizations. Currently, the following workloads are designed at a low level to benefit from V-Order:
 
 1. **Power BI Direct Lake Semantic Models**: Typically, you'll see a 40% to 60% improvement in cold-cache Direct Lake queries when V-Order is enabled.
 2. **Fabric Warehouse**: Expect to see around a 10% improvement in read query performance but a 10-20% performance hit when writing data.
@@ -91,7 +91,7 @@ As noted above, if using Lakehouses for all zones in Fabric, there's arguably on
 
 To help decide whether to enable V-Order, consider the following:
 
-```mermaid
+<div class="mermaid">
 graph LR
     A[Are you using Direct Lake Semantic Models?]
         A -->|Yes| B{What is your priority?}
@@ -104,7 +104,7 @@ graph LR
                 D -->|10% Read Perf Boost| H
     classDef red stroke:#f00
     classDef green stroke:#0f0
-```
+</div>
 > The V-Order decision tree applies just the same for Optimized Write with the exception that it is generally beneficial for partitioned Delta tables. That said, they do NOT have to be enabled together, one might choose to enable V-Order to improve performance for VertiPaq optimized engines but disable Optimized Write due to the high cost of data shuffle on write and potential decreased parallelism when reading via Spark.
 
 What about non-Lakehouse-centric patterns? For use cases where the SQL Endpoint is heavily used or data is loaded from your Bronze Lakehouse into a Silver/Gold Warehouse, the decision becomes one of prioritizing data production versus data consumption. If you have thousands of ad-hoc queries run against your Fabric Warehouse, a 10% ad-hoc query performance improvement via V-Ordered tables could be entirely worth the performance hit of up to 33% slower writes in Fabric Spark or 10-20% in Fabric Warehouse. However, you may prefer to prioritize making data available for querying in your Silver/Gold Warehouse as fast as possible, accepting a small performance hit for your data consumers in exchange for data being available sooner.
