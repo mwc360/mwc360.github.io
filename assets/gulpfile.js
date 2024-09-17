@@ -1,18 +1,16 @@
 /*
- * Here are all of the gulp tasks you can use to help manage your blog
+ * Here are all the gulp tasks you can use to help manage your blog
  * Use `npm install` to install all the dependencies located in package.json
  * If you have an issue with sharp, try: `npm rebuild`.
  * Then `gulp default` to minimize css and images.
  */
 const gulp = require('gulp');
 const concat = require('gulp-concat');
-const uglify = require('gulp-uglify');
-const imagemin = require('gulp-imagemin');
+const uglify = require('gulp-uglify-es').default;
 const less = require('gulp-less');
 const cleanCSS = require('gulp-clean-css');
 const replace = require('gulp-replace');
 const webp = require('gulp-webp');
-const responsive = require('gulp-responsive');
 const fs = require('fs');
 
 // Use it gulp post -n <title of the post>
@@ -41,9 +39,11 @@ gulp.task('js', function minijs() {
     .pipe(gulp.dest("js/"))
 });
 
-gulp.task("img", function imging() {
+gulp.task("img", async function imging() {
+  const imagemin = await import('gulp-imagemin');
+
   return gulp.src('img/**/*.{png,svg,jpg,webp,jpeg,gif}')
-    .pipe(imagemin())
+    .pipe(imagemin.default())
     .on('error', (err) => {
       console.log(err.toString())
     })
@@ -51,7 +51,8 @@ gulp.task("img", function imging() {
 });
 
 // Alternative using "sharp" in case "imagemin" does not work, supported formats: heic, heif, jpeg, jpg, png, raw, tiff, webp
-gulp.task('sharp_img', function () {
+gulp.task('sharp_img', async function () {
+  const responsive = await import('gulp-responsive');
   let settings = {
     quality: 85,
     progressive: true,
@@ -66,7 +67,8 @@ gulp.task('sharp_img', function () {
     .pipe(gulp.dest('img'))
 });
 
-gulp.task('thumbnails', function () {
+gulp.task('thumbnails', async function () {
+  const responsive = await import('gulp-responsive');
   let settings = {
     width: '50%',
     //format: 'jpeg', // convert to jpeg format
@@ -81,7 +83,8 @@ gulp.task('thumbnails', function () {
 });
 
 
-gulp.task('thumbnails-all', function () {
+gulp.task('thumbnails-all', async function () {
+  const responsive = await import('gulp-responsive');
   let settings = {
     width: '50%',
     //format: 'jpeg', // convert to jpeg format
