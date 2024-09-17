@@ -105,36 +105,6 @@ graph LR
     classDef red stroke:#f00
     classDef green stroke:#0f0
 ```
----
-
-```mermaid
-graph LR
-    A[Are you using Direct Lake Semantic Models?]
-    A -->|Yes| B{What is your priority?}
-    B -->|Data Timeliness| F[Disable V-Order]:::red
-    B -->|User Experience| H[Enable V-Order]:::green
-    A -->|No| C[Are you using Fabric Warehouse or SQL Endpoint extensively?]
-    C -->|No| F
-    C -->|Yes| D{What is your priority?}
-    D -->|Data Timeliness| F
-    D -->|10% Read Perf Boost| H
-    classDef red stroke:#f00
-    classDef green stroke:#0f0
-```
----
-
-```mermaid
-graph LR
-    A[Are you using Direct Lake Semantic Models?]
-    A -->|Yes| B{What is your priority?}
-    B -->|Data Timeliness| F[Disable V-Order]
-    B -->|User Experience| H[Enable V-Order]
-    A -->|No| C[Are you using Fabric Warehouse or SQL Endpoint extensively?]
-    C -->|No| F
-    C -->|Yes| D{What is your priority?}
-    D -->|Data Timeliness| F
-    D -->|10% Read Perf Boost| H
-```
 
 > The V-Order decision tree applies just the same for Optimized Write with the exception that it is generally beneficial for partitioned Delta tables. That said, they do NOT have to be enabled together, one might choose to enable V-Order to improve performance for VertiPaq optimized engines but disable Optimized Write due to the high cost of data shuffle on write and potential decreased parallelism when reading via Spark.
 
