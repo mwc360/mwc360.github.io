@@ -19,24 +19,28 @@ The Optimized Write feature is designed with partitioned tables in mind. When ta
 This feature is excellently illustrated via the diagram below:
 ![alt text](https://docs.delta.io/latest/_images/optimized-writes.png)
 
-The number of files written depends on the BinSize Spark config, which controls the target in-memory size of each file before it is written. In Fabric Runtimes, the setting currently defaults to 1GB. If leaving Optimized Write enabled, you may want to change the BinSize to 512MB or even 256MB depending on your workload.
+The number of files written depends on the BinSize Spark config, which controls the target in-memory size of each file before it is written. In Fabric Runtimes, the setting currently defaults to 1GB. If leaving Optimized Write enabled, you may want to change the BinSize to 256MB or even 128MB depending on your workload.
+
+> ⚠️ UPDATED 10/1/2024: Starting with Fabric Runtime 1.3, Optimize Write is now controlled via the `spark.databricks.delta.optimizeWrite.enabled` spark config and not `spark.microsoft.delta.optimizeWrite.enabled` property that was used in Runtime 1.2. This is because Optimized Write was introduced as a core Delta feature (non-Microsoft specific) starting with OSS Delta 3.1. Jobs using Runtime 1.2 would still use the `spark.microsoft.delta.optimizeWrite.enabled` property.
 
 The BinSize setting can be changed via the code below; the value is provided in bytes:
 ```python
-spark.conf.set("spark.microsoft.delta.optimizeWrite.binSize", 1073741824) 
+spark.conf.set("spark.databricks.delta.optimizeWrite.binSize", 1073741824) 
 ```
 
 The feature can be turned off and on via the below code:
 
 ```python
-spark.conf.set("spark.microsoft.delta.optimizeWrite.enabled", "<true/false>")
+spark.conf.set("spark.databricks.delta.optimizeWrite.enabled", "<true/false>")
 ```
 
 Or in SparkSQL:
 
 ```sql
-SET `spark.microsoft.delta.optimizeWrite.enabled` = true
+SET `spark.databricks.delta.optimizeWrite.enabled` = true
 ```
+
+
 
 ## When Should I Use It?
 For Spark workloads, arguably there's really only one standard use case for Optimized Write, partitioning. While the feature does result in shuffling all data before writing it, the improved time to write less files and downstream impact of reading less files (which improves DML operations that require reading the Delta table), often outweighs the shuffle performance hit. ~~You should only ever consider using it for partitioned tables.~~ _UPDATED 08/19/24: I was reminded that Optimized Write is important for optimizing Power BI Direct Lake Semantic Model performance._
