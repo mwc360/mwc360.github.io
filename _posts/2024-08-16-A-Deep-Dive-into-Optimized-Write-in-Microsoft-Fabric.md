@@ -21,7 +21,7 @@ This feature is excellently illustrated via the diagram below:
 
 The number of files written depends on the BinSize Spark config, which controls the target in-memory size of each file before it is written. In Fabric Runtimes, the setting currently defaults to 1GB. If leaving Optimized Write enabled, you may want to change the BinSize to 256MB or even 128MB depending on your workload.
 
-> ⚠️ **UPDATED 10/1/2024**: Starting with Fabric Runtime 1.3, Optimize Write is now controlled via the `spark.databricks.delta.optimizeWrite.enabled` spark config and not `spark.microsoft.delta.optimizeWrite.enabled` property that was used in Runtime 1.2. This is because Optimized Write was introduced as a core Delta feature (non-Microsoft specific) starting with OSS Delta 3.1. Jobs using Runtime 1.2 would still use the `spark.microsoft.delta.optimizeWrite.enabled` property.
+> ⚠️ **UPDATED 10/1/2024**: Starting with Fabric Runtime 1.3, Optimized Write is now controlled via the `spark.databricks.delta.optimizeWrite.enabled` spark config and not `spark.microsoft.delta.optimizeWrite.enabled` property that was used in Runtime 1.2. This is because Optimized Write was introduced as a core Delta feature (non-Microsoft specific) starting with OSS Delta 3.1. Jobs using Runtime 1.2 would still use the `spark.microsoft.delta.optimizeWrite.enabled` property.
 
 The BinSize setting can be changed via the code below; the value is provided in bytes:
 ```python
