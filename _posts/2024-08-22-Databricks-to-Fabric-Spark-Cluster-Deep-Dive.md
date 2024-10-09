@@ -89,6 +89,7 @@ To evaluate the cost of each, I prefer to look at an atomical job and compare th
 | Workload                                 | Total Cost per vCore Hour | Hardware Cost per vCore Hour (Edsv5) | Licensing Cost per vCore Hour |
 |------------------------------------------|---------------------------|--------------------------------------|-------------------------------|
 | Fabric Spark                             | $0.10                     | $0.09                                | $0.01                         |
+| Fabric Spark w/ Native Execution Engine  | $0.10                     | $0.09                                | $0.01                         |
 | Databricks Jobs Compute                  | $0.19                     | $0.09                                | $0.10                         |
 | Databricks Jobs Compute w/ Photon        | $0.34                     | $0.09                                | $0.25                         |
 | Databricks All-Purpose Compute           | $0.28                     | $0.09                                | $0.19                         |
