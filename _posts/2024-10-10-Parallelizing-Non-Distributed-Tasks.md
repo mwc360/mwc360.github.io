@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "Mastering Spark: Parallelizing Non-Distributed Tasks"
-tags: [Fabric, Spark, Lakehouse, Delta Lake]
+title: "Mastering Spark: Parallelizing API Calls and Other Non-Distributed Tasks"
+tags: [Fabric, Spark, Lakehouse, Optimization]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-googledeepmind-17483907.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-googledeepmind-17483907.jpeg"
