@@ -19,7 +19,7 @@ Before we dig into different ways to distribute such a task, let's frame up the 
 
 My goal is to see how quickly I can make 1,000 API calls to _TheCatAPI_, then parse and save the JSON responses with completely useless information about cats to OneLake for further cat analysis.
 
-> Note: The free tier of _TheCatAPI_ supports only 120 requests per minute, and since I’m likely to exceed this limit, I’ve introduced a sleep function to simulate throttling and approximate an API call duration of 370 milliseconds. While _TheCatAPI_ supports bulk operations, not all APIs do, so this serves as an example of how to interact with APIs that don't support bulk requests.
+> Note: The free tier of _TheCatAPI_ supports only 120 requests per minute, and since I quickly exceeded this limit and got throttled, I introduced a sleep function to simulate the approximate API call duration of 350 milliseconds. While _TheCatAPI_ supports bulk operations, not all APIs do, so this serves as an example of how to interact with APIs that don't support bulk requests.
 
 ## Why Distribute Such a Task?
 Starting with the serial approach, running 1,000 API calls to _TheCatAPI_ takes about **5.5 minutes**, averaging around **330 milliseconds per call**. As we scale the solution, the time grows linearly: 2,000 API calls would take roughly 12 minutes. Surely, Spark can speed this up.
@@ -66,12 +66,12 @@ df_with_api_response = spark.createDataFrame(pdf)
 df_with_api_response.write.mode("overwrite").format("noop").save()
 ```
 
-Since everything up to casting the Pandas DataFrame as a Spark DataFrame is just Python, it is exclusively executed on the driver. While we are running this on a Spark cluster with 2 executors, all of the processing takes place on the driver node. We can see this in the _Resources_ tab of the Notebook cell:
+Since everything up to casting the Pandas DataFrame as a Spark DataFrame is just Python, it is exclusively executed on the driver. While we are running this on a Spark cluster with 2 executors, all of the processing takes place on the driver node. We can see that 0 executor cores are being leveraged on the _Resources_ tab of the Notebook cell:
 ![Serial execution cores](/assets/img/posts/Parallelizing-Non-Distributed-Tasks/image.png)
 
 There's two options for parallelizing scalar API calls in Spark. We could use `parallelize` or use a PySpark `udf`.
 
-## `parallelize`
+## Parallelize
 Spark's `parallelize` function is particularly useful when you want to parallelize tasks that are not related to typical data processing jobs, such as those that don't directly result in a DataFrame. These can be operations that benefit from being distributed across multiple cores or executors but don't necessarily need to return structured data.
 
 By parallelizing the task, we can reduce the execution time to **22 seconds**. Although each API call still took ~350 milliseconds, distributing the work across 16 cores sped up the process roughly 16x.
@@ -87,7 +87,9 @@ df_with_api_response.write.mode("overwrite").format("noop").save()
 ```
 
 Looking at the _Resources_ tab of the Notebook cell we can see that all 16 cores across the 2 executors were leveraged:
-![Parallel execution cores](/assets\img\posts\Parallelizing-Non-Distributed-Tasks\image.png)
+![Parallel execution cores](/assets/img/posts/Parallelizing-Non-Distributed-Tasks/image.png)
+
+>   The write format **noop** in Spark, `format("noop")`, is used with the DataFrameWriter when you don't actually want to write any    data to an output sink but still want to trigger the computation. The "noop" format stands for "no operation," and it essentially acts as a placeholder that does nothing but allows Spark to go through the motions of executing the job, triggering all the necessary actions (like parallelizing, transformations, etc.) without actually writing the data anywhere. This can be useful for benchmarking or testing performance without the overhead of writing data to storage, allowing you to focus solely on execution time or resource utilization.
 
 ## PySpark UDFs
 Processing the API calls as a scalar PySpark UDF also took **22 seconds**. This is not surprising, as this approach functionally performs the same operation as `parallelize`, albeit with a more intuitive syntax.
@@ -110,7 +112,7 @@ Use `parallelize` when you need more control over how tasks are distributed acro
 ## Can Multithreading Beat Spark?
 Multithreading is a powerful tool for concurrency, and I’ve written about it in the past ([here](https://milescole.dev/optimization/2024/02/19/Unlocking-Parallel-Processing-Power.html) and [here](https://milescole.dev/data-engineering/2024/04/26/Fabric-Concurrency-Showdown-RunMultiple-vs-ThreadPool.html)), but can it outperform Spark for this use case?
 
-Using the same `get_cat_json()` function, I mapped it across a thread pool with 16 threads, matching the number of cores in my Spark cluster. This process took **46 seconds**, which is about **2x slower than Spark** but still **7x faster than the serial method**. While slower than the Spark parallelization approaches, this method could run on a single-node Spark cluster, using only a fraction of the compute resources. So while Multithreading doesn't win on speed here, it’s a strong contender if optimizing for job cost.
+Using the same `get_cat_json()` function, I mapped it across a thread pool with 16 threads, matching the number of cores in my Spark cluster. This process took **46 seconds**, which is about **2x slower than Spark** but still **7x faster than the serial method**. While slower than the Spark parallelization approaches, this method could run on a single-node Spark cluster, using only 1/3 the compute resources compared to my other tests which ran on a cluster with 2 8vCore executors. So while Multithreading doesn't win on speed here, it’s a strong contender if optimizing for job cost.
 
 ```python
 from concurrent.futures import ThreadPoolExecutor, as_completed
