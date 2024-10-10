@@ -117,7 +117,6 @@ There are more methods explained in the [RDD documentation](https://spark.apache
     - **What It Does**: Returns a new RDD that only contains elements that satisfy a given condition.
     - **Example**:
         ```python
-        Copy code
         filtered_rdd = rdd.filter(lambda x: x % 2 == 0)
         print(filtered_rdd.collect())
         ```
