@@ -87,7 +87,7 @@ df_with_api_response.write.mode("overwrite").format("noop").save()
 ```
 
 Looking at the _Resources_ tab of the Notebook cell we can see that all 16 cores across the 2 executors were leveraged:
-![Parallel execution cores](/assets/img/posts/Parallelizing-Non-Distributed-Tasks/image.png)
+![Parallel execution cores](/assets/img/posts/Parallelizing-Non-Distributed-Tasks/image-2.png)
 
 >   The write format **noop** in Spark, `format("noop")`, is used with the DataFrameWriter when you don't actually want to write any    data to an output sink but still want to trigger the computation. The "noop" format stands for "no operation," and it essentially acts as a placeholder that does nothing but allows Spark to go through the motions of executing the job, triggering all the necessary actions (like parallelizing, transformations, etc.) without actually writing the data anywhere. This can be useful for benchmarking or testing performance without the overhead of writing data to storage, allowing you to focus solely on execution time or resource utilization.
 
