@@ -141,7 +141,7 @@ xychart-beta
     bar [5.5, 0.36, 0.36, 0.76]
 ```
 
-> **Why was Spark faster than Multithreading?** Spark truly parallelized the operation across multiple cores and executors. In contrast, multithreading primarily introduced concurrency, meaning the threads were taking turns executing on the same resources. This limits the performance compared to Spark’s distributed execution model which allows for true parallelization.
+> **💡 Why was Spark faster than Multithreading?** Spark truly parallelized the operation across multiple cores and executors. In contrast, multithreading primarily introduced concurrency, meaning the threads were taking turns executing on the same resources. This limits the performance compared to Spark’s distributed execution model which allows for true parallelization.
 
 # Closing Thoughts
 Spark allowed us to parallelize a non-distributed task, achieving results **16x faster** than the serial approach. For tasks like API calls that can’t natively leverage Spark’s distributed data processing, using `parallelize` or PySpark UDFs provides an easy path to acceleration. If you’re constrained on compute or cost, multithreading offers a reasonable alternative, but Spark remains the go-to for scalable performance in a distributed environment.
