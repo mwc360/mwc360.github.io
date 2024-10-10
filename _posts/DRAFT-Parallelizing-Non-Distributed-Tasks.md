@@ -21,8 +21,8 @@ My goal is to see how quickly I can make 1,000 API calls to _TheCatAPI_, then pa
 
 > Note: The free tier of _TheCatAPI_ supports only 120 requests per minute, and since I quickly exceeded this limit and got throttled, I introduced a sleep function to simulate the approximate API call duration of 350 milliseconds. While _TheCatAPI_ supports bulk operations, not all APIs do, so this serves as an example of how to interact with APIs that don't support bulk requests.
 
-## Why Distribute Such a Task?
-Starting with the serial approach, running 1,000 API calls to _TheCatAPI_ takes about **5.5 minutes**, averaging around **330 milliseconds per call**. As we scale the solution, the time grows linearly: 2,000 API calls would take roughly 12 minutes. Surely, Spark can speed this up.
+## Why Parallelize Non-Distributed Tasks?
+Starting with the serial approach, running 1,000 API calls to _TheCatAPI_ takes about **5.5 minutes**, averaging around **330 milliseconds per call**. As we scale the solution, the time grows linearly: 2,000 API calls would take roughly 12 minutes, 4,000 API calls would take about 24 minutes. Let's see what Spark can do!
 
 ```python
 import requests
