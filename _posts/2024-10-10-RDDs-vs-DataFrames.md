@@ -13,19 +13,25 @@ I was 95% done with writing a fun case study on how to parallelize API calls and
 For those niche scenarios where you really need to take full advantage of the Spark distributed architecutre, particularly for tasks that aren't natively distributed in nature, or are unstructured, understanding RDDs is a must. Let's dive in.
 
 # Resiliant Distributed Datasets (RDDs)
-An **[RDD (Resilient Distributed Dataset)](https://spark.apache.org/docs/latest/rdd-programming-guide.html)** is the core abstraction in Spark for handling distributed data and computation. It represents a distributed collection of objects across a Spark cluster. When an RDD is created, data is divided into partitions, and these partitions are distributed across different worker nodes (executors) in the cluster. Each partition contains a subset of the data, which can be processed in parallel by the executors.
+An **[RDD (Resilient Distributed Dataset)](https://spark.apache.org/docs/latest/rdd-programming-guide.html)** is the core abstraction in Spark for handling distributed data and computation. It represents a distributed collection of objects across a Spark cluster. When an RDD is created, Spark builds a logical declaration (a lineage graph) of the transformations that will be applied to the data across a number of partitions. However, no data is processed or distributed at this stage. Once a triggering action occurs, Spark divides the data into partitions, and these partitions are then distributed across different worker nodes (executors) in the cluster. Each partition contains a subset of the data, which can then be processed in parallel by the executors.
 
 ## How RDDs Are Different Than DataFrames
-While the definition I gave for an RDD probably sounds just like a DataFrame, RDDs are a lower-level abstraction in Spark that are used to build DataFrames. Given that they are lower level, we can do things that are not possible with DataFrames such as parallelizing native Python objects, DataFrames on the otherhand are limited to tabular datasets.
+While the definition I gave for an RDD might sound similar to a DataFrame, they are distinctly different abstractions in Spark, each serving different purposes with varying levels of control and use cases. RDDs are a lower-level API that provides fine-grained control over data processing but lacks the automatic optimizations that DataFrames offer. You can convert an RDD to a DataFrame, which results in the DataFrame being backed by the RDD in the lineage graph. However, a newly created DataFrame (e.g., via `spark.read()` or `spark.range()`) is not simply an abstraction of an RDD. Instead, it is part of an entirely different API, optimized for more efficient query execution and memory management.
+
+DataFrames, by contrast, are a higher-level abstraction built on top of Spark’s execution engine. They allow Spark to perform optimizations using the _Catalyst optimizer_ and _Tungsten execution engine_, which make queries and operations on structured data faster and more efficient, particularly for SQL-like operations.
+
+While both RDDs and DataFrames use lazy evaluation, DataFrames benefit from query optimization, where the Catalyst optimizer can reorganize and compress transformation steps for improved performance. RDDs, on the other hand, execute exactly as coded, with no such optimization.
+
+Lastly, RDDs can handle things that DataFrames cannot, such as parallelizing native Python objects or working with complex, unstructured data. DataFrames, however, are limited to tabular datasets with predefined schemas, making them better suited for structured data processing.
 
 | Feature                 | RDD                                        | DataFrame                                 |
 |-------------------------|--------------------------------------------|-------------------------------------------|
 | **Abstraction Level**   | Low-level                                  | High-level                                |
-| **Ease of Use**         | Requires detailed code                     | SQL-like, simpler syntax                  |
+| **Ease of Use**         | More complex, lower-level coding (lambda)  | SQL-like, simpler syntax                  |
 | **Schema**              | No schema                                  | Has schema                                |
 | **Optimization**        | No automatic optimization                  | Catalyst query optimizer, Tungsten engine |
 | **Performance**         | Slower for large datasets                  | Faster due to optimizations               |
-| **Fault Tolerance**     | Yes (via lineage graph)                    | Yes (inherits from RDD)                   |
+| **Fault Tolerance**     | Yes (via lineage graph)                    | Yes (inherits from design of RDDs)        |
 | **Use Case**            | Unstructured data, complex transformations | Structured data, SQL-like queries         |
 | **Data Representation** | Distributed collection of objects          | Distributed table with schema             |
 
@@ -91,7 +97,7 @@ After an RDD is created with `parallelize`, just like with DataFrames, you can a
 1. **Actions**:
     - Actions (i.e: `foreach`, `reduce`, `collect`, `foreachPartition`) trigger the actual computation of the transformations. For example, collect will gather all the transformed data from the executors and return it to the driver, while foreach or foreachPartition can perform side effects like writing to a database or logging.
 
-There are more methods explained in the [RDD documentation](https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.RDD.html#pyspark.RDD) than one can possibly remember, I'll highlight a few of the basics. You'll notice that nearly all of these methods are also referenced in the [DataFrames documentation](https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/dataframe.html), this is because a DataFrame is fundamentally a higher-level tabular abstraction of an RDD, therefore many methods are inherited from RDDs.
+There are more methods explained in the [RDD documentation](https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.RDD.html#pyspark.RDD) than one can possibly remember, I'll highlight a few of the basics. You'll notice that nearly all of these same methods are also referenced in the [DataFrames documentation](https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/dataframe.html). Having similar features for both RDDs and DataFrames allows for a more consistent API, user experience, and ability to migrate between the two.
 
 ### Example RDD Transformations
 1. `map`

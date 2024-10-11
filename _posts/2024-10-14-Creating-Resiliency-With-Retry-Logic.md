@@ -34,7 +34,7 @@ With Tenacity, we can add the `@retry()` decorator to automatically retry the fu
 import random
 from tenacity import retry
 
-@retry()
+@retry() # The retry decorator is added before the function we want to retry
 def connect_to_database():
     if random.choice([True, False]):
         raise ConnectionError("Failed to connect to database")
