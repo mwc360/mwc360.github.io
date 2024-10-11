@@ -7,7 +7,6 @@ feature-img: "assets/img/feature-img/pexels-googledeepmind-25626446.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-googledeepmind-25626446.jpeg"
 published: True
 ---
-
 I was 95% done with writing a fun case study on how to parallelize API calls and other non-distributed tasks in Spark when I realized that I was about to gloss over a extremely foundational topic in Spark: RDDs. While most developers minimally understand the basics of DataFrames, RDDs are less commonly known, partly because they are a lower-level abstraction in Spark and DataFrames are full featured enough that you can often get away without needing to know what an RDD is.
 
 For those niche scenarios where you really need to take full advantage of the Spark distributed architecutre, particularly for tasks that aren't natively distributed in nature, or are unstructured, understanding RDDs is a must. Let's dive in.
