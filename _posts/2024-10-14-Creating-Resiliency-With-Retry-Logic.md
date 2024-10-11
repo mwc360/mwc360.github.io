@@ -7,12 +7,12 @@ feature-img: "assets/img/feature-img/pexels-googledeepmind-17483907.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-googledeepmind-17483907.jpeg"
 published: False
 ---
-In distributed systems, handling unreliable processes—whether due to API rate limiting, network instability, or transient failures—can be a significant challenge. In this post, we'll explore how to make any unstable process more resilient by leveraging the open-source library Tenacity. By adding robust retry logic with exponential backoff, we can gracefully handle API throttling, server-side failures, and network interruptions in a Spark environment. This post walks through practical strategies for improving the reliability of Spark workloads, whether you’re calling external APIs or managing any resource-intensive tasks prone to failure.
+In any programming environment, handling unreliable processes—whether due to API rate limiting, network instability, or transient failures—can be a significant challenge. This is not exclusive to Spark but applies to distributed systems and programming languages across the board. In this post, we’ll focus on Python (since I’m a PySpark developer) and explore how to make any unstable process more resilient by leveraging the open-source library Tenacity. By adding strategic retry logic with exponential backoff, we can gracefully handle API throttling, server-side failures, and network interruptions to build more robust and fault tolerant solutions.
 
 ## How to Handle Throttling in Real-World Use Cases
-In my case study, we were dealing with a non-real-world use case about cats, and I was fine simulating the throttled API calls to mimic the duration of a successful call. But what should you do when working in production scenarios with unstable or rate-limited APIs?
+In my prior post where I illustrated how to parallelize running thousands of API calls to TheCatAPI service, I was fine simulating the throttled API calls to mimic the duration of a successful call. But what should you do when working in production scenarios when dealing with unstable or rate-limited APIs?
 
-While it’s not overly complex to write your own retry logic with exponential backoff to handle API failures or throttling, the open-source library Tenacity makes this much easier. The great news is that [Tenacity](https://tenacity.readthedocs.io/en/latest/) is included as part of the Fabric Spark Runtime, so you have access to it out of the box.
+While it’s not overly complex to write your own retry logic with exponential backoff to handle API failures or throttling, the open-source library Tenacity makes significantly easier. The great news is that [Tenacity](https://tenacity.readthedocs.io/en/latest/) is included as part of the Fabric Spark Runtime, so you have access to it out of the box.
 
 ### Using Tenacity for Retry Logic
 Before integrating Tenacity into the `get_cat_json()` function, let’s walk through a basic example. In the function below, I simulate a _ConnectionError_ by randomly failing a connection to an unstable database. Run it a couple of times, and statstically, you'll encounter a _ConnectionError_.
