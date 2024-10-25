@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Breaking the Myth: Spark Isn’t as Complex as You Think (And Yes, It Supports SQL!)"
+title: "Breaking the Myth: Spark Isn’t as Scary as You'd Think (And Yes, It Supports SQL!)"
 tags: [Fabric, Spark, Lakehouse]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-googledeepmind-17485738.jpeg"
