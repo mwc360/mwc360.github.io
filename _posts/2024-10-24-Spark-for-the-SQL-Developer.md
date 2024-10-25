@@ -121,6 +121,7 @@ As a former SQL Developer learning Spark, learning how to size clusters was a si
         df = spark.sql("SELECT * FROM users where dob.age < {age_limit}", age_limit=40)
         display(df)
         ```
+
 ### Data Type Specificity
 - **T-SQL**: In T-SQL, data types are strictly enforced, and developers often spend significant effort deciding between fixed-length (`CHAR`), variable-length (`VARCHAR`), and whether or not strings are UNICODE (`NCHAR`) data types to optimize storage and enforce data expectations. Choosing the wrong size can result in either excessive storage consumption (over-allocating) or errors from truncating values (under-allocating). Careful sizing of fields is essential to minimize the database size and optimize performance.
 - **SparkSQL with Delta**: In SparkSQL, especially when using modern Parquet-based formats like Delta Lake, data type specificity is less of a concern. Parquet treats strings as STRING types, without distinguishing between fixed-length (`CHAR`) and variable-length (`VARCHAR`), making these distinctions purely metadata constraints. Parquet fully supports Unicode and various character sets, abstracting away encoding concerns for developers.
