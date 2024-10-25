@@ -52,7 +52,7 @@ In the prior example we performed a basic truncate and load pattern. In a future
 1. **Robust Idempotency**: Having come from a T-SQL background, SparkSQL’s native support for idempotency in its `CREATE` operations is incredibly convenient and reduces the need for extra logic. 
     - `CREATE OR REPLACE`: Simplifies table management by allowing you to replace tables without manually writing `DROP` or `TRUNCATE` statements.
     - `CREATE... IF NOT EXISTS`: Removes the need to write complex checks for whether an object exists before creating it, streamlining your code.
-1. **Time Saving Operators and Functions**: SparkSQL offers a wide range of built-in functions and “syntax sugar” to reduce the need for verbose code. With over 400 built-in functions compared to T-SQL’s ~200, SparkSQL has massive flexibility, particularly when it comes to ANSI-SQL functions and semi-structured data.
+1. **Time Saving Operators and Functions**: SparkSQL offers a wide range of built-in functions and “syntax sugar” to reduce the need for verbose code. With over [400 built-in functions](https://spark.apache.org/docs/latest/api/sql/index.html) compared to T-SQL’s ~200, SparkSQL has massive flexibility, particularly when it comes to ANSI-SQL functions and semi-structured data.
     - `GROUP BY ALL`: A standout feature that simplifies common operations like checking for duplicates by grouping all non-aggregated columns automatically. Instead of manually listing each non-aggregated column, GROUP BY ALL simplifies this significantly, saving time and reducing errors.
     ```sql
     SELECT key1, key2, count(1) 
