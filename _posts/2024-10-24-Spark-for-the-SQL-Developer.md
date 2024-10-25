@@ -24,7 +24,7 @@ Learning the necessity for dimensional modeling before the semantic model layer,
 <br>
 Over time, as I reached the limits of GUI based experiences in numerous areas, I gave PowerShell a try which I didn't realize would turn out to be the gateway drug for me to learn a half-dozen other languages (Python, C#, Scala, JavaScript, YAML, etc.) which really opened a whole new world of possibilities. During this transition, against my better SQL Developer judgement, I decided to give Spark a try for a use case that wasn't possible in my beloved Synapse DW engine. The rest is history.
 
-Now that you know my background, I'll say that **Spark is only as complex as you want it to be**. For typical data loading and transformation that SQL Developers do, in my experience, Spark isn’t complex and, in some scenarios, it’s easier than using a T-SQL-based engine. That said, as your requirements grow, Spark’s APIs across multiple programming languages allow you to build insanely complex applications to meet the most demanding requirements.
+Now that you know my background, I'll say that **Spark is only as complex as you want it to be**. For typical data loading and transformation that SQL Developers do, in my experience, Spark isn’t complex and, in some scenarios, it’s easier than common SQL-based engines. That said, as your requirements grow, Spark’s APIs across multiple programming languages allow you to build insanely complex applications to meet the most demanding requirements.
 
 ## Spark Supports SQL... SparkSQL!
 One of Spark’s many beauties is that you can code in the language you know. If you love SQL, you can use **SparkSQL**! Yes, Spark supports its own SQL dialect, close to ANSI-SQL and feature-rich. You don’t need Python or Scala; an entire medallion architecture can be built using 100% SparkSQL in Fabric.
@@ -52,7 +52,7 @@ In the prior example we performed a basic truncate and load pattern. In a future
 1. **Robust Idempotency**: Having come from a T-SQL background, SparkSQL’s native support for idempotency in its `CREATE` operations is incredibly convenient and reduces the need for extra logic. 
     - `CREATE OR REPLACE`: Simplifies table management by allowing you to replace tables without manually writing `DROP` or `TRUNCATE` statements.
     - `CREATE... IF NOT EXISTS`: Removes the need to write complex checks for whether an object exists before creating it, streamlining your code.
-1. **Time Saving Operators and Functions**: SparkSQL offers a wide range of built-in functions and “syntax sugar” to reduce the need for verbose code. With over [400 built-in functions](https://spark.apache.org/docs/latest/api/sql/index.html) compared to T-SQL’s ~200, SparkSQL has massive flexibility, particularly when it comes to ANSI-SQL functions and semi-structured data.
+1. **Time Saving Operators and Functions**: SparkSQL offers a wide range of built-in functions and “syntax sugar” to reduce the need for verbose code. With over [400 built-in functions](https://spark.apache.org/docs/latest/api/sql/index.html) compared to T-SQL’s ~200, SparkSQL has massive flexibility, particularly when it comes to ANSI-SQL functions (i.e. `nvl2`) and working with semi-structured data.
     - `GROUP BY ALL`: A standout feature that simplifies common operations like checking for duplicates by grouping all non-aggregated columns automatically. Instead of manually listing each non-aggregated column, GROUP BY ALL simplifies this significantly, saving time and reducing errors.
     ```sql
     SELECT key1, key2, count(1) 
@@ -87,7 +87,7 @@ In the prior example we performed a basic truncate and load pattern. In a future
         ```sql
         SELECT explode(array('a', 'b', 'c')) AS value
         ```
-These are just a sampling of reasons SparkSQL is an extremely expressive SQL dialect, simplifying complex tasks and reducing boilerplate code compared to T-SQL and other dialects.  For those transitioning from traditional SQL databases, these operators can make working with large datasets, semi-structured data, and complex transformations far more efficient with much less code.
+These are just a sampling of reasons SparkSQL is an extremely expressive SQL dialect, simplifying complex tasks and reducing boilerplate code as compared to most traditional SQL dialects. For those transitioning from traditional SQL databases, these operators can make working with large datasets, semi-structured data, and complex transformations far more efficient with much less code.
 
 ## Comparing Core Development Concepts
 ### Compute Sizing
@@ -96,7 +96,7 @@ Compute is really the one area today where Spark can be justified as being more 
 As a former SQL Developer learning Spark, learning how to size clusters was a significant hurdle. Node size, autoscale, number of nodes – there’s a lot to consider for job performance. However, having the ability to make jobs faster by adding more compute is invaluable. In pure serverless models, you typically have little to no control and are beholden to the capabilities of engines serverless architecture.
 
 ### Dynamic SQL
-- **T-SQL**: In T-SQL, dynamic SQL typically involves constructing SQL statements as strings and executing them using the EXEC or sp_executesql commands. This allows flexibility, such as generating queries based on user inputs, but it can make code more difficult to debug and maintain. Additionally, there are potential security concerns (e.g., SQL injection) if user input is not properly sanitized.
+- **SQL**: In T-SQL, and most other SQL dialects, dynamic SQL typically involves constructing SQL statements as strings and executing them using the EXEC or sp_executesql commands. This allows flexibility, such as generating queries based on user inputs, but it can make code more difficult to debug and maintain. Additionally, there are potential security concerns (e.g., SQL injection) if user input is not properly sanitized.
 
     ```sql
     DECLARE @sql NVARCHAR(MAX)
@@ -123,7 +123,7 @@ As a former SQL Developer learning Spark, learning how to size clusters was a si
         ```
 
 ### Data Type Specificity
-- **T-SQL**: In T-SQL, data types are strictly enforced, and developers often spend significant effort deciding between fixed-length (`CHAR`), variable-length (`VARCHAR`), and whether or not strings are UNICODE (`NCHAR`) data types to optimize storage and enforce data expectations. Choosing the wrong size can result in either excessive storage consumption (over-allocating) or errors from truncating values (under-allocating). Careful sizing of fields is essential to minimize the database size and optimize performance.
+- **SQL**: In T-SQL, and most other SQL dialects, data types are strictly enforced, and developers often spend significant effort deciding between fixed-length (`CHAR`), variable-length (`VARCHAR`), and whether or not strings are UNICODE (`NCHAR`) data types to optimize storage and enforce data expectations. Choosing the wrong size can result in either excessive storage consumption (over-allocating) or errors from truncating values (under-allocating). Careful sizing of fields is essential to minimize the database size and optimize performance.
 - **SparkSQL with Delta**: In SparkSQL, especially when using modern Parquet-based formats like Delta Lake, data type specificity is less of a concern. Parquet treats strings as STRING types, without distinguishing between fixed-length (`CHAR`) and variable-length (`VARCHAR`), making these distinctions purely metadata constraints. Parquet fully supports Unicode and various character sets, abstracting away encoding concerns for developers.
 
     You don’t need to focus on right-sizing fields to save storage space. Instead, Parquet’s columnar format applies efficient compression algorithms that minimize storage regardless of the string size. Additionally, Delta Lake logs detailed column statistics (e.g., min/max values, null counts) in its transaction log, which helps optimize queries by informing the query planner about the underlying data distribution. By defining strings as simple STRING types, you let Parquet and Delta Lake handle compression and optimization, enabling you to focus entirely on the data processing logic.
