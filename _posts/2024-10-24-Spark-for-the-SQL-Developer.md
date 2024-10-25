@@ -159,10 +159,10 @@ I've mentioned a lot of goodness so far, now for the letdown of features that ar
 Hopefully, I’ve convinced you that Spark with SparkSQL isn’t intimidating and can be more expressive for working with both structured and semi-structured data. For those looking to explore PySpark to augment SparkSQL or go full-bore into the DataFrame API, Microsoft Fabric can help you learn, improve your productivity, and can even automatically tune your jobs.
 
 ## Starter Pools
-No one likes waiting 3 to 5-minutes for a cluster to spin up, Fabric eliminates this wait time for many workloads via Starter Pools. This pool type allows for start up times in the tune of about 15 seconds. It's an insanely positive improvement in the Spark development experience when you might already be used to taking 10-15 seconds to open up SSMS, VS Code, or other IDE to connect to your SQL engine of choice.
+No one likes waiting 3 to 5-minutes for a cluster to spin up, Fabric eliminates this wait time for many workloads via [Starter Pools](https://learn.microsoft.com/en-us/fabric/data-engineering/spark-compute#starter-pools). This pool type allows for start up times in the tune of about 15 seconds. It's an insanely positive improvement in the Spark development experience when you might already be used to taking 10-15 seconds to open up SSMS, VS Code, or other IDE to connect to your SQL engine of choice.
 
 ## Data Wrangler
-Data Wrangler is a GUI based experience for transforming datasets in Fabric Spark that generates PySpark code as an output. This can be fantastic for learning how to use the PySpark DataFrame API. If you've used this, please reach out and let me know what you think.
+[Data Wrangler](https://learn.microsoft.com/en-us/fabric/data-science/data-wrangler) is a GUI based experience for transforming datasets in Fabric Spark that generates PySpark code as an output. This can be fantastic for learning how to use the PySpark DataFrame API. If you've used this, please reach out and let me know what you think.
 
 ## AutoTune
 [AutoTune](https://learn.microsoft.com/en-us/fabric/data-engineering/autotune?tabs=sparksql) is an innovative feature in Fabric that aims to decrease the the execution time of repeat Spark jobs over by progressively tuning key Spark configuriations using ML. More to come on this, I have a dedicated blog on this topic in the works.
