@@ -271,7 +271,7 @@ If you want to enable deletion vectors on an existing table, you can do the foll
 ```sql
 ALTER TABLE your_table SET TBLPROPERTIES ('delta.enableDeletionVectors' = 'true')
 ```
-> ⚠️ Enabling deletion vectors will permanently increase the `minReaderVersion` to 3 and the `minReaderVersion` to 7. 
+> ⚠️ Enabling deletion vectors will permanently increase the `minReaderVersion` to 3 and the `minWriterVersion` to 7. 
 
 # Closing Thoughts
 _Merge-on-read_, implemented through **deletion vectors** in Delta Lake, is a crucial feature for optimizing write-heavy workloads that involve deletions and updates. While deletion vectors can significantly reduce write times, they require a thoughtful approach to table maintenance. Regular `OPTIMIZE` and `VACUUM` operations are essential to ensure a balanced approach to performance across reads and writes.
