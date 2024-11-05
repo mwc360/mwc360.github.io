@@ -243,6 +243,14 @@ In a scenario where only a `MERGE` of 5M new records was processed, deletion vec
 
 ![alt text](/assets/img/posts/Deletion-Vectors/image-6.png)
 
+Lastly, let’s consider what would happen if we ran our `SELECT` statements after performing an `OPTIMIZE` operation to compact the table following our four _merge-on-read_ write operations. By doing so, the `SELECT` statements would run in identical time as commpared to the table where deletion vectors were disabled (using _copy-on-write_) since readers wouldn't have any deletion vectors to reconcile.
+
+Therefore, if we compare the cumulative processing time—including all write and maintenance operations—the table with deletion vectors enabled would still have the lowest overall processing time.
+- **With Deletion Vectors**: 101 seconds for writes and maintenance + query duration (i.e. 20 seconds)
+- **Without Deletion Vectors**: 212 seconds for writes and mainteance + query duration (i.e. 20 seconds)
+
+This highlights how deletion vectors, combined with strategic use of `OPTIMIZE`, can reduce the net processing time for workloads with frequent updates and deletes.
+
 ## Should I Enable Deletion Vectors?
 Deletion vectors are an excellent _default_ configuration for Delta tables **provided that a table maintenance strategy is in place**. Without a regular strategy for `OPTIMIZE` and `VACUUM`, both write and read performance can suffer as deletion vectors accumulate and must be reconciled at read time. 
 
