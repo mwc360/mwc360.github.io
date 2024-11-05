@@ -254,6 +254,25 @@ That said, there's a couple scenarios where you will not want to enable deletion
 - **External Delta Compatibility Requirements**: Deletion vectors require Delta Lake version 2.3 or newer, with reader version 3 and writer version 7. This means older readers or tools not yet supporting deletion vectors will encounter compatibility issues.
 - **Fabric Pipeline COPY Activity**: Currently, the COPY activity in Fabric does not support deletion vectors. It will return all active Parquet files without filtering out records included in deletion vectors, meaning deleted or updated data will reappear unless an `OPTIMIZE` operation is run before each COPY activity. Full support for deletion vectors in COPY activities is expected in the next 3-4 months.
 
+## How Can I Enable Deletion Vectors?
+If you want to enable deletion vectors for all newly created tables within a Spark session or context you can set the below Spark config:
+```python
+spark.conf.set("spark.databricks.delta.properties.defaults.enableDeletionVectors", "true")
+```
+
+If you want to enable on a table by table basis, you can use the table option when creating tables:
+```python
+df.write \
+    .option("delta.enableDeletionVectors", "false") \
+    .saveAsTable("dbo.dv_enabled_table")
+```
+
+If you want to enable deletion vectors on an existing table, you can do the following:
+```sql
+ALTER TABLE your_table SET TBLPROPERTIES ('delta.enableDeletionVectors' = 'true')
+```
+> ⚠️ Enabling deletion vectors will permanently increase the `minReaderVersion` to 3 and the `minReaderVersion` to 7. 
+
 # Closing Thoughts
 _Merge-on-read_, implemented through **deletion vectors** in Delta Lake, is a crucial feature for optimizing write-heavy workloads that involve deletions and updates. While deletion vectors can significantly reduce write times, they require a thoughtful approach to table maintenance. Regular `OPTIMIZE` and `VACUUM` operations are essential to ensure a balanced approach to performance across reads and writes.
 
