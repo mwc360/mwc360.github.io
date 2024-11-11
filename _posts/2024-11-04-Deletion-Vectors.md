@@ -257,7 +257,7 @@ Deletion vectors are an excellent _default_ configuration for Delta tables **pro
 That said, there's a couple scenarios where you will not want to enable deletion vectors:
 - **Infrequent Writes, Frequent Reads**: If a table has infrequent writes but frequent reads, deletion vectors may introduce unnecessary read overhead. For example, if you only modify data monthly but run ad-hoc queries daily, it may make more sense to use _copy-on-write_ to avoid merging data on read for every query.
 
-    ![alt text](/assets/img/posts/Deletion-Vectors/deletion-vector-guidance2.excalidraw.png){: .excalidraw-image }
+    ![alt text](/assets/img/posts/Deletion-Vectors/deletion-vector-guidance2.excalidraw.svg){: .excalidraw-image }
 
 - **External Delta Compatibility Requirements**: Deletion vectors require Delta Lake version 2.3 or newer, with reader version 3 and writer version 7. This means older readers or tools not yet supporting deletion vectors will encounter compatibility issues.
 - **Fabric Pipeline COPY Activity**: Currently, the COPY activity in Fabric does not support deletion vectors. It will return all active Parquet files without filtering out records included in deletion vectors, meaning deleted or updated data will reappear unless an `OPTIMIZE` operation is run before each COPY activity. Full support for deletion vectors in COPY activities is expected in the next 3-4 months.
