@@ -3,8 +3,8 @@ layout: post
 title: "Announcing the Microsoft Fabric Shape Library for Excalidraw"
 tags: [Fabric, Spark, Lakehouse]
 categories: Data-Engineering
-feature-img: "assets/img/feature-img/Fabric-workloads.png"
-thumbnail: "assets/img/feature-img/Fabric-workloads.png"
+feature-img: "assets/img/feature-img/Fabric-workloads.jpeg"
+thumbnail: "assets/img/feature-img/Fabric-workloads.jpeg"
 published: True
 ---
 
