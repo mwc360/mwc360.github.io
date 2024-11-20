@@ -1,11 +1,11 @@
 ---
 layout: post
 title: "Announcing the Microsoft Fabric Shape Library for Excalidraw"
-tags: [Fabric, Spark, Lakehouse]
+tags: [Fabric, Spark, Lakehouse, Delta Lake]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-pixabay-235990.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-pixabay-235990.jpeg"
-published: True
+published: true
 ---
 
 I'm _thrilled_ to announce that my **Microsoft Fabric Shape Library for Excalidraw** has been published!
