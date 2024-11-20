@@ -3,8 +3,8 @@ layout: post
 title: "Announcing the Microsoft Fabric Shape Library for Excalidraw"
 tags: [Fabric, Spark, Lakehouse, Delta Lake]
 categories: Data-Engineering
-feature-img: "assets/img/feature-img/pexels-pixabay-235990.jpeg"
-thumbnail: "assets/img/thumbnails/feature-img/pexels-pixabay-235990.jpeg"
+feature-img: "assets/img/feature-img/Fabric-workloads.jpeg"
+thumbnail: "assets/img/feature-img/Fabric-workloads.jpeg"
 published: true
 ---
 
@@ -53,8 +53,8 @@ One last feature that blew my mind: _the auto creation of diagrams from data_. C
 
 And it will give you either a bar or line chart option to automatically render the data as a chart:
 
-![bar chart](/assets/img/posts/Excalidraw/bar-chart.png){: .excalidraw-img }
-![line chart](/assets/img/posts/Excalidraw/line-chart.png){: .excalidraw-img }
+![bar chart](/assets/img/posts/Excalidraw/bar-chart.png)
+![line chart](/assets/img/posts/Excalidraw/line-chart.png)
 
 So far I've just talked about features of the free version of Excalidraw that I use in VS Code. It also offers a [paid version](https://plus.excalidraw.com/excalidraw-plus-vs-excalidraw) that gives you all the nice features you'd expect like cloud hosted drawings, collaborative editing, etc.
 
@@ -66,6 +66,6 @@ Ok, enough background, the Microsoft Fabric Architecture Icons!
 These are not stamped as _Microsoft Official_ so give me a break if colors and graphics are not spot on. Again, with the hand-drawn effect, they aren't intended to be. The library can be installed or tested via [this link](https://excalidraw.com/?addLibrary=https%3A%2F%2Flibraries.excalidraw.com%2Flibraries%2Fmwc360%2Fmicrosoft-fabric-architecture-icons.excalidrawlib) (no account needed!) or via browsing for libraries in the UI if you are already using Excalidraw.
 
 Here's a sample diagram:
-![alt text](/assets/img/posts/Excalidraw/diagram.png){: .excalidraw-img }
+![alt text](/assets/img/posts/Excalidraw/diagram.png)
 
 Excalidraw isn’t just a tool; it’s a game-changer for diagramming and documenting solutions. If you haven’t tried it yet, now’s the time. With my **Microsoft Fabric Shape Library**, you’ll have everything you need to start creating visually stunning, hand-drawn diagrams of your lakehouses built in Fabric. Enjoy!
