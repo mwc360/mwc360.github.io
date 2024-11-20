@@ -17,17 +17,20 @@ Having spent time in both web and graphic design at various points in my career,
 # What is Excalidraw and Why You Should Care
 Excalidraw is a whiteboarding tool designed for easily creating diagrams with a hand-drawn feel. It’s open-source, available in free or paid versions, and offers a lightweight experience that feels a bit like Lucidchart—but is more lighteight.
 
+Here's an example of an architecture diagram created with it:
+![alt text](/assets/img/posts/Excalidraw/diagram.png)
+
 ## Why should you care
 I could care less if you, the reader, end up using Excalidraw, but I think the underlying technology and concepts that make it unique are absolutely fascinating and worth a read.
 
-Excalidraw is built using the [Rough.js](https://roughjs.com/) library. If you’re curious, it’s completely worth taking a look at the landing page. To summarize, shapes are expressed using x and y coordinates for corners and curve points. Lines are rendered with a configurable level of randomness that mimics a hand-drawn effect.
+Excalidraw is built using the [Rough.js](https://roughjs.com/) JavaScript library. If you’re curious, it’s completely worth taking a look at the landing page. To summarize, shapes are expressed using x and y coordinates for corners and curve points. Lines are rendered to connect the coordinates with a configurable level of randomness that mimics a hand-drawn effect.
 
-Here’s the part I really appreciate: since no human can draw the exact same circle—or any other shape—twice, every instance of a shape in Excalidraw looks purposefully unique. By leveraging Rough.js, Excalidraw replicates this uniqueness. As a result, every shape you draw or use from a library looks like it was hand-drawn.
+Here’s the part I really appreciate: just like no human can draw an identical circle—or any other shape—twice, every instance of a shape in Excalidraw looks purposefully unique. By leveraging Rough.js, Excalidraw replicates this uniqueness. As a result, every shape you draw or use from a library looks like it was hand-drawn.
 
-### Isn't it Unprofessional?
-Doesn’t a hand-drawn look seem unprofessional? I’ll admit, it’s a stylistic choice, and it’s not for everyone. However, you can adjust the sloppiness of your shapes to suit your needs. Personally, I love it.
+### Can hand-drawn look professional?
+I’ll admit, it’s a stylistic choice, and it’s not for everyone. However, you can adjust the sloppiness of your shapes to suit your needs. Personally, I love it.
 
-The hand-drawn effect gives you creative freedom and removes the need for pixel-perfect diagrams. After all, who has time for that? If shapes naturally vary and every straight line has a predictably unique hand-drawn sloppiness, there’s no reason to spend hours snapping shapes to a grid to ensure every edge aligns perfectly. Instead, you can simply drag things into approximate positions, and the hand-drawn effect makes it look natural—and even expected.
+The hand-drawn effect gives you creative freedom and removes the expectation of pixel-perfect diagrams, after all, who has time for that? If shapes naturally vary and every straight line has a predictably unique hand-drawn sloppiness, there’s no reason to spend hours snapping shapes to a grid to ensure every edge aligns and is sized perfectly. Instead, you can simply drag things into approximate positions, and the hand-drawn effect makes it look natural—and even expected.
 
 ### Why Excalidraw is a Developer’s Dream
 Here’s what really sets Excalidraw apart: it’s a developer’s dream for diagramming.
@@ -64,8 +67,5 @@ Ok, enough background, the Microsoft Fabric Architecture Icons!
 ![Fabric Icons](/assets/img/posts/Excalidraw/shape-library.png)
 
 These are not stamped as _Microsoft Official_ so give me a break if colors and graphics are not spot on. Again, with the hand-drawn effect, they aren't intended to be. The library can be installed or tested via [this link](https://excalidraw.com/?addLibrary=https%3A%2F%2Flibraries.excalidraw.com%2Flibraries%2Fmwc360%2Fmicrosoft-fabric-architecture-icons.excalidrawlib) (no account needed!) or via browsing for libraries in the UI if you are already using Excalidraw.
-
-Here's a sample diagram:
-![alt text](/assets/img/posts/Excalidraw/diagram.png)
-
+-----
 Excalidraw isn’t just a tool; it’s a game-changer for diagramming and documenting solutions. If you haven’t tried it yet, now’s the time. With my **Microsoft Fabric Shape Library**, you’ll have everything you need to start creating visually stunning, hand-drawn diagrams of your lakehouses built in Fabric. Enjoy!
