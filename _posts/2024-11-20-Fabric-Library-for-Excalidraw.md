@@ -68,5 +68,6 @@ Ok, enough background, the Microsoft Fabric Architecture Icons!
 ![Fabric Icons](/assets/img/posts/Excalidraw/shape-library.png)
 
 These are not stamped as _Microsoft Official_ so give me a break if colors and graphics are not spot on. Again, with the hand-drawn effect, they aren't intended to be. The library can be installed or tested via [this link](https://excalidraw.com/?addLibrary=https%3A%2F%2Flibraries.excalidraw.com%2Flibraries%2Fmwc360%2Fmicrosoft-fabric-architecture-icons.excalidrawlib) (no account needed!) or via browsing for libraries in the UI if you are already using Excalidraw.
+
 -----
 Excalidraw isn’t just a tool; it’s a game-changer for diagramming and documenting solutions. If you haven’t tried it yet, now’s the time. With my **Microsoft Fabric Shape Library**, you’ll have everything you need to start creating visually stunning, hand-drawn diagrams of your lakehouses built in Fabric. Enjoy!
