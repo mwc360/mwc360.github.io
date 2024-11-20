@@ -44,6 +44,7 @@ When you export with scene data, the file includes all the shape coordinates and
 Have you ever saved a diagram as an image for a presentation, only to lose the source Visio file later? With Excalidraw, you don’t have to worry about that. If you include scene data when exporting your drawing, the file will always remain editable—as long as it isn’t flattened or compressed.
 
 One last feature that blew my mind: _the auto creation of diagrams from data_. Copy and paste the below data into Excalidraw:
+
 | Query  | Runtime (sec.) |
 |--------|----------------|
 | Query1 | 2              |
