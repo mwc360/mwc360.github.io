@@ -3,8 +3,8 @@ layout: post
 title: "Should You Ditch Spark for DuckDb or Polars?"
 tags: [Fabric, Spark, Lakehouse, Delta Lake, DuckDB, Polars]
 categories: Data-Engineering
-feature-img: "assets/img/feature-img/spark-duckdb-polars.png"
-thumbnail: "assets/img/feature-img/spark-duckdb-polars.png"
+feature-img: "assets/img/feature-img/spark-duckdb-polars-new.png"
+thumbnail: "assets/img/feature-img/spark-duckdb-polars-new.png"
 published: True
 ---
 
