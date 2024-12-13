@@ -43,11 +43,11 @@ Based on my experience consulting where I built many Lakehouse architectures, th
 
 ## Compute Configurations
 
-I elected to use the smallest possible compute size for each respective engine for both the 10GB and 100GB benchmarks. For DuckDB and Polars, using Python Notebooks, this was the default 2-vCore VM size. For Spark, the smallest possible compute size is a Single-Node 4-vCore Spark cluster (one single Small node VM). While the starting node size for Spark is 2x bigger, Fabric Single-Node clusters currently allocate 50% of cores to the driver, meaning the Spark job effectively only has 2 vCores available for typical Spark tasks.
+I elected to use the smallest possible compute size for each respective engine for both the 10GB and 100GB benchmarks. For DuckDB and Polars, using Python Notebooks, this was the default 2-vCore VM size. For Spark, the smallest possible compute size is a Single-Node 4-vCore Spark cluster (one single Small node VM). While the starting node size for Spark is 2x bigger, Fabric Single-Node clusters allocate 50% of cores to the driver, meaning the Spark job effectively only has 2 vCores available for typical Spark tasks.
 
-- The 10GB benchmark was run on 2-, 4-, and 8-vCore machines (all single-node configurations for Spark).
-- The 100GB benchmark was run on 2-, 4-, 8-, 16-, and 32-vCore compute configurations:
-  - For Spark, I used single-node configurations for 4- and 8-vCores.
+- The 10GB benchmark was run on 2, 4, and 8-vCore machines (all single-node configurations for Spark).
+- The 100GB benchmark was run on 2, 4, 8, 16, and 32-vCore compute configurations:
+  - For Spark, I used single-node configurations for 4 and 8-vCores.
   - For 16-vCores, I used a cluster with three 4-vCore worker nodes (4 driver vCores + 12 worker vCores).
   - For 32-vCores, I used a cluster with three 8-vCore worker nodes (8 driver vCores + 24 worker vCores).
 
@@ -174,7 +174,7 @@ Selecting a compute engine isn’t just about raw performance—it’s also abou
 
 - **OneLake Auth Setup**: _Note, this is not a critique of the engine itself; this is an evaluation of how natively the engine is integrated to authenticate to OneLake (or ADLS) in Fabric._  
     - _Spark_: Easy—you don't do anything; it just works.  
-    - _DuckDB_: In hopes of avoiding more complex auth methods, I tried to get token authentication to work. I was blocked on this for a few hours until Mim saved the day and noted that I needed to upgrade to DuckDB version 1.1.3 to use this newer auth method. Once I got this one line of code, everything seamlessly works.  
+    - _DuckDB_: In hopes of avoiding more complex auth methods, I tried to get token authentication to work. I was blocked on this for a few hours until my colleague Mim Djouallah (he has some great [blogs](https://datamonkeysite.com) on DuckDB) saved the day and noted that I needed to upgrade to DuckDB version 1.1.3 to use this newer auth method. Once I got this one line of code, everything seamlessly works.  
     - _Polars_: At first, I couldn't get any Polars authentication to work, then Sandeep Pawar showed me that `scan_delta()` works with ABFSS paths without needing to specify auth (since it gets a token from env vars). ABFSS does not currently work with `scan_parquet()`, `read_parquet()`, and other similar methods. David Browne, however, pointed out that while ABFSS does not work for all methods, relative file paths do work: `/lakehouse/default/Files` since it interacts with the OneLake directory via a mount point instead of directly making ABFSS endpoint calls. I got everything working eventually, but this was frustrating to say the least.
 
 
@@ -268,14 +268,14 @@ Here's a quick visual to summarize where I think each engine makes sense for mos
 1. **Migrating off of Spark is all hype**: I think the whole narrative that you should consider replacing your Spark workloads with DuckDB or Polars if your data is small is all hype. Yes, the engines have certainly earned their place at the table, however Spark is still reigns king for data processing any way you look at it. Sure, DuckDB and Polars can marginally outperform Spark at data processing at the 10GB scale on a 4-vCore (or smaller machine). I think the real story here is this:
     - **Each engine does something really well, so why not strategically mix and match them** to take advantage of where each truly shines. Use Spark for ELT work, use the Rust-based DeltaLake Library on Python for maintenance operations, and use DuckDB for interactive queries on your small datasets.
 
-2. **Now that I've spent more time working in both DuckDB and Polars I have tremendous respect for both**: While I prefer developing with Spark because I can move between SparkSQL and the DataFrame API as needed (without needing an abstraction library like Ibis), DuckDB's implementation of an in-memory SQL engine is extremely powerful and could have many use cases, particularly if you don't readily have access to use a Spark cluster.
+2. **I now have tremendous respect for Polars and DuckDB**: While I prefer developing with Spark because I can move between SparkSQL and the DataFrame API as needed (without needing an abstraction library like Ibis), DuckDB's implementation of an in-memory SQL engine is extremely powerful and could have many use cases, particularly if you don't readily have access to use a Spark cluster. 
 
-3. **Performance with Spark more consistently scales as compute scales**: I was extremely surprised to find that the performance of DuckDB and Polars was barely impacted by throwing more cores and memory at the benchmark. I'm sure there's some magic that could be worked to tune things and get more efficient compute utilization as cores are increased, but this just isn't something you normally need to consider with Spark.
+3. **Performance with Spark more consistently scales as compute scales**: I was extremely surprised to find that the performance of DuckDB and Polars was barely impacted by throwing more cores and memory at the benchmark. I'm sure there's some magic that could be worked to tune things and get more efficient compute utilization as cores are increased, but this just isn't something you often need to consider with Spark.
 
-4. **Memory spill matters!**: While you want to avoid it, Spark has the ability to spill memory onto disk. This is a critical capability for building robust data engineering pipelines. With both DuckDB and Polars, I ran into out-of-memory issues and neither engine supports spilling memory to disk to prevent the VM from being terminated.
+4. **Memory spill matters!**: While you want to avoid it, by default, Spark can spill memory to disk if needed, making it resilient to out-of-memory (OOM) issues. With DuckDB and Polars, I ran into OOM issues (100GB @ 2-vCore for DuckDB and 2, 4, and 8-vCore for Polars), and neither engine supports memory spilling to disk to prevent the memory exhaustion causing the VM to crash. While memory spill causes Spark to run slower when it happens, it at least greatly reduces the risk of job failures and allows flexibility in compute sizing.
 
-5. **Distributed computing has compute overhead, but this adds fault tolerance**: When the DuckDB and Polars VMs crashed due to OOM, that was it—no automatic restart, and no ability to resume from where it left off.
+5. **Distributed computing has compute overhead for task orchestration, but this adds fault tolerance**: When DuckDB and Polars VMs crashed due to OOM, that was it—no automatic restart or ability to resume from where it left off. The same would happen with single-node Spark clusters. However, with multi-node Spark clusters (which most production workloads use), fault tolerance is built in. If a worker node crashes for any reason, the driver node maintains the task lineage and processing state so another VM can replace the worker and resume from where the crashed VM left off, without data loss. This may lead to some in-process transformations being reprocessed, but the engine guarantees that data writes are only performed once. See my blog on [RDDs vs. DataFrames](https://milescole.dev/data-engineering/2024/10/10/RDDs-vs-DataFrames.html) for more details.
 
-6. **Consider your specific workload**: I designed my benchmark to reflect the typical Lakehouse architecture that I see all the time.
+6. **Consider your specific workload**: I designed my benchmark to reflect the typical lakehouse architecture that I see. Given that Spark has the biggest advantage for ELT-type data processing, if your use case involves infrequent small data loads (e.g., monthly), primarily interactive querying, or the necessity for an embedded in-memory database engine, DuckDB could be a great fit—especially for small data volumes.
 
 _Lastly, this is just another benchmark—do your own testing._
