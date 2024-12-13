@@ -90,10 +90,10 @@ To evaluate the cost of each, I prefer to look at an atomical job and compare th
 |------------------------------------------|---------------------------|--------------------------------------|-------------------------------|
 | Fabric Spark                             | $0.10                     | $0.09                                | $0.01                         |
 | Fabric Spark w/ Native Execution Engine  | $0.10                     | $0.09                                | $0.01                         |
-| Databricks Jobs Compute                  | $0.19                     | $0.09                                | $0.10                         |
-| Databricks Jobs Compute w/ Photon        | $0.34                     | $0.09                                | $0.25                         |
-| Databricks All-Purpose Compute           | $0.28                     | $0.09                                | $0.19                         |
-| Databricks All-Purpose Compute w/ Photon | $0.46                     | $0.09                                | $0.37                         |
+| Databricks Jobs Compute                  | $0.20                     | $0.09                                | $0.11                         |
+| Databricks Jobs Compute w/ Photon        | $0.37                     | $0.09                                | $0.28                         |
+| Databricks All-Purpose Compute           | $0.30                     | $0.09                                | $0.21                         |
+| Databricks All-Purpose Compute w/ Photon | $0.50                     | $0.09                                | $0.41                         |
 
 > ⚠️ These are point-in-time costs at the time this blog was written, rounded to the nearest hundreth of a cent, subject to change, and for illustration only. Neither Microsoft Fabric nor Databricks advertise costs per vCore hour, this is an attempt to standardize billing models for comparison purposes at the lowest compute grain, 1 vCore used for 1 hour.
 
