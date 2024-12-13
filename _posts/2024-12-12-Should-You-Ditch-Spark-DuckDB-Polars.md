@@ -118,7 +118,7 @@ Note: In all of these tests, Spark has access to fewer total vCores for data pro
 #### 100GB Results @ 16-vCores
 ![100GB Phase Results](/assets/img/posts/Engine-Benchmark/100g_phase_results.png)
 
-### Performance Isolations for Maintenance Operations
+---------------
 Since the performance difference for `VACUUM`, `OPTIMIZE`, and *Ad-hoc/Interactive Queries* tends to be overshadowed by longer-running ELT processes, here's an isolated view of the 10GB 4-vCore benchmark highlighting how much faster DuckDB and Polars (with Delta-rs) are for these workloads.
 
 ![10GB Phase Isolation](/assets/img/posts/Engine-Benchmark/10g_phase_result_isolation.png)
