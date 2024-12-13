@@ -77,7 +77,7 @@ Since sampling a large table as the source for an incremental load is not someth
 - At 4-vCores, DuckDB takes the win followed by Polars and lastly Spark. DuckDB was ~1.6x faster than Spark w/ NEE.
 - At 8-vCores, DuckDB finishes only slightly faster than Spark w/ NEE. Both Polars scenarios come last.
 
-![10GB Results](/assets/img/posts/Engine-Benchmark/10g_results.png)
+![10GB Results](/assets/img/posts/Engine-Benchmark/10g_results2.png)
 
 ### 100GB Scale
 - No engine completed the benchmark with only 2-vCores (Fabric doesn't offer a 2-vCore node size for Spark so this wasn't tested).
@@ -85,7 +85,7 @@ Since sampling a large table as the source for an incremental load is not someth
 - Spark w/ NEE was fastest at 8, 16, and 32-vCores.
 - Polars ran into out-of-memory (OOM) and wasn't able to finish tests at 4 or 8 vCores. Polars was much slower than DuckDB and Spark at 16 and 32-vCores.
 
-![100GB Results](/assets/img/posts/Engine-Benchmark/100g_results.png)
+![100GB Results](/assets/img/posts/Engine-Benchmark/100g_results2.png)
 
 Note: In all of these tests, Spark has access to fewer total vCores for data processing work yet was able to keep up and even exceed the others.
 
@@ -113,15 +113,15 @@ Note: In all of these tests, Spark has access to fewer total vCores for data pro
    - As expected, this is where engines like DuckDB and Polars provide mind-blowing, super-low-latency performance. Depending on the scale, DuckDB and Polars were between 2-6x faster than Spark w/ NEE.
 
 #### 10GB Results @ 4-vCores
-![10GB Phase Results](/assets/img/posts/Engine-Benchmark/10g_phase_results.png)
+![10GB Phase Results](/assets/img/posts/Engine-Benchmark/10g_phase_results2.png)
 
 #### 100GB Results @ 16-vCores
-![100GB Phase Results](/assets/img/posts/Engine-Benchmark/100g_phase_results.png)
+![100GB Phase Results](/assets/img/posts/Engine-Benchmark/100g_phase_results2.png)
 
 ---------------
 Since the performance difference for `VACUUM`, `OPTIMIZE`, and *Ad-hoc/Interactive Queries* tends to be overshadowed by longer-running ELT processes, here's an isolated view of the 10GB 4-vCore benchmark highlighting how much faster DuckDB and Polars (with Delta-rs) are for these workloads.
 
-![10GB Phase Isolation](/assets/img/posts/Engine-Benchmark/10g_phase_result_isolation.png)
+![10GB Phase Isolation](/assets/img/posts/Engine-Benchmark/10g_phase_result_isolation2.png)
 
 ---
 
@@ -133,7 +133,7 @@ Since I logged the vCores used for each run, translating to CU seconds and then 
 - Both DuckDB and *Polars w/ sample mod* were about 50% cheaper compared to Spark.
 - With 8-vCores, Spark w/ NEE and DuckDB have very close job costs ($0.019 vs $0.017).
 
-![10GB Cost Results](/assets/img/posts/Engine-Benchmark/10g_cost_results.png)
+![10GB Cost Results](/assets/img/posts/Engine-Benchmark/10g_cost_results2.png)
 
 ### 100GB Cost
 
@@ -144,7 +144,7 @@ Since I logged the vCores used for each run, translating to CU seconds and then 
     - *DuckDB*: Compared to the 4-vCore run, DuckDB w/ 32-vCores was only 2.4x faster while the job costs 3.5x more.
     - *Polars*: Compared to the 16-vCore run, Polars w/ 32-vCores was only ~1.1x faster while costing ~1.9x more.
 
-![100GB Cost Results](/assets/img/posts/Engine-Benchmark/100g_cost_results.png)
+![100GB Cost Results](/assets/img/posts/Engine-Benchmark/100g_cost_results2.png)
 
 ---
 
