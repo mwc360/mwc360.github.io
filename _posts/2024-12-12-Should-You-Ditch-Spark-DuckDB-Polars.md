@@ -45,20 +45,28 @@ Based on my experience consulting where I built many Lakehouse architectures, th
 
 I elected to use the smallest possible compute size for each respective engine for both the 10GB and 100GB benchmarks. For DuckDB and Polars, using Python Notebooks, this was the default 2-vCore VM size. For Spark, the smallest possible compute size is a Single-Node 4-vCore Spark cluster (one single Small node VM). While the starting node size for Spark is 2x bigger, Fabric Single-Node clusters allocate 50% of cores to the driver, meaning the Spark job effectively only has 2 vCores available for typical Spark tasks.
 
-- The 10GB benchmark was run on 2, 4, and 8-vCore machines (all single-node configurations for Spark).
+- The 10GB benchmark was run on 2, 4, and 8-vCore machines (all single-node configurations for Spark and single-VMs running Python for DuckDB and Polars).
 - The 100GB benchmark was run on 2, 4, 8, 16, and 32-vCore compute configurations:
   - For Spark, I used single-node configurations for 4 and 8-vCores.
   - For 16-vCores, I used a cluster with three 4-vCore worker nodes (4 driver vCores + 12 worker vCores).
   - For 32-vCores, I used a cluster with three 8-vCore worker nodes (8 driver vCores + 24 worker vCores).
+  - For DuckDB and Polars, single-VMs running Python were used.
 
 For Spark, I used the Native Execution Engine (NEE), as this is a native C++ vectorized engine that makes vanilla Spark faster. There's no additional CU rate multiplier, so there's no reason not to use it, particularly when trying to optimize for both cost and performance.
+
+### Engine Versions
+| **Engine**   | Version                                   |
+|--------------|-------------------------------------------|
+| **Spark**    | Fabric Runtime 1.3 (Spark 3.5, Delta 3.2) |
+| **DuckDB**   | 1.1.3                              |
+| **Polars**   | 1.6.0                              |
 
 ### Delta Lake Writer Configs
 
 I used the best practice Delta Lake writer configs available in each engine.
 
-- For the Spark tests, I enabled deletion vectors. See my [blog](https://milescole.dev/data-engineering/2024/11/04/Deletion-Vectors.html) on this topic to understand their value.
-- For both DuckDB and Polars, since they depend on the Rust-based [DeltaLake Python library](https://delta-io.github.io/delta-rs/), which does not support deletion vectors, this setting could not be enabled. However, at this small scale, deletion vectors only have a marginal impact on performance, so this does not skew the results in any meaningful way.
+- For the Spark tests, I enabled deletion vectors. See my [blog](https://milescole.dev/data-engineering/2024/11/04/Deletion-Vectors.html) on this topic to understand the value proposition.
+- For both DuckDB and Polars, since they depend on the Rust-based [DeltaLake Python library](https://delta-io.github.io/delta-rs/) for writes, which does not support deletion vectors, this setting could not be enabled. However, at this small scale, deletion vectors would only have a marginal impact on performance, so this does not skew the results in any meaningful way.
 
 > The Native Execution Engine (NEE) doesn't yet natively support deletion vectors. When DVs are included, it results in mixed execution query plans with fallback to Spark row-based execution. Depending on the workload, DVs can still improve performance where merge-on-read results in less data being written. In this benchmark, DVs resulted in NEE completing ~3% faster.
 
@@ -154,18 +162,22 @@ Selecting a compute engine isn’t just about raw performance—it’s also abou
 
 ### Key Features Impacting Development Cost
 
-| **Engine** | SQL | DataFrame API | Native Delta Reader | Native Delta Writer | Local Development | Live Monitoring Capabilities | OneLake Auth Setup |
-|------------|-----|---------------|---------------------|---------------------|-------------------|------------------------------|--------------------|
-| **Spark**  | Yes | Yes           | Yes                 | Yes                 | Poor              | Good but w/ a steep learning curve | Excellent    |
-| **DuckDB** | Yes | No            | Yes                 | No                  | Great             | Poor                         | Ok                 |
-| **Polars** | No  | Yes           | Yes                 | Yes                 | Great             | Very Poor                    | Partial            |
+| **Engine** | SQL Interface | DataFrame API | Native Delta Reader      | Native Delta Writer  | Local Development | Live Monitoring Capabilities | OneLake Auth Setup |
+|------------|---------------|---------------|--------------------------|----------------------|-------------------|------------------------------|--------------------|
+| **Spark**  | Yes           | Yes           | Yes                      | Yes                  | Poor              | Good but w/ a steep learning curve | Excellent    |
+| **DuckDB** | Yes           | Yes††         | Yes _(via Delta Kernel)_ | No                   | Great             | Poor                         | Ok                 |
+| **Polars** | Yes†          | Yes           | Yes                      | Yes _(via Delta-rs)_ | Great             | Very Poor                    | Partial            |
+
+> _† Corrected 12/16/24, Polars does support a SQL interface. This has been decently mature since 0.17.0 (June 2023)._
+
+> _†† Corrected 12/16/24: DuckDB supports a DataFrame-like API through its [Relational API](https://duckdb.org/docs/api/python/relational_api) and [Expression API](https://duckdb.org/docs/api/python/expression), introduced in version 0.7.0 (August 2022). Additionally, DuckDB is developing an experimental [Spark API](https://duckdb.org/docs/api/python/spark_api), enabling Spark users to run workloads using the DuckDB engine while leveraging the familiar Spark DataFrame API. This feature facilitates seamless migration of lightweight Spark jobs to DuckDB with near-zero code changes, while also allowing users to start with the DuckDB Spark API and transition to the Spark engine as data scales beyond DuckDB's optimal range._
 
 #### My Analysis  
-- **SQL and DataFrame API**: While you can use a DataFrame abstraction library like Ibis or SQLFrame, Spark is the only engine I benchmarked that natively supports both SQL and a DataFrame API. Having both presents tremendous flexibility in building data engineering pipelines. Most Spark developers I know heavily use both the SparkSQL and the DataFrame API.  
+- **SQL and DataFrame API**: ~~While you can use a DataFrame abstraction library like Ibis or SQLFrame, Spark is the only engine I benchmarked that natively supports both SQL and a DataFrame API. Having both presents tremendous flexibility in building data engineering pipelines. Most Spark developers I know heavily use both the SparkSQL and the DataFrame API.~~ _Corrected 12/16/24._ All engines support both a SQL interface and a DataFrame API, enabling programmatic chaining of transformations that can be executed via lazy evaluation. Spark offers the most robust capabilities through SparkSQL and its DataFrame API. However, Polars (DataFrame-first) and DuckDB (SQL-first) are both making significant progress in enhancing their secondary query construction models. Notably, DuckDB is actively developing a [Spark API](https://duckdb.org/docs/api/python/spark_api), allowing Spark users to leverage DuckDB with familiar syntax while providing a seamless path (_fingers crossed, this is still experimental_) to switch to Spark’s distributed compute engine as data volumes scale.
 
 - **Native Delta Writer**:  
     - _DuckDB_ only supports writing to Delta tables by converting DuckDB DataFrames to another memory format and then using the DeltaLake Python library to perform the write operation. This should be natively supported in time, but today this experience of needing to convert DataFrames and use another writer was quite surprising and took some time to figure out the most optimal way to do it. I first started by converting DuckDB DataFrames to Arrow Tables via `arrow()` and ran into OOM issues below 16-vCore. Mim then jumped in and helped me understand that I should be using `record_batch()` to make this a streaming Arrow DataFrame so that the data gets processed in batches and doesn't require the full dataset to fit into memory.  
-    - _Polars_ supports a native Delta Lake writer through Delta-rs.  
+    - _Polars_ supports a native Delta Lake writer via Delta-rs bindings.  
     - Since both DuckDB and Polars are dependent on the Delta-rs-based DeltaLake Python library for full-featured writes, both are limited by features that have yet to be implemented in Delta-rs, namely deletion vectors. This feature request was reported almost two years ago and is still [open](https://github.com/delta-io/delta-rs/issues/1094). Since deletion vectors are not supported, this means that while DuckDB can read from DV-enabled tables, since both DuckDB and Polars are dependent on Delta-rs, neither can write to such tables. See my post on [deletion vectors](https://milescole.dev/data-engineering/2024/11/04/Deletion-Vectors.html) to understand the importance of merge-on-read.  
 
 - **Local Development**: DuckDB and Polars both win in the 'local development' category as the engines are super lightweight and can be run on a local computer with a simple PIP command. Spark is more complex, as it's not possible to run the Fabric Spark Runtime locally. Therefore, you must connect remotely to a Fabric Spark cluster in VS Code (local or web) to get Fabric Spark-specific features. This experience is getting better every day but is not nearly as simple as running the actual engine locally.  
@@ -202,13 +214,13 @@ Selecting a compute engine isn’t just about raw performance—it’s also abou
 - **Workflow Integration / Implementation Speed**: I'd define this category as how well the engine works to fit into a typical data engineering workflow. How well is it integrated into the platform? How do features of the engine impact how fast you can get work done, and do the features work with typical data engineering patterns? How complete is the engine itself, or does it feel more like a bolt-on capability?
     - **_Spark_**: I live and breathe Spark, so the actual implementation was fast for me. For the average user, I'd still suggest it can be pretty fast since things like auth, evaluation, and both reader and writer capabilities are extremely robust. Spark is a standalone, full-featured data processing engine. AL/ML, Graph, structured, semi-structured—Spark can do it all at any data size.
     - **_DuckDB_**: Ok. Could I swap some DuckDB into normal workflows? Certainly. Would I take additional time to refactor things since DuckDB doesn't natively support Hive Meta Store and in-memory database concepts are fundamentally different? Yes. The necessity to pass DataFrames from DuckDB to the DeltaLake Writer and so forth is not hard when you get used to it, but the user experience of having to do this isn't great and does impact the time to implement solutions.
-    - **_Polars_**: Ok. The positive here is that Polars offers a native Delta Lake writer method built on Delta-rs, which provides full-featured writes (including a merge operator), and authentication for OneLake was out-of-the-box—_for Delta tables_. The downside is that Polars offers no SQL dialect, so you are stuck with learning a new DataFrame API and learning the nuances of having tasks evaluated with potentially both eager and lazy evaluation in the same DataFrame. This adds additional work to figure out the most optimal way to code things. That said, like DuckDB, Polars is blazing fast for querying Delta tables, and this is a big positive. I was about to give Polars an _OK+_ rating but will leave off the plus since I could never get Polars to complete the tests below 16-vCores, even after successfully swapping in DuckDB for the data sampling and unsuccessfully trying to improve write performance for the large table by messing with write batch sizes.
+    - **_Polars_**: Ok. The positive here is that Polars offers a native Delta Lake writer method built on Delta-rs, which provides full-featured writes (including a merge operator), and authentication for OneLake was out-of-the-box—_for Delta tables_. The downside is that users need to learn the nuances of having tasks evaluated with potentially both eager and lazy evaluation in the same DataFrame. This adds additional work to figure out the most optimal way to code things. That said, like DuckDB, Polars is blazing fast for querying Delta tables, and this is a big positive. I was about to give Polars an _OK+_ rating but will leave off the plus since I could never get Polars to complete the tests below 16-vCores, even after successfully swapping in DuckDB for the data sampling and unsuccessfully trying to improve write performance for the large table by messing with write batch sizes.
 
 I'd easily give Spark the win in this category.
 
 ## Engine Maturity and OSS Table Format Compatibility
 
-As mentioned, the Delta-rs library which Polars is dependent on for reading Delta (DuckDB uses the Delta Kernel) and both Polars and DuckDB are dependent on for writing to Delta does not support deletion vectors. Deletion vectors are a general best practice setting for Delta tables. If you want to use Polars or DuckDB to write to Delta tables, you need to weigh the impact of not being able to use deletion vectors and potentially other newer Delta features. If your data is super small, this likely doesn't matter, but as your data size increases, the potential impact also increases.
+With Polars, there's no support for deletion vectors as it's native Delta reader doesn't yet support it and it's writer uses Delta-rs bindings which don't yet support it as well. While DuckDB does support reading from tables with deletion vectors enabled, via using Delta Kernel bindings, it's dependency on Delta-rs for writing (after converting the DuckDB DataFrame to Arrow format) also blocks the ability to write to tables with deletion vectors enabled. Deletion vectors are a general best practice setting for Delta tables. If you want to use Polars or DuckDB to read or write to Delta tables, you need to weigh the impact of potential Delta compatibility issues which may block the ability to use newer/optimal Delta features. If your data is super small, not being able to use deletion vectors will have very minimal impact, but as your data volume increases, the potential impact can be significant.
 
 In terms of engine maturity, Polars and DuckDB are both relatively new. In contrast, Spark has been around for over a decade, and we are now approaching GA of the 4th major release. Spark performance continues to improve, Spark capabilities are continuing to expand, and Spark is going nowhere. Just consider some of the upcoming Spark 4.0 features:
 
@@ -248,10 +260,14 @@ Any and all "data processing." Think E.L.T., the steps to extract, load, and tra
 
 - Interactive and ad-hoc queries
 - Data exploration
+- Data processing microservices
 
 ## Primary Polars Use Cases
 
-Honestly, with DuckDB generally outperforming Polars, with zero tuning effort, and providing a rich SQL surface area, I probably wouldn't use Polars unless there was something that DuckDB didn't support and was significantly faster than Spark.
+Honestly, with DuckDB generally outperforming Polars, with zero tuning effort, and less OneLake authentication issues, I'd probably start with DuckDB but certainly wouldn't rule Polars out, particularly if the use case doesn't require robust SQL capabilities (one area where DuckDB excels). Polars did win the 10GB 2-vCore test, I'd still give it a fair shot at the same use cases as DuckDB:
+- Interactive and ad-hoc queries
+- Data exploration
+- Data processing microservices
 
 ## Primary DeltaLake Python Library Use Cases
 
@@ -263,16 +279,17 @@ Here's a quick visual to summarize where I think each engine makes sense for mos
 
 ![alt text](/assets/img/posts/Engine-Benchmark/engine-map.excalidraw.png)
 
+_Updated 12/16/24, I added Polars to the image above since it does support a basic SQL interface, thus making it a good candidate for ad-hoc analysis._
 # My Key Takeaways
 
 1. **Migrating off of Spark is all hype**: I think the whole narrative that you should consider replacing your Spark workloads with DuckDB or Polars if your data is small is all hype. Yes, the engines have certainly earned their place at the table, however Spark is still reigns king for data processing any way you look at it. Sure, DuckDB and Polars can marginally outperform Spark at data processing at the 10GB scale on a 4-vCore (or smaller machine). I think the real story here is this:
-    - **Each engine does something really well, so why not strategically mix and match them** to take advantage of where each truly shines. Use Spark for ELT work, use the Rust-based DeltaLake Library on Python for maintenance operations, and use DuckDB for interactive queries on your small datasets.
+    - **Each engine does something really well, so why not strategically mix and match them** to take advantage of where each truly shines. Use Spark for ELT work, use the Rust-based DeltaLake Library on Python for maintenance operations, and use DuckDB or Polars for interactive queries on your small datasets.
 
-2. **I now have tremendous respect for Polars and DuckDB**: While I prefer developing with Spark because I can move between SparkSQL and the DataFrame API as needed (without needing an abstraction library like Ibis), DuckDB's implementation of an in-memory SQL engine is extremely powerful and could have many use cases, particularly if you don't readily have access to use a Spark cluster. 
+2. **I now have tremendous respect for Polars and DuckDB**: While I prefer developing with Spark because I can seemlessly move between the extremely robust SparkSQL and the DataFrame API as needed, all while being able to scale to process massive amounts of data, DuckDB's implementation of an in-memory SQL engine is remarkably powerful and supports many use cases—especially when access to a Spark cluster is not readily available. Polars, the newestkid on the block, is rapidly maturing. If its current capabilities are any indication, Polars will undoubtedly make the "which engine should I use" question even more challenging. DuckDB's investment in developing a Spark API shows that they take Spark seriously and suggests they believe they can capture some of Spark's market share by simplifying migration to DuckDB and making Spark devs feel at home. While this is likely to happen, I believe native vectorized engines that integrate with Spark and eliminate JVM inefficiencies—such as the Native Execution Engine (Velox & Gluten) in Microsoft Fabric and Photon in Databricks—will continue to make staying within the Spark ecosystem compelling, even for small-data use cases.
 
 3. **Performance with Spark more consistently scales as compute scales**: I was extremely surprised to find that the performance of DuckDB and Polars was barely impacted by throwing more cores and memory at the benchmark. I'm sure there's some magic that could be worked to tune things and get more efficient compute utilization as cores are increased, but this just isn't something you often need to consider with Spark.
 
-4. **Memory spill matters!**: While you want to avoid it, by default, Spark can spill memory to disk if needed, making it resilient to out-of-memory (OOM) issues. With DuckDB and Polars, I ran into OOM issues (100GB @ 2-vCore for DuckDB and 2, 4, and 8-vCore for Polars), and neither engine supports memory spilling to disk to prevent the memory exhaustion causing the VM to crash. While memory spill causes Spark to run slower when it happens, it at least greatly reduces the risk of job failures and allows flexibility in compute sizing.
+4. **Memory spill matters!**: While you want to avoid it, by default, Spark can spill memory to disk if needed, making it resilient to out-of-memory (OOM) issues. With DuckDB and Polars, I ran into OOM issues (100GB @ 2-vCore for DuckDB and 2, 4, and 8-vCore for Polars) ~~, and neither engine supports memory spilling to disk to prevent the memory exhaustion causing the VM to crash.~~ _Corrected 12/16/24: Both Polars and DuckDB support memory spill to disc, that said, with both having OOM issues I'm guessing that something here is not as efficient (or out-of-the-box) as Spark. I need to do some more triaging here._ While memory spill causes Spark to run slower when it happens, it at least greatly reduces the risk of job failures and allows flexibility in compute sizing.
 
 5. **Distributed computing has compute overhead for task orchestration, but this adds fault tolerance**: When DuckDB and Polars VMs crashed due to OOM, that was it—no automatic restart or ability to resume from where it left off. The same would happen with single-node Spark clusters. However, with multi-node Spark clusters (which most production workloads use), fault tolerance is built in. If a worker node crashes for any reason, the driver node maintains the task lineage and processing state so another VM can replace the worker and resume from where the crashed VM left off, without data loss. This may lead to some in-process transformations being reprocessed, but the engine guarantees that data writes are only performed once. See my blog on [RDDs vs. DataFrames](https://milescole.dev/data-engineering/2024/10/10/RDDs-vs-DataFrames.html) for more details.
 
