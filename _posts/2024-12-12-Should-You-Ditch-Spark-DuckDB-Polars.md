@@ -55,11 +55,12 @@ I elected to use the smallest possible compute size for each respective engine f
 For Spark, I used the Native Execution Engine (NEE), as this is a native C++ vectorized engine that makes vanilla Spark faster. There's no additional CU rate multiplier, so there's no reason not to use it, particularly when trying to optimize for both cost and performance.
 
 ### Engine Versions
+
 | **Engine**   | Version                                   |
 |--------------|-------------------------------------------|
 | **Spark**    | Fabric Runtime 1.3 (Spark 3.5, Delta 3.2) |
-| **DuckDB**   | 1.1.3                              |
-| **Polars**   | 1.6.0                              |
+| **DuckDB**   | 1.1.3                                     |
+| **Polars**   | 1.6.0                                     |
 
 ### Delta Lake Writer Configs
 
