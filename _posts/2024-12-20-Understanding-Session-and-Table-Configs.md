@@ -72,11 +72,9 @@ The following order determines which configuration is applied when there’s a c
     SHOW TBLPROPERTIES dbo.table_with_properties
     ```
     
-    #### Why the deliniation between persistent and default?:
-
-    **Persistent Table Properties**: Designed for features that are core to table behavior and must persist across sessions and jobs.
-
-    **Configurable Table Properties**: Offer runtime flexibility based on workload types, allowing  configurations to be customized for specific Spark jobs.
+    **Why the deliniation between persistent and default?**:
+    - **Persistent Table Properties**: Designed for features that are core to table behavior and must persist across sessions and jobs.
+    - **Transient Table Properties**: Offer runtime flexibility based on workload types, allowing configurations to be customized for specific Spark jobs.
 
 ### Why Do Multiple Scope Exist?
 - **Flexibility**: Different workloads require different optimization strategies, and multiple scopes allow fine-tuning.
