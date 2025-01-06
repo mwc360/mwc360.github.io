@@ -88,11 +88,11 @@ The following order determines which configuration is applied when there’s a c
 | Optimize Write         | spark.databricks.delta.optimizeWrite.enabled                     | option('optimizeWrite', 'true')          | delta.autoOptimize.optimizeWrite |
 | Auto Compaction        | spark.databricks.delta.autoCompact.enabled                       | option('autoCompact', 'true')            | delta.autoOptimize.autoCompact   |
 | Change Data Feed (CDC) | spark.databricks.delta.properties.defaults.enableChangeDataFeed  |                                          | delta.enableChangeDataFeed       |
-| Schema Auto-Merge      | spark.databricks.delta.schema.autoMerge.enabled                  |                                          | delta.schema.autoMerge.enabled   |
+| Schema Auto-Merge      | spark.databricks.delta.schema.autoMerge.enabled                  | option('mergeSchema', 'true')            | delta.schema.autoMerge.enabled   |
 | Log Retention Duration | spark.databricks.delta.logRetentionDuration                      |                                          | delta.logRetentionDuration       |
 | Checkpoint Interval    | spark.databricks.delta.checkpointInterval                        |                                          | delta.checkpointInterval         |
 | Deletion Vectors       | spark.databricks.delta.properties.defaults.enableDeletionVectors |                                          | delta.enableDeletionVectors      |
-| V-Order                | spark.sql.parquet.vorder.enabled                                 | option('parquet.vorder.enabled', 'true') | delta.parquet.vorder.enabled           |
+| V-Order                | spark.sql.parquet.vorder.[enabled/default]                       | option('parquet.vorder.enabled', 'true') | delta.parquet.vorder.enabled     |
 
 You'll notice the DataFrameWriter options only eixsts for transient writer settings.
 
@@ -128,23 +128,27 @@ spark.conf.set('spark.sql.parquet.vorder.enabled', 'true')
 df.write.option('parquet.vorder.enabled', 'false').saveAsTable('dbo.vorder_is_enabled')
 ```
 
-To allow for defining V-Order for individual tables on an _opt-in_ basis we have to unset a two session-level configs so that they don't take precedence over the DataFrameWriter, or better yet, the table property:
+To allow for defining V-Order for individual tables on an _opt-in_ basis, Runtime 1.2 required unsetting the `spark.sql.parquet.vorder.enabled` session-level config, however Runtime 1.3 uses `spark.sql.parquet.vorder.default` instead which no longer requires unsetting the property just to have table level control. The `spark.sql.parquet.vorder.default` session-level config enables V-Order as a DataFrameWriter option if it is not already set.
 ```python
-spark.conf.unset('spark.sql.parquet.vorder.enabled') # session-level config | priority #1
-spark.conf.unset('spark.sql.parquet.vorder.default') # session-level config which sets V-Order as default for the DataFrameWriter option | priority #2, takes precedence if the prior config is unset and the DataFrameWriter option is not defined
+spark.conf.get('spark.sql.parquet.vorder.enabled') # NONE | session-level config which overrides DataFrameWriter and Table Properties | priority #1
+spark.conf.get('spark.sql.parquet.vorder.default') # TRUE | session-level config which sets V-Order as default for the DataFrameWriter option | priority #2, takes precedence if the prior config is unset and the DataFrameWriter option is not defined
 
 # SCENARIO 1
-df.write.saveAsTable('dbo.vorder_is_not_enabled') # NOT ENABLED since we didn't define the DataFrameWriter option and the session-level configs are unset
+df.write.saveAsTable('dbo.vorder_is_enabled') # ENABLED since the DataFrameWriter will default to enabling V-Order
 
 # SCENARIO 2
-df.write.option('parquet.vorder.enabled', 'true').saveAsTable('dbo.vorder_is_enabled') # ENABLED since we specified the DataFrameWriter option as enabled
+spark.conf.unset('spark.sql.parquet.vorder.default')
+df.write.saveAsTable('dbo.vorder_is_not_enabled') # NOT ENABLED since we didn't define the DataFrameWriter option and the session-level default was unset
 
 # SCENARIO 3
+df.write.option('parquet.vorder.enabled', 'true').saveAsTable('dbo.vorder_is_enabled2') # ENABLED since we specified the DataFrameWriter option as enabled
+
+# SCENARIO 4
 spark.sql("""
     CREATE TABLE dbo.vorder_is_enabled
     TBLPROPERTIES ('delta.parquet.vorder.enabled' = 'true')
     AS SELECT 1 as c1
-""") # ENABLED since we specified the table property and higher precedence configs are not defined
+""") # ENABLED since we specified the table property and the session-level config `spark.sql.parquet.vorder.enabled` defaults to being unset
 ```
 
 ## Best Practices for Config Management
@@ -207,12 +211,13 @@ In this scenario, since the Delta table itself has the transient `delta.autoOpti
 - **Best Practice**: Always set critical features like `delta.autoOptimize.autoCompact` or `delta.autoOptimize.optimizeWrite` as table properties to avoid reliance on consistent session configurations across various writers.
 
 **Minimize Session-Level Configs**
-- **Why**: Session-level configs only apply to the current Spark session and can cause unexpected results if forgotten or if other writers use different session configs.
-- **Best Practice**: Use session-level configs only for temporary testing or configurations that should be applied platform-wide.
+- **Why**: Session-level configs only apply to the current Spark session and can cause unexpected results if forgotten or if other writers use different session configs in combindation with transient table properties.
+- **Best Practice**: Use session-level configs only for temporary testing or persistent configurations that should be applied platform-wide.
 
 **Use DataFrameWriter Options Selectively**
 - **Why**: DataFrameWriter options only apply to the current write operation and do not persist across sessions.
-- **Best Practice**: Only use DataFrameWriter options if the feature supports automatically enabling the corresponding table property (e.g., parquet.vorder.enabled for V-Order). Otherwise, restrict their use to testing or ad-hoc writes, where applying the same feature for future writes does not matter.
+- **Best Practice**: Only use DataFrameWriter options if the feature supports automatically enabling the corresponding table property (e.g., delta.parquet.vorder.enabled for V-Order). Otherwise, restrict their use to testing or ad-hoc writes, where applying the same feature for future writes does not matter.
+
 
 ## Retrieving Active Configs
 Given that it is important to understand what session-level configurations are set and what the active values are, the below function can be extremely handy as it will return a dictionary of key-value pairs which can easily be viewed in whole or queried. Kuddos to this [Stack Overflow Post](https://stackoverflow.com/questions/76986516/how-to-retrieve-all-spark-session-config-variables) for the source code.
