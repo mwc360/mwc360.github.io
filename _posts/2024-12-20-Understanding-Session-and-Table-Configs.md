@@ -51,7 +51,7 @@ The following order determines which configuration is applied when there’s a c
     1. **Transient**: Features that apply by default if a session or DataFrameWriter setting does not override it.
 
         _Examples_:
-        - parquet.vorder.enabled
+        - delta.parquet.vorder.enabled
         - delta.autoOptimize.optimizeWrite
         - delta.autoOptimize.autoCompact
         - delta.schema.autoMerge.enabled
@@ -92,7 +92,7 @@ The following order determines which configuration is applied when there’s a c
 | Log Retention Duration | spark.databricks.delta.logRetentionDuration                      |                                          | delta.logRetentionDuration       |
 | Checkpoint Interval    | spark.databricks.delta.checkpointInterval                        |                                          | delta.checkpointInterval         |
 | Deletion Vectors       | spark.databricks.delta.properties.defaults.enableDeletionVectors |                                          | delta.enableDeletionVectors      |
-| V-Order                | spark.sql.parquet.vorder.enabled                                 | option('parquet.vorder.enabled', 'true') | parquet.vorder.enabled           |
+| V-Order                | spark.sql.parquet.vorder.enabled                                 | option('parquet.vorder.enabled', 'true') | delta.parquet.vorder.enabled           |
 
 You'll notice the DataFrameWriter options only eixsts for transient writer settings.
 
@@ -142,7 +142,7 @@ df.write.option('parquet.vorder.enabled', 'true').saveAsTable('dbo.vorder_is_ena
 # SCENARIO 3
 spark.sql("""
     CREATE TABLE dbo.vorder_is_enabled
-    TBLPROPERTIES ('parquet.vorder.enabled' = 'true')
+    TBLPROPERTIES ('delta.parquet.vorder.enabled' = 'true')
     AS SELECT 1 as c1
 """) # ENABLED since we specified the table property and higher precedence configs are not defined
 ```
