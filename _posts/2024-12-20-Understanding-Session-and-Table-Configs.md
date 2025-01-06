@@ -224,7 +224,7 @@ Given that it is important to understand what session-level configurations are s
 
 ```python
 def get_spark_session_configs() -> dict:
-    scala_map = self.spark.conf._jconf.getAll()
+    scala_map = spark.conf._jconf.getAll()
     spark_conf_dict = {}
 
     iterator = scala_map.iterator()
