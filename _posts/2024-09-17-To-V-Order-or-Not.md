@@ -115,18 +115,28 @@ What about non-Lakehouse-centric patterns? For use cases where the SQL Endpoint 
 > _* Optimized Write is beneficial for partitioned Delta tables._
 
 # How to Enable / Disable V-Order
-V-Order is a Spark session configuration that determines whether a table written to by the Spark session is V-Ordered by default.
+V-Order can either be set as a Spark configuration in your environment or set inline as part of your Notebook or Spark Job Definition. My recommendation is to opt-in to enabling V-Order at the table property level. See [my blog](https://milescole.dev/data-engineering/2024/12/20/Understanding-Session-and-Table-Configs.html) that explains the different between various different configuration scopes.
 
-This can either be set as a Spark configuration in your environment or set inline as part of your Notebook or Spark Job Definition:
+### Enable for all write operations within a session
+_In Fabric Spark Runtime 1.3 this defaults to being unset. Runtime 1.2 defaults as being enabled. This setting will override all other scopes._
 ```python
 spark.conf.set("spark.sql.parquet.vorder.enabled", "<true/false>")
 ```
 
-If disabled at the session level, it can be selectively enabled as a table writer option:
+### Enable by default for all write operations within a session
+_This setting differs from the prior config as it only applies if the DataFrameWriter or Delta table does not specify whether or not V-Order is enabled. Fabric Spark Runtime 1.3 defaults with this setting enabled._
+```python
+spark.conf.set("spark.sql.parquet.vorder.default", "<true/false>")
+```
+
+### Enable via the DataFrameWriter
+Assuming `spark.sql.parquet.vorder.enabled` is unset at the session-level, you can selectively enabled V-Order on tables via the DataFrameWriter option. By default, when this is used it will automatically enable the Delta table property `delta.parquet.vorder.enabled` so that other writers and sessions maintain the V-Order optimization.
 ```python
 df.write.option("parquet.vorder.enabled ","true").saveAsTable("table1")
 ```
-Or via SparkSQL:
+
+### Enable via Delta Table Properties
+This is my recommended method as the table is intentionally created with the setting on an opt-in basis and encourages other writers to respect writing with the defined V-Order state.
 ```sql
 CREATE TABLE table1 (c1 INT) 
     TBLPROPERTIES("delta.parquet.vorder.enabled" = "true");
