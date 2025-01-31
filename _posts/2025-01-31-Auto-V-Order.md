@@ -25,6 +25,7 @@ This will be a short blog—let’s get straight to the concept, the source code
     ```
    You should ensure that all your data engineering jobs either unset this session config or explicitly set it to `false` in your environment configurations.
 
+
 2. **Remove the V-Order Table Property from Existing Tables**  
    This step is optional but useful if you have multiple tables with V-Order enabled that are not used in Direct Lake Semantic Models. While I may provide a bulk removal script later, for now, you can manually list your tables and run an `ALTER TABLE` command to remove the property.  
     ```sql
@@ -32,8 +33,10 @@ This will be a short blog—let’s get straight to the concept, the source code
     ```
    This doesn’t rewrite existing data to remove V-Order—it simply removes the feature from the table properties. Future writes will not use V-Order as long as the session config from the previous step remains unset or disabled.
 
+
 3. **Schedule an Automatic V-Order Maintenance Script**  
    The script provided below should be scheduled (e.g., weekly) to automatically update tables used in Direct Lake Semantic Models, selectively enabling the V-Order Delta table property only for relevant tables.
+
 
 ---
 
@@ -44,6 +47,7 @@ While this functionality may eventually be packaged into a formal Python library
 
 > **Why do I need to provide a list of workspaces?**  
 > _Your Semantic Models could be hosted in a different workspace than your Lakehouses. Scoping to multiple workspaces allows you to bridge this separation. As long as you have write access to the source Lakehouse, you’ll be able to automatically set the table property. If no workspace list is provided, it defaults to the current workspace._
+
 
 <script src="https://gist.github.com/mwc360/e2ca91667c8fb95f75435f32aa3c27bb.js"></script>
 
