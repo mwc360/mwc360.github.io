@@ -146,7 +146,7 @@ See below for a comparison of only enabling Optimized Write vs enabling the feat
 ## So What Method Won?
 ![alt text](/assets/img/posts/Compaction/results.png)
 
-**Auto Compaction + Optimized Write** had the lowest total runtime, lowest standard deviation of file count, the lowest standard deviation for queries, and the 2nd lowest standard deviation of write duration. By all measures, the combination of _avoiding writing small files_ (where possible) and _automatically cleaning up small files_ was the winning formula.
+**Auto Compaction + Optimized Write** had the lowest total runtime, lowest standard deviation of file count, nearly the lowest standard deviation for queries, and the 2nd lowest standard deviation of write duration. By all measures, the combination of _avoiding writing small files_ (where possible) and _automatically compacting up small files_ was the winning formula.
 
 | Scenario                 | Duration (minutes) | Std. Deviation of File Count | Std. Dev. of Merge + Optimize Duration (seconds) | Std. Dev. of Query Duration (seconds) |
 |--------------------------|--------------------|------------------------------|--------------------------------------------------|---------------------------------------|
