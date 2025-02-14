@@ -172,7 +172,7 @@ As the iterations and number of compacted files increases, the frequency of comp
 
 Below is the behavior that you would expect to see: _as the number of compacted files increases, the frequency of compaction wouldn't increase, instead you would see that the maximum active file count would slowly increase over time. Once a write operation puts the number of uncompacted files over the minNumFiles threshold (50 files by default), auto compaction is triggered._
 
-![alt text](/assets\img\posts\Compaction\auto-compaction-expected-1m.excalidraw.png)
+![alt text](/assets/img/posts/Compaction/auto-compaction-expected-1m.excalidraw.png)
 
 # How to Enable Auto Compaction
 While auto compaction _can_ be enabled at the session level with `spark.conf.set('spark.databricks.delta.autoCompact.enabled', 'true')`, until the referenced bug that impacts larger tables is fixed, I would suggest enabling it at the table level for tables under 1GB in size:
