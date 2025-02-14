@@ -94,31 +94,31 @@ Before getting into the performance comparison of running these tests, let's bas
 
 ### No Compaction
 As expected, since we aren't performing any maintenance, the count of parquet files in the active Delta version increases linearly. After 200 iterations, we have 3,001 files.
-![No Compaction File Counts 1k Batch](/assets\img\posts\Compaction\no-compaction-files-1k.png)
+![No Compaction File Counts 1k Batch](/assets/img/posts/Compaction/no-compaction-files-1k.png)
 
 ### Scheduled Compaction
 With compaction scheduled to run every 20th iteration, the final file count is 1 due to it ending on a compaction interval. The file count peaks at > 300 right before each compaction operation is run.
 
-![Scheduled Compaction File Counts 1k Batch](/assets\img\posts\Compaction\scheduled-compaction-files-1k.png)
+![Scheduled Compaction File Counts 1k Batch](/assets/img/posts/Compaction/scheduled-compaction-files-1k.png)
 
 ### Automatic Compaction
 With Auto Compaction, based on this workload, we see that every 4 iterations results in the background, syncronously run, min-compaction job. After 200 iterations we have 47 files, this makes sense as by default auto-compaction triggers whenever there is 50 or more files below 128MB.
-![Auto Compaction File Counts 1k Batch](/assets\img\posts\Compaction\auto-compaction-files-1k.png)
+![Auto Compaction File Counts 1k Batch](/assets/img/posts/Compaction/auto-compaction-files-1k.png)
 
 Automatic compaction certainly produces the most optimal file layout after 200 iterations, it has by far the lowest standard devation of file count which will result in more consistency in both write and read performance.
 
 ## Performance Comparison - 1K Row Batch Size
 ### No Compaction
 Without any compaction, by iteration 44 the write duration has doubled and by iteration 200 the merge operation now takes nearly 5x longer to complete. Reads were impacted less, but by the last iteration had surpassed being 1.5x slower.
-![No Compaction Performance 1k Batch](/assets\img\posts\Compaction\no-compaction-perf-1k.png)
+![No Compaction Performance 1k Batch](/assets/img/posts/Compaction/no-compaction-perf-1k.png)
 
 ### Scheduled Compaction
 With compaction every 20th iteration, we see that the performance of both writes and reads gets slower until the compaction operation runs.
-![Scheduled Compaction Performance 1k Batch](/assets\img\posts\Compaction\scheduled-compaction-perf-1k.excalidraw.png)
+![Scheduled Compaction Performance 1k Batch](/assets/img/posts/Compaction/scheduled-compaction-perf-1k.excalidraw.png)
 
 ### Automatic Compaction
 With automatic compaction, just like how there's the lowest standard deviation in the active file count, we also see that performance is extremely stable. Both the write and query duration from start to end have no discernable upward trend. What is noticeable though is that every 4th write operation after the first, we can see that the merge step takes over 2x longer since it is performing the min-compaction.
-![Automatic Compaction Performance 1k Batch](/assets\img\posts\Compaction\auto-compaction-perf-1k.png)
+![Automatic Compaction Performance 1k Batch](/assets/img/posts/Compaction/auto-compaction-perf-1k.png)
 
 With the frequent mini-compactions taking place, this begs the question: **can we avoid writing small files to begin with?**
 
@@ -127,24 +127,24 @@ If we refresh our knowledge on Optimized Write, the idea is that there's a pre-w
 - MERGE statements
 - DELETE and UPDATE statements w/ subqueries
 
-![Optimized Write](/assets\img\posts\Compaction\optimized-write.excalidraw.png)
+![Optimized Write](/assets/img/posts/Compaction/optimized-write.excalidraw.png)
 
 For this small batch size, optimized write results in one file being written each iteration rather than ~16. The small amount of data being shuffle pre-write has an immaterial impact on write performance and more importantly, we can see that the performance from start to finish was extremely consistent.
-![Optimized Write Perf 1k Batch](/assets\img\posts\Compaction\optimized-write-perf-1k.png)
+![Optimized Write Perf 1k Batch](/assets/img/posts/Compaction/optimized-write-perf-1k.png)
 
 ### Auto Compaction + Optimized Write
 Is Optimized Write a replacement for Auto Compaction or Scheduled Compaction here? No, consider if this process of merging 1K rows into a table were in production for 1 year running once every hour; after 1 year we would have 8,760 files in our table. Over the course of the year the performance of both reading and writing would become signficantly slower. Given that we still need some sort of process to compact files post-write, what if we combined this feature with Auto Compaction?
 
 With both features combined, we have less files written per iteration which translates to less frequent auto compaction being run. As the number of small files exceed 50, auto compaction is run, now we get the best of both worlds :).
-![Auto Compaction + Optimized Write Performance 1k Batch](/assets\img\posts\Compaction\auto-compaction-plus-ow-perf-1k.png)
+![Auto Compaction + Optimized Write Performance 1k Batch](/assets/img/posts/Compaction/auto-compaction-plus-ow-perf-1k.png)
 
 #### File Count Impact
 See below for a comparison of only enabling Optimized Write vs enabling the feature with Auto Compaction:
-![alt text](/assets\img\posts\Compaction\optimized-write-files-1k.png)
-![alt text](/assets\img\posts\Compaction\auto-compaction-plus-ow-files-1k.png)
+![alt text](/assets/img/posts/Compaction/optimized-write-files-1k.png)
+![alt text](/assets/img/posts/Compaction/auto-compaction-plus-ow-files-1k.png)
 
 ## So What Method Won?
-![alt text](/assets\img\posts\Compaction\results.png)
+![alt text](/assets/img/posts/Compaction/results.png)
 
 **Auto Compaction + Optimized Write** had the lowest total runtime, lowest standard deviation of file count, the lowest standard deviation for queries, and the 2nd lowest standard deviation of write duration. By all measures, the combination of _avoiding writing small files_ (where possible) and _automatically cleaning up small files_ was the winning formula.
 
@@ -163,9 +163,9 @@ With auto compaction we now see that as our data volume increases we start to ac
 
 > _Note: the below chart is on a zoomed-in Y-axis scale to better illustrate the bug._
 
-![alt text](/assets\img\posts\Compaction\auto-compaction-files-1m.excalidraw.png)
+![alt text](/assets/img/posts/Compaction/auto-compaction-files-1m.excalidraw.png)
 
-![alt text](/assets\img\posts\Compaction\auto-compaction-perf-1m.excalidraw.png)
+![alt text](/assets/img/posts/Compaction/auto-compaction-perf-1m.excalidraw.png)
 As the iterations and number of compacted files increases, the frequency of compaction increases even give the same number of additive small files each iteration (~16). This is technically not per the documented functionality of the feature and after a cursory review of the Delta.io source code, it appears that there's a bug that impacts larger tables since auto compaction never lets the table exceed 50 files even when the transaction log shows that the majority of these files are large enough to be considered compacted.
 
 > ⚠️ Due to [this bug](https://github.com/delta-io/delta/issues/4045) in OSS Delta, I will hold off on posting 100K and 1M batch results till a patch is released. Until then I would recommend only using auto compaction for tables that are 1GB in size or smaller. Anything larger than this and auto compaction will run too frequently and therefore result in unnessesary write overhead. Until then, I recommend continuing to schedule compaction jobs for tables > 1GB in size.
@@ -196,7 +196,7 @@ The behavior of auto compaction can be adjusted via changing the two properties:
 Here are the use cases for when I would tweak these properties:
 - **minNumFiles**: assuming you can tollerate higher standard deviation in query execution times, make this value larger if I want auto compaction to be triggered less frequently.
 - **maxFileSize**: adjust this value to align with the ideal file size for your tables. In the below chart you can see the relationship between the size of a table and the ideal size of each file. This helps to minimize I/O cycles to read data into memory as well as optimizes file skipping opportunities (too few files means suboptimal file skipping).
-    ![alt text](/assets\img\posts\Compaction\ideal-file-size.png)
+    ![alt text](/assets/img/posts/Compaction/ideal-file-size.png)
 
 # Key Takeaways
 - **Auto compaction removes complexity**: the "how often should I run `OPTIMIZE`" question was completely eliminated. In my benchmark, after having analyzed the results, I realized that I ran the scheduled compaction too often. While running `OPTIMIZE` every 20 iterations was beneficial for the 1K row batch size, as my data volumes increased, less small files were written and a full compaction being run that often was somewhat inefficient. Also, I could've better designed the process to only compact files added since the last compaction operation was run. 
