@@ -156,6 +156,8 @@ See below for a comparison of only enabling Optimized Write vs enabling the feat
 | **Optimized Write**      | 13.76              | 58                           | 0.62                                             | 0.27                                  |
 | **Auto Compaction + Optimized Write** | 12.77 | 14                           | 0.74                                             | 0.24                                  |
 
+> _While Scheduled Compaction was almost as fast as Auto Compaction, it's important to consider the additional cost of coding, scheduling, optimzing the frequency of run, and maintaining the maintenance job. With Auto Compaction on the other hand, just turn it on and you get the same benefit as a perfectly scheduled compaction job, but without any of the overhead and complexity._
+
 ## What about larger batch sizes?
 I started to performed some testing at both 100K and 1M row batch sizes. At 100K row batches the results are nearly identical to the 1K row batches. At 1M rows, Auto Compaction appeared to be running too frequently which resulted in much less of a performance benefit.
 
