@@ -127,7 +127,7 @@ If we refresh our knowledge on Optimized Write, the idea is that there's a pre-w
 - MERGE statements
 - DELETE and UPDATE statements w/ subqueries
 
-![Optimized Write](/assets/img/posts/Compaction/optimized-write.excalidraw.png)
+![Optimized Write](/assets/img/posts/Compaction/optimized-write.excalidraw.png){: .excalidraw-img }
 
 For this small batch size, optimized write results in one file being written each iteration rather than ~16. The small amount of data being shuffle pre-write has an immaterial impact on write performance and more importantly, we can see that the performance from start to finish was extremely consistent.
 ![Optimized Write Perf 1k Batch](/assets/img/posts/Compaction/optimized-write-perf-1k.png)
