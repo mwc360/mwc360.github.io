@@ -198,6 +198,7 @@ ALTER TABLE dbo.ac_enabled_table SET TBLPROPERTIES ('delta.autoOptimize.autoComp
 
 ## Tuning Auto Compaction
 The behavior of auto compaction can be adjusted via changing the two properties:
+
 | Property | Description | Default Value | Session Config | Table Property |
 |----------|-------------|---------------|----------------|----------------|
 | **maxFileSize** | The maximum file size in bytes for compacted files. Anything below this threshold will be considered for compaction. | 134217728b (128Mb)  | spark.databricks.delta.autoCompact.maxFileSize | delta.autoOptimize.autoCompact.maxFileSize |
