@@ -3,9 +3,9 @@ layout: post
 title: "Mastering Spark: The Art and Science of Table Compaction"
 tags: [Fabric, Spark, Lakehouse, Delta Lake]
 categories: Data-Engineering
-feature-img: "assets/img/feature-img/pexels-andreea-ch-371539-4178808.jpeg"
-thumbnail: "assets/img/thumbnails/feature-img/pexels-andreea-ch-371539-4178808.jpeg"
-published: False
+feature-img: "assets/img/feature-img/pexels-googledeepmind-17485680.jpeg"
+thumbnail: "assets/img/thumbnails/feature-img/pexels-googledeepmind-17485680.jpeg"
+published: True
 ---
 
 If there anything that data engineers agree about, it's that table compaction is important. Often one of the first big lessons that folks will learn early on is that not compacting tables can present serious performance issues: you've gotten your lakehouse pilot approved and it's been running for a couple months in production and you find that both reads and writes are increasingly getting slower and slower while your data volumes have not increased drastically. Guess what, you almost surely have a "small file problem". 
@@ -25,9 +25,9 @@ What engineers won't always sing the same tune on is how and when to perform tab
 So, there's plenty of options for ensuring tables are appropriately sized. Is there a best practice option when using Fabric Spark and Delta Lake? Lets find out.
 
 # The Case Study
-To study the efficiency and performance implications of various compaction methods, I formed a benchmark to study the effects of the following 3 scenarios:
+To study the efficiency and performance implications of various compaction methods, I formed a benchmark to study the effects of the following 4 scenarios:
 1. **No Compaction**
-1. **Pre-Write Compaction**
+1. **Pre-Write Compaction (a.k.a Optimized Write)**
 1. **Scheduled Compaction**
 1. **Automatic Compaction**
 
@@ -69,7 +69,7 @@ I ran all tests using an iteration target batch count of 1K, 100K, and 1M rows. 
              .whenNotMatchedInsertAll() \
              .execute()
     ```
-1. **Aggregation Query**: The query touches every column in the table does not have any filter predicates to ensure that all files in the current Delta version are included in scope.
+1. **Aggregation Query**: The query touches every column in the table and does not have any filter predicates to ensure that all files in the current Delta version are included in scope.
     ```sql
     select 
         sum(value1), 
@@ -123,7 +123,7 @@ With automatic compaction, just like how there's the lowest standard deviation i
 With the frequent mini-compactions taking place, this begs the question: **can we avoid writing small files to begin with?**
 
 ### Optimized Write
-If we refresh our knowledge on Optimized Write, the idea is that there's a pre-write step where data is shuffled and grouped across executors to bin data together so that fewer files are written. This feature is extrmely helpful for partitioned tables. However for non-partitioned tables there are even a few write scenarios where more files are typically written due to the nature of the operation, and optimized write can help prevent this:
+If we refresh our knowledge on Optimized Write, the idea is that there's a pre-write step where data is shuffled and grouped across executors to bin data together so that fewer files are written. This feature is critical for partitioned tables, however for non-partitioned tables there are even a few write scenarios where more files are typically written due to the nature of the operation, and optimized write can help prevent this:
 - MERGE statements
 - DELETE and UPDATE statements w/ subqueries
 
@@ -144,9 +144,9 @@ See below for a comparison of only enabling Optimized Write vs enabling the feat
 ![alt text](/assets/img/posts/Compaction/auto-compaction-plus-ow-files-1k.png)
 
 ## So What Method Won?
-![alt text](/assets/img/posts/Compaction/results.png)
+![alt text](/assets/img/posts/Compaction/results-1k.png)
 
-**Auto Compaction + Optimized Write** had the lowest total runtime, lowest standard deviation of file count, nearly the lowest standard deviation for queries, and the 2nd lowest standard deviation of write duration. By all measures, the combination of _avoiding writing small files_ (where possible) and _automatically compacting up small files_ was the winning formula.
+**Auto Compaction + Optimized Write** had the lowest total runtime, lowest standard deviation of file count, nearly the lowest standard deviation for queries, and the 2nd lowest standard deviation of write duration. By all measures, the combination of _avoiding writing small files_ (where possible) and _automatically compacting small files_ was the winning formula.
 
 | Scenario                 | Duration (minutes) | Std. Deviation of File Count | Std. Dev. of Merge + Optimize Duration (seconds) | Std. Dev. of Query Duration (seconds) |
 |--------------------------|--------------------|------------------------------|--------------------------------------------------|---------------------------------------|
@@ -159,7 +159,7 @@ See below for a comparison of only enabling Optimized Write vs enabling the feat
 > _While Scheduled Compaction was almost as fast as Auto Compaction, it's important to consider the additional cost of coding, scheduling, optimzing the frequency of run, and maintaining the maintenance job. With Auto Compaction on the other hand, just turn it on and you get the same benefit as a perfectly scheduled compaction job, but without any of the overhead and complexity._
 
 ## What about larger batch sizes?
-I started to performed some testing at both 100K and 1M row batch sizes. At 100K row batches the results are nearly identical to the 1K row batches. At 1M rows, Auto Compaction appeared to be running too frequently which resulted in much less of a performance benefit.
+I performed testing at both 100K and 1M row batch sizes. At 100K row batches the results are nearly identical to the 1K row batches. At 1M rows, Auto Compaction appeared to be running too frequently which resulted in much less of a performance benefit.
 
 With auto compaction we now see that as our data volume increases we start to accumulate files that are right sized (> 128Mb). The active file count no longer returns to 1 file every 4 batches, instead it increases linearly and ends with 42 total files. The frequency of mini-compactions that are runs adapts as the data volume changes, based on the count of small files below a max file count threshold (explained later).
 
@@ -168,13 +168,21 @@ With auto compaction we now see that as our data volume increases we start to ac
 ![alt text](/assets/img/posts/Compaction/auto-compaction-files-1m.excalidraw.png)
 
 ![alt text](/assets/img/posts/Compaction/auto-compaction-perf-1m.excalidraw.png)
-As the iterations and number of compacted files increases, the frequency of compaction increases even give the same number of additive small files each iteration (~16). This is technically not per the documented functionality of the feature and after a cursory review of the OSS Delta-Spark source code, it appears that there's a bug where compacted files are also counted towards the _minNumFiles_. This means that anytime the total number of active files exceeds 50 (or whatever you set _minNumFiles_ to), compaction will be triggered, even if you have less than 50 files that meet the "small file" criteria.
+As the iterations and number of compacted files increases, the frequency of compaction increases even give the same number of additive small files each iteration (~16). This is technically not per the documented functionality of the feature and after a interrogating the OSS Delta-Spark source code, I found that there's a bug where compacted files are also counted towards the _minNumFiles_ threshold. This means that anytime the total number of active files exceeds 50 (or whatever you set _minNumFiles_ to), compaction will be triggered, even if you have less than 50 files that meet the "small file" criteria.
 
-> ⚠️ Due to [this bug](https://github.com/delta-io/delta/issues/4045) in OSS Delta, I will hold off on posting 100K and 1M batch results till a patch is released. Until then I would recommend only using auto compaction for tables that are 1GB in size or smaller. Anything larger than this and auto compaction will run too frequently and therefore result in unnessesary write overhead. Until then, I recommend continuing to schedule compaction jobs for tables > 1GB in size.
+> ⚠️ Due to [this bug](https://github.com/delta-io/delta/issues/4045) in OSS Delta (and therefore Fabric), for now I would recommend only using auto compaction for tables that are 1GB in size or smaller. Anything larger than this and auto compaction will run too frequently and therefore result in unnessesary write overhead. Until then, I recommend continuing to schedule compaction jobs for tables > 1GB in size. BUT **good news**, I submitted a PR to fix the issue in [OSS Delta](https://github.com/delta-io/delta/pull/4178) and the fix is also soon to be shipping in Fabric Spark. 
 
-Below is the behavior that you would expect to see: _as the number of compacted files increases, the frequency of compaction wouldn't increase, instead you would see that the maximum active file count would slowly increase over time. Once a write operation puts the number of uncompacted files over the minNumFiles threshold (50 files by default), auto compaction is triggered._
+Below is the behavior that we see with the bugfix in place: _as the number of compacted files increases, the frequency of compaction wouldn't increase, instead you would see that the maximum active file count would slowly increase over time. Once a write operation puts the number of uncompacted files over the minNumFiles threshold (50 files by default), auto compaction is triggered._
 
 ![alt text](/assets/img/posts/Compaction/auto-compaction-expected-1m.excalidraw.png)
+
+Below are the results with the patched delta-spark JAR, again we see that Auto Compaction does wonders to maintain the performance of both writes and reads, even as the amount of data we process scales. Two observations:
+- As we scale to merge more data the benefit of avoiding needing to later compact small files is evident, Optimized Write provided the best results with the combination of Auto Compaction + Optimized Write coming close behind. 
+- At this scale, since each write operation gets us relaively close to our ideal file size (with Optimized Write enabled), Auto Compaction doesn't yet provide much performance benefit in comparison to Optimized Write alone, however it does act as insurance to prevent the accumulation of too many small files which would surely occur and start to impact performance if this process was run for another few hundred or even a thousand iterations.
+- Scheduled Compaction slightly outperformed Automatic Compaction. This is purely a factor of Automatic Compaction evaluating to run at a more frequent interval compared the Scheduled Compaction based on the default configs, the result of which is more consistent and better read performance, but at the cost of slower writes due to more compaction operations being triggered.
+
+![alt text](/assets/img/posts/Compaction/results-1m.png)
+
 
 # How to Enable Auto Compaction
 While auto compaction _can_ be enabled at the session level with `spark.conf.set('spark.databricks.delta.autoCompact.enabled', 'true')`, until the referenced bug that impacts larger tables is fixed, I would suggest enabling it at the table level for tables under 1GB in size:
@@ -205,6 +213,27 @@ Here are the use cases for when I would tweak these properties:
 - **Scheduled or Ad-Hoc Compaction Might Still Be Necessary**: While auto compaction seems to win at all data volumes that I tested, would this continue after 1,000 or even 10,000 iterations? While a 128Mb file size target for auto compaction seems to work well, at some point you may need to compact these into 500Mb or even up to 1Gb files. While I would typically rely on auto compaction for short-term maintenance, in the long term you may need to selectively run an ad-hoc `OPTIMIZE` operation since the two different methods have different _maxFileSize_ thresholds.
 
 # Closing Thoughts
-Given the results of the three options that I tested, I would likely enable auto compaction in most use cases. It's just too easy to enable and produces consistent results at various workload sizes. Sure you might be able to schedule an incremental compaction job based on workload metadata that might produce slightly better results, but why overcomplicate things? It's one (or more) less job to support, tune, and execute. With additional settings to control thresholds which impact the frequency of run and file size considered, for many workloads, it's a no-brainer.
+Given the results of the three options that I tested, I would enable auto compaction in almost all use cases. It's just too easy to enable and produces consistent results at various workload sizes. Sure, you might be able to schedule an incremental compaction job based on workload metadata that might match auto compaction results, but why overcomplicate things? It's one (or more) less job to support, tune, and execute. With additional settings to control thresholds which impact the frequency of run and file size considered, for many workloads, it's a no-brainer.
 
 I was just recently in the scenario where I had a scheduled process that would frequently insert a smallish number of rows into a table (similar to my 1K row test) and noticed considerable slowness when querying the log table where queries would take 30+ seconds to return. Rather than scheduling a maintenance job or ad-hoc running `OPTIMIZE` for agile dev/test work I was doing, I just enabled auto compaction on the table. The next run of the process cleaned up the small files and I was back to 1-2 second latency when querying the table to analyze results.
+
+-------------------
+
+# Bonus Bits!
+I've presented on this topic a few times and received some interesting questions that I'll share answers to below:
+- **How can I tell what files are part of the active Delta version being queried?**: you can use the `inputFiles()` DataFrame method to evaluate the parquet files that would be read to return the query result.
+    ```python
+    spark.sql("SELECT * FROM dbo.table").inputFiles()
+    ```
+- **How can I tell when Auto Compaction is actually run?**: use the below PySpark. Auto Compaction operations show up as regular `OPTIMIZE` jobs in the transaction log but have an additional _auto_ flag which is logged in _operationParameters_.
+    ```python
+    history_df = spark.sql("DESCRIBE HISTORY dbo.table_with_ac_enabled")
+    filtered_history = history_df \
+        .filter(history_df.operation == "OPTIMIZE") \
+        .filter(history_df.operationParameters.auto == "true")
+    display(filtered_history)
+    ```
+- **How can I estimate the appropriate target file size for my Delta tables?**: You can use `DESCRIBE DETAIL` to get the size of the latest version of your Delta table in bytes and then use this number to estimate the ideal target file size based on my prior referenced sizing chart.
+    ```python
+    spark.sql("DESCRIBE DETAIL dbo.table_with_ac_enabled")
+    ```
