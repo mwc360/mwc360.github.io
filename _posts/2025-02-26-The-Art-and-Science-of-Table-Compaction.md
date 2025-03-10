@@ -201,8 +201,9 @@ The behavior of auto compaction can be adjusted via changing the two properties:
 
 | Property | Description | Default Value | Session Config | Table Property |
 |----------|-------------|---------------|----------------|----------------|
-| **maxFileSize** | The maximum file size in bytes for compacted files. Anything below this threshold will be considered for compaction. | 134217728b (128Mb)  | spark.databricks.delta.autoCompact.maxFileSize | delta.autoOptimize.autoCompact.maxFileSize |
-| **minNumFiles** | The minimum number that must exist under the max file size threshold for a mini-compaction operation to be triggered. | 50 | spark.databricks.delta.autoCompact.minNumFiles | delta.autoOptimize.autoCompact.minNumFiles |
+| **maxFileSize** | The target maximum file size in bytes for compacted files. | 134217728b (128Mb)  | spark.databricks.delta.autoCompact.maxFileSize | _Not available_ |
+| **minFileSize** | The minimum file size in bytes for a file to be considered compacted. Anything below this threshold will be considered for compaction and counted towards the `minNumFiles` threshold. | _Unset_ by default, it is calculated as 1/2 of the `maxFileSize` unless you explicitly set a value. | spark.databricks.delta.autoCompact.minFileSize | _Not available_ |
+| **minNumFiles** | The minimum number that must exist under the max file size threshold for a mini-compaction operation to be triggered. | 50 | spark.databricks.delta.autoCompact.minNumFiles | _Not available_ |
 
 Here are the use cases for when I would tweak these properties:
 - **minNumFiles**: assuming you can tollerate higher standard deviation in query execution times, make this value larger if I want auto compaction to be triggered less frequently.
