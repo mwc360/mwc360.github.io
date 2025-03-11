@@ -8,8 +8,8 @@ thumbnail: "assets/img/thumbnails/feature-img/pexels-googledeepmind-17485680.jpe
 published: True
 ---
 
-> **TL/DR**, just the basics:
-> ![Auto Compaction TL/DR](/assets/img/posts/Compaction/auto-compaction.excalidraw.png)
+#**TL/DR**, just the basics:
+![Auto Compaction TL/DR](/assets/img/posts/Compaction/auto-compaction.excalidraw.png)
 
 ------------------
 
