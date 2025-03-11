@@ -8,11 +8,6 @@ thumbnail: "assets/img/thumbnails/feature-img/pexels-googledeepmind-17485680.jpe
 published: True
 ---
 
-# **TL/DR**, just the basics:
-![Auto Compaction TL/DR](/assets/img/posts/Compaction/auto-compaction.excalidraw.png)
-
-------------------
-
 If there anything that data engineers agree about, it's that table compaction is important. Often one of the first big lessons that folks will learn early on is that not compacting tables can present serious performance issues: you've gotten your lakehouse pilot approved and it's been running for a couple months in production and you find that both reads and writes are increasingly getting slower and slower while your data volumes have not increased drastically. Guess what, you almost surely have a "small file problem". 
 
 What engineers won't always sing the same tune on is how and when to perform table compaction. There's really 5 things I see when looking generally at any platform using log-structured tables like Delta, Hudi, or Iceberg:
@@ -21,7 +16,8 @@ What engineers won't always sing the same tune on is how and when to perform tab
 1. **Post-Write Manual Compaction**: As part of your jobs you've coded an `OPTIMIZE` (and possibly a `VACUUM`) operation to run after every table that is written to. 
 1. **Scheduled Compaction (Manual)**: Just as it sounds, you schedule a job, maybe on a weekly basis, that will loop through all tables and run `OPTIMIZE`.
 1. **Automatic Compaction**: A feature of the log structured table that will automatically evaluate if compaction is needed and run it syncronously (or async in the case of Hudi) following write operations.
-    - **Delta Lake**: [Auto Compaction](https://docs.delta.io/latest/optimizations-oss.html#auto-compaction) is disabled by default but can be enabled to run syncronously, as needed, after writes.
+    - **Delta Lake**: [Auto Compaction](https://docs.delta.io/latest/optimizations-oss.html#auto-compaction) is disabled by default but can be enabled to run syncronously, as needed, after writes. Here's a all the basics on Auto Compaction in Delta Lakes:
+    ![Auto Compaction TL/DR](/assets/img/posts/Compaction/auto-compaction.excalidraw.png)
     - **Hudi**: [Compaction](https://hudi.apache.org/docs/next/compaction/#ways-to-trigger-compaction) runs automatically (async) by default, as needed, after writes.
     - **Iceberg**: [Compaction](https://iceberg.apache.org/docs/latest/maintenance/#compact-data-files) in Iceberg is only supported as a user executed operation, there's no support for automatic maintenance here. Ironically, the Iceberg docs even list compaction under _Optional Mainenance_, this seems a bit shortsighted as there's no technical reason why Iceberg users wouldn't suffer from small file issues just like Delta and Hudi.
 
