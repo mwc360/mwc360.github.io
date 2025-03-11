@@ -8,6 +8,11 @@ thumbnail: "assets/img/thumbnails/feature-img/pexels-googledeepmind-17485680.jpe
 published: True
 ---
 
+> **TL/DR**, just the basics:
+> ![Auto Compaction TL/DR](/assets/img/posts/Compaction/auto-compaction.excalidraw.png)
+
+------------------
+
 If there anything that data engineers agree about, it's that table compaction is important. Often one of the first big lessons that folks will learn early on is that not compacting tables can present serious performance issues: you've gotten your lakehouse pilot approved and it's been running for a couple months in production and you find that both reads and writes are increasingly getting slower and slower while your data volumes have not increased drastically. Guess what, you almost surely have a "small file problem". 
 
 What engineers won't always sing the same tune on is how and when to perform table compaction. There's really 5 things I see when looking generally at any platform using log-structured tables like Delta, Hudi, or Iceberg:
@@ -22,7 +27,7 @@ What engineers won't always sing the same tune on is how and when to perform tab
 
 1. **Background Platform Managed Compaction**: The first things that comes to mind is S3 Tables (AWS proprietary fork of Iceberg) with it's heavily marketed managed compaction feature. _You write and query your tables and we will charge you an exhorbinant amount to perform background compaction jobs so you don't need to worry about table maintenance!_ While AWS may have gotten some flak their pricing ($0.05 per GB + $0.004 per 1,000 files processed) and overmarketing a feature that Hudi and Delta already solve for, not needing to manage or even configure compaction is a wonderful thing since it reduces the compelxity and experience needed to implement a performant solution. 
 
-So, there's plenty of options for ensuring tables are appropriately sized. Is there a best practice option when using Fabric Spark and Delta Lake? Lets find out.
+So, there's plenty of options for ensuring tables are appropriately sized. But, is there a best practice option when using Fabric Spark and Delta Lake? Lets find out.
 
 # The Case Study
 To study the efficiency and performance implications of various compaction methods, I formed a benchmark to study the effects of the following 4 scenarios:
