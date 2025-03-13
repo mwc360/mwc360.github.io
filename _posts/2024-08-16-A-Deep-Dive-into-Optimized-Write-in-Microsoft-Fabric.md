@@ -16,8 +16,9 @@ Optimized Write is a Delta Lake feature that aims to reduce the number of files 
 
 The Optimized Write feature is designed with partitioned tables in mind. When tables are partitioned, you naturally end up with more files since each executor is going to write its own file(s) to the given partition. The more executors and partitions that you have, the more files you will have that make up your table. Reading from a single partition may be efficient, but when reading from many or all partitions, there's a much higher likelihood of seeing performance degradation because of there being too many small files. Optimized Write solves for this by shuffling data before it is written so that a single executor would contain all data within a given partition to ensure that fewer (and larger) files are written.
 
-This feature is excellently illustrated via the diagram below:
-![alt text](https://docs.delta.io/latest/_images/optimized-writes.png)
+Here's all of the basics of the feature:
+![Small File Problem](/assets/img/posts/Optimized-Writes/optimized-write.excalidraw.png)
+
 
 The number of files written depends on the BinSize Spark config, which controls the target in-memory size of each file before it is written. In Fabric Runtimes, the setting currently defaults to 1GB. If leaving Optimized Write enabled, you may want to change the BinSize to 256MB or even 128MB depending on your workload.
 
@@ -43,6 +44,16 @@ SET `spark.databricks.delta.optimizeWrite.enabled` = true
 
 
 ## When Should I Use It?
+_UPDATED 2/5/2025_ There are a few scenarios where Optimized Write is beneficial and sometimes even critical to maintain performance of writing to and querying Delta tables via Spark:
+- **Partitioned Tables**: Partitioned tables introduce additional complexities because writes must be distributed across multiple partitions. Each worker core will write its in-memory partition of data to all table partitions that it has data for, this can result in many small files being written.
+
+ Without Optimized Writes:
+- **UPDATE**: Update operations could potentially touch many existing files and if deletion vectors are enabled, this results in a high likelihood of writing small files ()
+- **DELETE**: Delete operations 
+
+- **MERGE**: Merge statements combine updates, inserts, and deletes into one operation and thus has the same implications the individual UPDATEs or DELETEs do.
+
+
 For Spark workloads, arguably there's really only one standard use case for Optimized Write, partitioning. While the feature does result in shuffling all data before writing it, the improved time to write less files and downstream impact of reading less files (which improves DML operations that require reading the Delta table), often outweighs the shuffle performance hit. ~~You should only ever consider using it for partitioned tables.~~ _UPDATED 08/19/24: I was reminded that Optimized Write is important for optimizing Power BI Direct Lake Semantic Model performance._
 
 Considering that this feature results in consolidating data into less files (targeted based on the size of data in-memory), outside of Spark, this feature can be useful for writing out Delta tables for other engines that might be optimized when reading less files. A prime example of this is Power BI Direct Lake Semantic Models: cold cache Direct Lake queries are fastest on average when reading from Delta tables where Optimized Write was enabled with a 1GB bin size. This is why the default Spark config in Fabric uses 1GB as the bin size.
