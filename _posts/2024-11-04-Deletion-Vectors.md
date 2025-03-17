@@ -13,7 +13,7 @@ Since Delta 2.3, deletion vectors have been available, but only recently have we
 # What Are Deletion Vectors?
 [Deletion vectors](https://delta.io/blog/2023-07-05-deletion-vectors/) are an optimization within the Delta format that shifts data changes from a _copy-on-write_ strategy to _merge-on-read_, aimed at greatly reducing the time to process changes or deletions in Delta tables.
 
-![Deletion vector guidance](/assets/img/posts/Deletion-Vectors/deletion-vectors-tldr.excalidraw.png)
+![Deletion vector guidance](/assets/img/posts/Deletion-Vectors/deletion-vectors-tldr2.excalidraw.png)
 
 Before I dive into some benchmarks to illustrate why nearly every Fabric customer should be enabling deletion vectors, let's start by reviewing these core concepts and how the feature works.
 
