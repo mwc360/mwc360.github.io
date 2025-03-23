@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Elevate Your Code: Developing Python Libraries Using Microsoft Fabric"
+title: "Elevate Your Code: Creating Python Libraries Using Microsoft Fabric (Part 1 of 2: Development)"
 tags: [Fabric, Spark, Lakehouse]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-koprivakart-5914531.jpeg"
