@@ -10,7 +10,9 @@ published: true
 
 This is part 2 of my prior [post](https://milescole.dev/data-engineering/2024/07/18/Developing-Python-Libraries-Using-Microsoft-Fabric.html) that continues where I left off. I previously showed how you can use **Resource folders** in either the Notebook or Environment in Microsoft Fabric to do some pretty agile development of Python modules/libraries.
 
-Now, how exactly can you package up your code to distribute and leverage it across multiple **Workspaces** or **Environment** items?
+Now, how exactly can you package up your code to distribute and leverage it across multiple **Workspaces** or **Environment** items? How could we acomplish something like the below?
+
+![Library Process](/assets/img/posts/Developing-Fabric-Libraries-Pt2/lib-diagram.excalidraw.png)
 
 # Building / Packaging
 While you can certainly run all of this code locally on your machine, everything that I'll show in this section will be 100% from the Fabric Notebook UI. Sure, doing some of this stuff locally can be more productive and agile, but there's a certain convenience and magic to having the _capability_ to do everything in your browser.
