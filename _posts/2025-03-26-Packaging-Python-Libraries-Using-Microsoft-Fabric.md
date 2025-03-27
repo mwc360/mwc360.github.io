@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Elevate Your Code: Creating Python Libraries Using Microsoft Fabric (Part 2 of 2: Packaging, Distribution, and Consumption)"
-tags: [Fabric, Spark, Lakehouse]
+tags: [Fabric, Spark, Lakehouse, SDLC]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-thisisengineering-3861972.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-thisisengineering-3861972.jpeg"
@@ -65,7 +65,7 @@ Since all I had in the prior blog was a single `utils.py` module, I'll need to a
     > Anytime you are making code changes you should evaluate if it is a _major_ (**0**.1.0 → **1**.0.0), _minor_ (0.1.0 → 0.**2**.0), or _revision_ (0.1.0 → 0.1.**1**) to your existing code and then update the version metadata in `setup.py` accordingly.
 
 1. **requirements.txt**  – This simple text file lists any dependencies your library requires. My module is pretty simple, but here's an example of what this file might look like:
-    ```txt
+    ```
     sqlglot==25.23.0
     JayDeBeApi==1.2.3
     ```
@@ -82,7 +82,6 @@ lakehoues_utils/
 ├── README.md # documentation
 ├── requirements.txt # dependencies
 └── setup.py # build instructions
-
 ```
 
 > If I had not put `utils.py` in a folder in the root called _lakehouse_utils_, the eventual `import` statment would've been `import utils`. To make the import more descriptive and avoid ambiguity I moved utils into a subfolder called _lakehouse_utils so that the `import` statement becomes `import lakehouse_utils.utils`.
@@ -128,7 +127,7 @@ This has major benefits:
 - **Versioning** – Since versions are immutable by default, you can rely on consistent behavior over time. Once published, the code won't change unless you explicitly choose to upgrade to a newer version.
 - **Single source of truth** – One place to publish. One place to consume. One less governance headache.
 
-> Could we publish this to PyPi for public distribution? Sure, but most organizations do not open-source their code given that it is often organizationally specific in nature, therefore I'll be showing how you can publish libraries to a private repository. In this case I'll be using Azure DevOps Artifacts as the hosting service, but this same process generally applies to any other service, you need to provide authentication and use a specific API to publish your library. 
+> _Could we publish this to PyPi for public distribution?_ Sure, but most organizations do not open-source their code given that it is often organizationally specific in nature, therefore I'll be showing how you can publish libraries to a private repository. In this case I'll be using Azure DevOps Artifacts as the hosting service, but this same process generally applies to any other service, you need to provide authentication and use a specific API to publish your library. 
 > <br>
 > <br>
 > _For those who are GitHub fans, GitHub sadly doesn't support Python libraries in it's artifact repository service._
@@ -245,7 +244,7 @@ Okay, maybe you're thinking: _"This seems unnecessarily complex. Why not just us
 
 That's a fair question—and really, it boils down to this:
 
-Do you want to be a **good** data engineer, or a **great** one?
+> Do you want to be a **good** data engineer, or a **great** one?
 
 Do you want to build something that works for a few months or maybe a year, only to require a complete rewrite when the data model changes, the team grows, or business needs evolve? Or do you want to build something that scales with your organization, stands the test of time (at least until AI takes all of our jobs and we get plugged into the Matrix), and—dare I say—brings joy (or minimally appreciation) to the next engineer who inherits it?
 
