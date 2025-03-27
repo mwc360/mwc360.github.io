@@ -151,6 +151,13 @@ importlib.reload(utils)
 ```
 This allows for specifying a specific module by name or alias to reload.
 
+> _Added 3/26/2015: you can instead run the below magic commands once to **automatically have libraries reloaded** upon any code being executed which references the module:_
+> ```
+> %load_ext autoreload
+> %autoreload 2
+> ```
+
+
 Now when I run the previously failing function, it succeeds because the module has been reloaded since the last code change.
 
 ![alt text](/assets/img/posts/Developing-Fabric-Libraries/result.png)
