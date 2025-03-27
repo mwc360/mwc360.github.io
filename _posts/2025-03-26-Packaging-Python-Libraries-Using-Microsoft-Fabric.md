@@ -37,7 +37,7 @@ Since all I had in the prior blog was a single `utils.py` module, I'll need to a
 
     setup(
         name="lakehouse_utils",
-        version="0.1.2",
+        version="0.1.0",
         author="Miles Cole",
         description="Example Python Library",
         long_description=long_description,
@@ -55,12 +55,12 @@ Since all I had in the prior blog was a single `utils.py` module, I'll need to a
         install_requires=requirements
     )
     ```
-    > In the above setup code, the `name`, `version`, and `python_requires` fields are key to generating the name of the resulting WHL file: `lakehouse_utils-0.1.2-py3-none-any.whl`. The parts of the WHL file name have the below basic pieces of information.
+    > In the above setup code, the `name`, `version`, and `python_requires` fields are key to generating the name of the resulting WHL file: `lakehouse_utils-0.1.0-py3-none-any.whl`. The parts of the WHL file name have the below basic pieces of information.
     > ```python
     >   f"{name}-{version}-{python_version}-{os_specific}-{architecture_specific}"
     > ```
 
-    > Anytime you are making code changes you should evaluate if it is a _major_ (**0**.1.0 → **1**.0.0), _minor_ (0.1.0 → 0.**2**.0), or _revision_ (0.1.0 → 0.1.**1**) to your existing code and then update the version metadata in `setup.py` accordingly.
+    > Anytime you are making code changes you should evaluate if it is a _major_ (**0**.1.0 → **1**.0.0), _minor_ (0.**1**.0 → 0.**2**.0), or _revision_ (0.1.**0** → 0.1.**1**) to your existing code and then update the version metadata in `setup.py` accordingly.
 
 1. **requirements.txt**  – This simple text file lists any dependencies your library requires. My module is pretty simple, but here's an example of what this file might look like:
     ```
