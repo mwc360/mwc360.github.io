@@ -15,10 +15,6 @@ Now, how exactly can you package up your code to distribute and leverage it acro
 ![Library Process](/assets/img/posts/Developing-Fabric-Libraries-Pt2/lib-diagram.excalidraw.png)
 
 # Building / Packaging
-While you can certainly run all of this code locally on your machine, everything that I'll show in this section will be 100% from the Fabric Notebook UI. Sure, doing some of this stuff locally can be more productive and agile, but there's a certain convenience and magic to having the _capability_ to do everything in your browser.
-
-Packaging a Python library results in having a single compressed file, a _"wheel"_ file, with the `.WHL` extension. For anyone new to Python, this is really just a compressed file (which you can actually unzip to view the contents via replacing the extension with `.ZIP`) that contains all of the Python modules, reference files, and virtual references to the dependencies that your library has. Since all I had in the prior blog was the single Python `utils` module, I will need to add a couple other things to support making this a packagable library.
-
 While you can certainly run all of this code locally on your machine, everything I'll show in this section will be 100% from the **Fabric Notebook UI**. Sure, doing some of this stuff locally can be more productive, but there's something convenient—and a little magical—about being able to do everything in your browser.
 
 Packaging a Python library results in a single compressed file, a _"wheel"_ file with the `.whl` extension. For anyone new to Python, this is really just a ZIP archive (you can rename it to `.zip` and peek inside) that contains all of your Python modules, metadata, and references to any dependencies your library needs.
@@ -86,7 +82,7 @@ lakehoues_utils/
 └── setup.py # build instructions
 ```
 
-> If I had not put `utils.py` in a folder in the root called _lakehouse_utils_, the eventual `import` statment would've been `import utils`. To make the import more descriptive and avoid ambiguity I moved utils into a subfolder called _lakehouse_utils so that the `import` statement becomes `import lakehouse_utils.utils`.
+> If I had not put `utils.py` in a folder in the root called _lakehouse_utils_, the eventual `import` statement would've been `import utils`. To make the import more descriptive and avoid ambiguity I moved utils into a subfolder called _lakehouse_utils_ so that the `import` statement becomes `import lakehouse_utils.utils`.
 
 Now that the structure is in place, let's build the library. I like to add the following code into the same Notebook used for developing and testing the module. That way, I can make a quick change, generate a new build, and finish by publishing the new version to an artifact repo—_all in one Notebook_.
 
@@ -206,7 +202,7 @@ artifact_pat = notebookutils.credentials.getSecret(f"https://{key_vault_name}.va
 # Execute PIP
 install = get_ipython().run_line_magic("pip", f"install {library_name}=={library_version} --index-url=https://{ado_artifact_feed_name}:{artifact_pat}@pkgs.dev.azure.com/{ado_org_name}/{ado_project_name}/_packaging/{ado_artifact_feed_name}/pypi/simple/")
 ```
-![alt text](image-5.png)
+![Install Lib](/assets/img/posts/Developing-Fabric-Libraries-Pt2/install-lib.png)
 
 Easy, right? If you don't need parameters, you can reduce it to two lines:
 
