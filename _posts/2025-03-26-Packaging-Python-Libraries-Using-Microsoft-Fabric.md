@@ -237,7 +237,7 @@ Well, first consider what our library version history looks like in Azure DevOps
 
 And here's where it gets powerful: **maintaining older versions** means we can continue building and testing new functionality in dev using `1.0.0`, without breaking everyone else. Once testing wraps up, we promote the changes to UAT with a reference to the newer version. No need to deploy the library itself, we only deploy the reference to the version number. Meanwhile, the other data teams—deep in the throes of their quarterly ping-pong tournament—don't even need to worry. Their code can keep humming along with the older version until they're ready to upgrade on their own schedule.
 
-In short: versioning gives you the power to move fast, _without_ breaking things, and even when Jim from Producement Analytics is too busy celebrating his huge win to adopt what might be the most glorious package release to grace the halls of your archaic IT org.
+In short: versioning gives you the power to move fast, _without_ breaking things, and even when Jim from Procurement Analytics is too busy celebrating his huge win to adopt what might be the most glorious package release to grace the halls of your archaic IT org.
 
 
 # Was it worth it?
