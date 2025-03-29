@@ -246,7 +246,7 @@ That's a fair question—and really, it boils down to this:
 
 Do you want to build something that works for a few months or maybe a year, only to require a complete rewrite when the data model changes, the team grows, or business needs evolve? Or do you want to build something that scales with your organization, stands the test of time (at least until AI takes all of our jobs and we get plugged into the Matrix), and—dare I say—brings joy (or minimally appreciation) to the next engineer who inherits it?
 
-The fundamental process that I used—**Develop → Build → Distribute → Install**—isn't something I just made up. It's how every piece of mature software on the planet Earth is shipped and consumed. 
+The fundamental process that I used—**Develop → Package → Distribute → Install**—isn't something I just made up. It's how every piece of mature software on the planet Earth is shipped and consumed. 
 
 Spark source code doesn't get manually copy-pasted to each VM when your cluster spins up by some guy named George. Pandas didn't become the most widely used DataFrame library because someone shared a `.py` file on a Google Drive. And if you browse today's open-source ecosystem, nearly everything worth using started with a dev like you or me, who had an amazing idea, followed standard SDLC practices, and decided it was worth sharing with the world.
 
