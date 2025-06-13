@@ -34,16 +34,12 @@ The table below contains the three Delta table features (plus one that requires 
 
 > ⚠️ Seeing `Yes` in the table **does not** necessarily mean you can enable that feature via the Fabric Runtime, just that your can read from a table that already has it enabled by another platform using Delta Lake.
 
-| Table Feature              | Runtime 1.1 (Delta Lake 2.2.0)      | Runtime 1.2 (Delta Lake 2.4.0)      | Runtime 1.3 Preview (Delta Lake 3.1)|
+| Table Feature              | Runtime 1.1 (Delta Lake 2.2.0)      | Runtime 1.2 (Delta Lake 2.4.0)      | Runtime 1.3 (Delta Lake 3.2)|
 |----------------------------|-------------------------------------|-------------------------------------|-------------------------------------|
-| Default Columns            | Yes†                                | Yes†                                | Yes†                                |
+| Default Columns            | Yes†                                | Yes†                                | Yes                                 |
 | V2 Checkpoints             | No                                  | No                                  | Yes                                 |
 | Liquid Clustering          | Yes if v2Checkpoints are dropped††  | Yes if v2Checkpoints are dropped††  | Yes                                 |
 | Deletion Vectors           | No                                  | Yes                                 | Yes                                 |
-
-> **UPDATE 6/13/24**: Fabric Spark Runtime 1.3 was upgraded to Preview status (from Experimental) and now includes Delta 3.1 which means we finally get ⚡**Liquid Clustering**⚡!!. It is arguably one of the most exciting Detla Lake features in version 3. It completely eliminates Hive-style partitioning and Z-ORDER indexing, it's that revolutionary.
-
-> † Default Columns is a writer table feature, however it currently prevents the detla table from being registered in the Lakehouse Delta table metastore when you create a shortcut. For now you can reference the path to the shortcut using `df = spark.read.format('delta').load(<path>)` to read from the table in Fabric.
 
 > †† Databricks currently enables V2 Checkpoints by default when using Liquid Clustering. However, Liquid Clustering by itself is a writer table protocol and not a reader protocol, that means we can drop V2 Checkpoints after enabling Liquid Clustering to allow Fabric Runtimes prior to 1.3 to read from Liquid Clustered tables. This not a straightforward process, see [how to drop V2 Checkpoints](#How-to-Drop-V2-Checkpoints).
 
