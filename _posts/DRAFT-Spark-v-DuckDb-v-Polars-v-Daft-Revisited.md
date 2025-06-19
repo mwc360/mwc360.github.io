@@ -85,26 +85,26 @@ Before we dig into the results, all engines have shipped various changes since D
 At the 140MB scale (not tested in my benchmark from December '24), all single-machine engines are quite close in performance and handily beat Spark.
 - There's almost no aggregate difference between DuckDB, Polars, and Daft at 4-vCores. At 2-vCores, Polars barely edges out DuckDB to take the win for the fastest execution on the smallest compute size.
 
-![alt text](/assets\img\posts\Small-Data-Benchmark-2025\1g-all.png)
+![alt text](/assets/img/posts/Small-Data-Benchmark-2025/1g-all.png)
 
 ### 140MB Scale @ 4-vCores - Phase Detail
 - Spark is significantly (2-5x) slower at all write operations.
 
-![alt text](/assets\img\posts\Small-Data-Benchmark-2025\1g-4core.png)
+![alt text](/assets/img/posts/Small-Data-Benchmark-2025/1g-4core.png)
 
 ## 1.2GB Scale
 We've no reached out breakeven point where Spark is super competitive with all single-machine engines.
 - While Fabric Spark doesn't give the option to run Spark on 2-vCores, at 4-vCores Spark is the slowest but is within arms reach of the other engines.
 - At 8-vCores, Spark, Polars, and DuckDB all complete the benchmark in the same time. Ironically, Spark at just 8-vCores running on a single-node is 1.5x faster than Daft, the _"Spark killer"_.
 
-![alt text](/assets\img\posts\Small-Data-Benchmark-2025\10g-all.png)
+![alt text](/assets/img/posts/Small-Data-Benchmark-2025/10g-all.png)
 
 ### 1.2GB Scale @ 8-vCores - Phase Detail
 
 Looking at the detail by phase, a few observations:
 > Fabric Spark with the Native Execution Engine is **super fast** at reading and writing parquet. Considering that Single-Node Spark clusters in Fabric only allocate 50% of VM resources to Spark, this means that Spark only had 1/2 the cores and memory available to do the actual work of reading and writing 1.2GB of parquet data and handily beat the other engines.
 
-![alt text](/assets\img\posts\Small-Data-Benchmark-2025\10g-8core.png)
+![alt text](/assets/img/posts/Small-Data-Benchmark-2025/10g-8core.png)
 
 ## 12.7GB Scale
 Now at 12.7GB scale we see Fabric Spark with the Native Execution Engine really flex it's muscles:
@@ -116,7 +116,7 @@ Now at 12.7GB scale we see Fabric Spark with the Native Execution Engine really 
     - Spark was 2.9x faster than Polars
     - Spark was 6.7x faster than Daft
 
-![alt text](/assets\img\posts\Small-Data-Benchmark-2025\100g-all.png)
+![alt text](/assets/img/posts/Small-Data-Benchmark-2025/100g-all.png)
 
 ### 12.7GB Scale @ 16-vCores - Phase Detail
 Looking at at the detail from the 16-vCore tests:
@@ -124,7 +124,7 @@ Looking at at the detail from the 16-vCore tests:
 - Polars slightly beat Spark at performing the CTAS operation.
 - Fabric Spark ran the 3x MERGE operations the fastest, with DuckDB close behind.
 - Polars executed the ac-hoc query the fastest, with DuckDB and Spark very close behind.
-![alt text](/assets\img\posts\Small-Data-Benchmark-2025\100g-16core.png)
+![alt text](/assets/img/posts/Small-Data-Benchmark-2025/100g-16core.png)
 
 
 ## General Observations
