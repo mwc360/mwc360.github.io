@@ -3,11 +3,13 @@ layout: post
 title: "The Small Data Showdown '25: Is it Time to Ditch Spark Yet??"
 tags: [Fabric, Spark, Lakehouse, Delta Lake, DuckDB, Polars, Daft]
 categories: Data-Engineering
-feature-img: "assets/img/posts/Small-Data-Benchmark-2025/engine-showdown.png"
-thumbnail: "assets/img/posts/Small-Data-Benchmark-2025/engine-showdown.png"
-published: True
+feature-img: "assets/img/feature-img/pexels-pixabay-248547.jpeg"
+thumbnail: "assets/img/thumbnails/feature-img/pexels-pixabay-248547.jpeg"
+published:
 ---
 Last December (2024) I published a blog seeking to explore the question of whether data engineers in Microsoft Fabric [should ditch Spark for DuckDb or Polars](https://milescole.dev/data-engineering/2024/12/12/Should-You-Ditch-Spark-DuckDB-Polars.html). Six months have passed and all engines have gotten more mature. Where do things stand? **Is it finally time to ditch Spark?** Let _The Small Data Showdown '25_ begin!
+
+![alt text](/assets/img/posts/Small-Data-Benchmark-2025/small-data-showdown.excalidraw.png)
 
 # Goals of This Post
 First, let's revisit the purpose of the benchmark: _The objective is to explore data engineering engines available in Fabric to understand whether Spark with vectorized execution (the Native Execution Engine) should be considered in small data architectures._
