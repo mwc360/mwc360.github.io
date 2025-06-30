@@ -5,7 +5,7 @@ tags: [Fabric, Spark, Lakehouse, Delta Lake, DuckDB, Polars, Daft]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-danielspase-2091351.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-danielspase-2091351.jpeg"
-published: True
+published: False
 ---
 
 I'm excited to announce **LakeBench**, v0.1, the first Python-based multi-modal benchmarking library that supports multiple data processing engines on multiple benchmarks. You can find it on [GitHub](https://github.com/mwc360/LakeBench) and [PyPi](https://pypi.org/project/lakebench/). 
