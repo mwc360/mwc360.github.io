@@ -52,8 +52,8 @@ Most benchmarks that are published are too query-heavy and miss the reality that
 | Spark        | Fabric Runtime 1.3 (Spark 3.5, Delta 3.2) |
 
 ## Spark Core -> Cluster Map
-
 For the single-node engines, there's nothing to be confused about. 16-vCores means a 16-vCore machine. For Spark, it gets nuanced. The below shows the mapping of cluster config to how many cores were used (including the driver node):
+
 | Core Count | Cluster Config            | Executor Cores |
 | ---------- | ------------------------- | -------------- |
 | 4          | 4-vCore Single Node       | 2              |
