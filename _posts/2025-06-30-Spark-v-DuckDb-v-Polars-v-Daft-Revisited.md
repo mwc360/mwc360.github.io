@@ -47,7 +47,7 @@ Most benchmarks that are published are too query-heavy and miss the reality that
 
 | Engine       | Version                                   |
 | ------------ | ----------------------------------------- |
-| Daft         | 0.4.18                                    |
+| Daft         | 0.5.7                                    |
 | Delta-rs     | 0.18.3                                    |
 | DuckDB       | 1.3.1                                     |
 | Polars       | 1.30.0                                    |
@@ -83,63 +83,106 @@ Before we dig into the results, all engines have shipped various changes since D
     - Still no Deletion Vector support :(. Make noise here: https://github.com/delta-io/delta-rs/issues/1094
 
 # Where Do Things Stand?
+> On 7/2/25 I reran the benchmark with a few changes:
+> 1. Delta-rs 1.0.2 was used instead of 0.18.2.
+> 1. ELTBench was updated to use the same exact sudo sampling logic as the input to the merge statement. Since Polars doesn't support a Lazy sample function it used its own custom sampling logic. All of the engines now use the same exact DIY sampling logic.
+> 1. Polars was upgraded to 1.3.1
+> 
+> With the above changes, particularly the upgrade to Delta-rs v1, the results generally had the non-distributed engines improve the most (the Delta-rs rust engine in v1 is now mature enough to not see performance regressions whereas in 0.18.2 the pyarrow engine was typically faster or at least prevented OOM).
+
 ## 140MB Scale
 At the 140MB scale (not tested in my benchmark from December '24), all single-machine engines are quite close in performance and handily beat Spark.
-- There's almost no aggregate difference between DuckDB, Polars, and Daft at 4-vCores. At 2-vCores, Polars barely edges out DuckDB to take the win for the fastest execution on the smallest compute size.
+- Polras is ~ 2x faster than DuckDB and Daft at 2 and 4-vCores. At 8-vCores all non-distributed engines are decently close.
 
 ![alt text](/assets/img/posts/Small-Data-Benchmark-2025/1g-all.png)
 
 ### 140MB Scale @ 4-vCores - Phase Detail
 - Spark is significantly (2-5x) slower at all write operations.
+- Polars somehow ran the ad-hoc query in 146 ms. It barely shows up on the chart, this is absolately mind blowing!
+- Spark took the bronze at completing the ad-hoc query, beating DuckDB. Somewhat suprising given how much faster the single-machine engines were at the write operations.
 
 ![alt text](/assets/img/posts/Small-Data-Benchmark-2025/1g-4core.png)
 
 ## 1.2GB Scale
-We've already reached our breakeven point where Spark is super competitive with all single-machine engines.
-- While Fabric Spark doesn't give the option to run Spark on 2-vCores, at 4-vCores Spark is the slowest but is within arm's reach of the other engines.
-- At 8-vCores, Spark, Polars, and DuckDB all complete the benchmark in the same time. Ironically, Spark at just 8-vCores running on a single-node (which uses only 4 executor cores) is 1.5x faster than Daft, the _"Spark killer"_.
+We are beginning to see that Spark is starting to catch up in aggregate but still has a ways to go.
+- Fabric Spark beats Daft, the _"Spark killer"_, at 8cores but DuckDB and particularly Polars still have a massive advantage.
+- While Fabric Spark doesn't give the option to run Spark on 2-vCores, at 4-vCores Spark is the slowest but its worth noting that only 1/2 of the nodes cores are allocated as executor cores in Single node mode, meaning that Spark is operation at 1/2 the compute power.
 
 ![alt text](/assets/img/posts/Small-Data-Benchmark-2025/10g-all.png)
 
 ### 1.2GB Scale @ 8-vCores - Phase Detail
 
-Looking at the detail by phase, a few observations:
-> Fabric Spark with the Native Execution Engine is **super fast** at reading and writing parquet. Considering that Single-Node Spark clusters in Fabric only allocate 50% of VM resources to Spark, this means that Spark only had 1/2 the cores and memory available to do the actual work of reading and writing 1.2GB of parquet data and handily beat the other engines.
+Looking at the detail by phase, a couple observations:
+- Again we see that Spark is not the fastest at any of the phases, however it's also not the slowest. Fabric Spark beat DuckDB at the ad-hoc query, and beat Daft at 2 of 3 write phases.
+- I'm again stunned by Polars...
 
 ![alt text](/assets/img/posts/Small-Data-Benchmark-2025/10g-8core.png)
 
 ## 12.7GB Scale
-Now at 12.7GB scale, we see Fabric Spark with the Native Execution Engine really flex its muscles:
-- Spark was the **only** engine to complete the benchmark on 4-vCores. Yes, every engine advertises it can process data that is larger than memory, but somehow Spark is the only engine to complete all benchmarks, and with the Single-Node config, does it with 1/2 the available memory and cores 🤯. Interestingly, DuckDB was able to complete this 4-vCore job on version 1.1.3, but using the latest version (1.3.1), which is significantly faster in all other scenarios, resulted in OOM.
-- At 8-vCores, neither Polars nor Daft could effectively manage memory to avoid OOM. Spark was 1.3x faster than DuckDB.
-- At 16-vCores, Spark was ~2x faster than the next engine, DuckDB.
-- At 32-vCores:
-    - Spark was 2.8x faster than DuckDB
-    - Spark was 2.9x faster than Polars
-    - Spark was 6.7x faster than Daft
+Now at 12.7GB scale, we see Fabric Spark with the Native Execution Engine start to flex its muscles as the data scale grows to what I'd consider the peark of the "small data" range:
+- Spark was the fastest engine, with DuckDB close behind, to complete all compute scales without running into out-of-memory (OOM).
+- Polars leaves me perplexed. It somehow beat Spark at the 16 and 32-vCore compute scale, yet it also ran into OOM below 16-vCores.
+- DuckDB was the only non-distributed engine to complete the benchmark at 2-vCores. 
+- I will again highlight that Spark at 4 and 8-vCores is running in single-node mode and only 1/2 of the machines cores and RAM are allocated to executors. The reason I point this out again is that this is a platform configuration (which conceptually could change) and at only 50% of the available compute being used, it is on-par or beating non-distributed engines. If all cores were allocated to executors I'd expect Spark to decisively win this scale and compute size.
+- Lastly, a note on the importance of upgrading your composible data stack (the reality that Delta-rs is used to write DuckDB in-memory data to Delta format): before upgrading to Delta-rs v1, DuckDB ran into OOM at the 2 and 4-vCore scale. After upgrading, with DuckDB being able to leverage the more efficient Rust based engine in Delta-rs it had no problem running the tests at 2 and 4-vCore compute scales. 
+- Daft trails the competition by a wide margin. I absolvely love Daft's vision, but I'm just not seeing it in the perf department.
 
-> Note: the 'PyArrow' Delta-rs engine was used instead of the newer 'Rust' engine for engines that don't directly support writing to Delta. The Rust engine had nearly the same performance but resulted in OOM at 8-vCores, whereas PyArrow didn't have any issues at this compute size.
+> <s>Note: the 'PyArrow' Delta-rs engine was used instead of the newer 'Rust' engine for engines that don't directly support writing to Delta (in version 0.18.2). The Rust engine had nearly the same performance but resulted in OOM at 8-vCores, whereas PyArrow didn't have any issues at this compute size.</s> In Delta-rs V1 the Rust engine is the only engine option.
 
 ![alt text](/assets/img/posts/Small-Data-Benchmark-2025/100g-all.png)
 
 ### 12.7GB Scale @ 16-vCores - Phase Detail
 Looking at the detail from the 16-vCore tests:
-- Fabric Spark with the Native Execution Engine was nearly 3x faster at phase 1 for loading the 5 Delta tables.
-- Polars slightly beat Spark at performing the CTAS operation.
-- Fabric Spark ran the 3x MERGE operations the fastest, with DuckDB close behind.
-- Polars executed the ad-hoc query the fastest, with DuckDB and Spark very close behind.
+- Polars and Daft tie at completing the ad-hoc query.
+- Fabric Spark comes in 2nd place at 2 of 3 write phases.
+- Polars was either the fastest or tied at every phase.
+- Daft took significantly longer to load the 5 Delta tables.
 
 ![alt text](/assets/img/posts/Small-Data-Benchmark-2025/100g-16core.png)
 
 ## General Observations
-1. As noted the last time I ran this benchmark, `VACUUM` is significantly slower in Spark. On the odd chance that you aren't using Deletion Vectors in Fabric, you could use the Delta-rs library to vacuum your tables.
+1. As noted, the last time I ran this benchmark, `VACUUM` is significantly slower in Spark. On the odd chance that you aren't using Deletion Vectors in Fabric, you could use the Delta-rs library to vacuum your tables.
 1. `OPTIMIZE` is generally faster via Delta-rs. The reason for this is primarily that the Native Execution Engine doesn't support the entire compaction code path and results in two fallbacks to execution on the JVM. I anticipate this will get _much faster_ once we ship support for this code path.
-1. In all benchmarks where Polars didn't run into OOM before getting to the ad-hoc query test, it was consistently the fastest engine at this aggregative query.
-1. **Spark was the only engine to complete the entire battery of benchmark scenarios with not a single out-of-memory exception**. This is the result of the Native Execution Engine's highly efficient use of columnar memory, outside the JVM. Where JVM memory is needed for any fallbacks (i.e., when running `OPTIMIZE`), memory is dynamically allocated between on-heap and off-heap as needed.
-1. Spark consistently sees greater relative improvement in execution time via adding more compute as compared to the other engines. Daft got slower at 1.2GB scale going from 4 to 8-vCores and also got slower at the 12.7GB scale going from 16 to 32-vCores.
+1. In all benchmarks where Polars didn't run into OOM, it was consistently the fastest engine.
+1. Both Spark and DuckDB where the only engines to complete the entire battery of benchmark scenarios with not a single out-of-memory exception. Maybe unsuprising for DuckDB which isn't JVM based, but for Spark this is the result of the Native Execution Engine's highly efficient use of columnar memory, outside the JVM. Where JVM memory is needed for any fallbacks (i.e., when running `OPTIMIZE`), memory is dynamically allocated between on-heap and off-heap as needed.
+1. Spark consistently sees greater relative improvement in execution time via adding more compute as compared to the other engines.
+
 
 ## Which Engine Gained the Most Ground Since December '24?
-While all engines got much faster, Fabric Spark with the Native Execution Engine saw the greatest performance gains relative to December '24 (between 1.6x-2x faster depending on the data scale and cluster config). Spark increased its advantage over single-machine engines at the 12.7GB scale while also getting even more competitive at the 1.2GB scale.
+While all engines got much faster, Polars followed by Fabric Spark with the Native Execution Engine saw the greatest performance gains relative to December '24. Polars got so much faster that I honestly questioned whether or not there was a bug in my code resulting in less data being written or LazyFrames that were never triggered. 
 
 # So Is It Time to Ditch Spark?
-Unless your data is around 100MB compressed, you don't project growth up to 1GB in the next couple of years, _and_ you are okay with trailing Delta lake compatibility (no support for Deletion Vectors), I'd say it's a hard **no** to give up on Spark anytime soon. While DuckDB, Polars, and Daft all leverage columnar memory and vectorized execution via either C++ or Rust implementations, Fabric Spark with the Native Execution Engine (via Velox and Apache Gluten) does as well. And guess what? There's plenty of additional optimizations still planned for Fabric Spark and the Native Execution Engine that will continue to improve performance in the coming year. I look forward to seeing where things stand in 2026 😁.
+While the non-distributed engines, particularly Polars and DuckDB are very competitive or even faster than Spark at most small data benchmarks, there's a few reasons why I would still use Spark with the Native Execution Engine in most small data scenarios:
+
+1. **Maturity**: What the perf numbers don’t highlight is the amount of work involved to get the benchmark to run successfully. Daft, DuckDB, and Polars all required significantly more time than Fabric Spark to get the same code from December ’24 running on the latest engine versions. I didn’t have to change a single thing in Spark — it just ran. And with zero effort (thanks to the engineering investment from Microsoft), my code ran ~2x faster.
+    - Daft had all sorts of issues with authenticating to storage ([GitHub Issue: 4692](https://github.com/Eventual-Inc/Daft/issues/4692)). After a few hours I gave up and reverted to using ADLS Gen2. Daft also broke after upgrading to Delta-rs v1, as it references a method that no longer exists in v1 ([GitHub Issue: 4677](https://github.com/Eventual-Inc/Daft/issues/4677)). On the code front, the only feature support issue I had with this benchmark was that it doesn’t have a random value function. On adding support for TPC-DS and TPC-H benchmarks in LakeBench, I’ve found that Daft SQL is very immature — it gets tripped up easily (no support for `CROSS JOIN`s and frequent data type casting issues that other engines don’t have).
+    - Polars code required some light refactoring to use the new streaming engine. Polars also required me to refactor the existing benchmark as it doesn’t support `LazyFrame.sample` and doesn’t have a random value function. My only other issue was navigating the OOM errors.
+    - DuckDB also had periodic issues authenticating to storage. At the larger data scale, tasks seemed to get stuck — almost like the auto-generated token was no longer valid — but would just keep running until I manually canceled the job. Upgrading to Delta-rs v1 required removing the `engine` parameter and possibly introduced this error: `InvalidInputException: Invalid Input Error: Attempting to execute an unsuccessful or closed pending query result`. Refactoring the code to explicitly establish a DuckDB connection and create my own storage secret fixed this, but it’s extremely hard to tell what the exact root cause was — DuckDB, Delta-rs, or ultimately a Fabric token issue.
+
+1. **Triaging Support**: Imagine that you have a query that has been running for a while and you just want to know what’s going on or what’s actually running at that moment. In Spark, you can simply look at the in-cell task metrics to see that things are happening or open the Spark UI to get full details on what’s currently running and what has run. For the non-distributed engines, I had multiple cases of wanting to know what it was actively doing — and there’s zero visibility. Fine for any operation that runs in <1 minute, but for anything longer, the lack of visibility is just like rolling dice, hoping you wrote the code well and that your compute size will work out. Want to look at logs to see what’s already happened or the details of a prior session? Good luck.
+
+1. **DIY Composable Data Systems == More Management Overhead**: First of all, I love the idea of the composable data stack — if you aren’t familiar with it, give [Wes McKinney’s blog](https://wesmckinney.com/blog/looking-back-15-years/) a read. Having pluggable components in your stack makes it more flexible and allows you to leverage the best of open source. Fabric takes advantage of this by using Velox and Apache Gluten as foundational components of the Native Execution Engine to accelerate Spark. But this is all managed for users — no need to test and choose versions, perform upgrades, roll out changes, etc. I’m beginning to love DuckDB (and Polars — I’m blown away by its recent perf gains), but what I don’t love is the necessity to stitch together different technologies just to get something simple to work. DuckDB is the most robust non-distributed engine at reading Delta format, but it doesn’t natively write to Delta. You can cast DuckDB relations to Arrow format so that Delta-rs can take over and do the write, but there are at least four different ways to do it (`arrow`, `fetch_record_batch`, `fetch_arrow_reader`, `record_batch`) and the [documentation](https://duckdb.org/docs/stable/guides/python/export_arrow) is poor at explaining the differences and best practices. What DuckDB natively supports is fantastic, but when you need to complete the whole E2E data lifecycle, things start to get fragmented. As your stack gets fragmented with different technologies, you then need to manage compatibility — e.g., LakeBench installs Delta-rs v1.0.N for Polars and DuckDB but v0.25.5 for Daft.
+
+1. **Delta Feature Support**: I look forward to the day when all these engines fully support features like Deletion Vectors for both reads and writes. Currently, DuckDB supports reading Deletion Vectors, but Delta-rs lacks support for writing them. Polars and Daft, as far as I know, do not support either read or write paths. In LakeBench, the telemetry logging table is configured with Deletion Vectors disabled to ensure compatibility across all engines for writing logs. Relying on the lowest common denominator of features can be quite limiting and frustrating.
+
+1. **Future Data Growth**: In most cases, small data will grow into big data — or at least into data of a scale where distributed engines are necessary for decent perf. If you have small data today, consider the rate of possible growth and whether it makes sense to start with distributed-capable compute like Spark. You can start on single-node configs to keep costs low and seamlessly scale out to multiple nodes as your data volumes grow.
+
+Just to add some data growth sanity to this benchmark, let's consider if our largest scale tested grew 10x from 12.7GB to ~ 127GB (2.8B row transaction table).
+
+## Which engine wins at the 127GB scale?
+
+All engines were tested on 16, 32, and 64 total cores (Spark w/ 7x8-vCore Workers + 1 8vCore driver).
+- DuckDB was the only non-distributed engine to complete the benchmark but did results in OOM at 16-vCores. Polars ran into OOM just minutes into the job. Daft ran for over and hour and then failed.
+- Spark was the only engine to complete the 127GB scale on all compute sizes.
+    - Spark was ~ 3.5x faster than DuckDB at 32-vCores
+    - Spark was ~ 6x faster than DuckDB at 64-vCores
+
+![alt text](/assets/img/posts/Small-Data-Benchmark-2025/1000g-all.png)
+
+There we go, now we have out dose of "medium data" reality, Spark is still king. I was starting to sweat a bit there as the small data tests completed 😅.
+
+So what's _my guidance_ here?
+
+> If you have uber-small data (i.e. up to 1GB compressed), you can be quite successful reducing costs and improving performance by using a non-distributed engine like Polars, DuckDB, or Daft. If your data is between 1GB and 10GB compressed, Spark with vectorization via the Native Execution Engine is super competitive perf-wise, much more fault- and constrained-memory-tolerant, and thus entirely worth leveraging. While DuckDB, Polars, and Daft all leverage columnar memory and vectorized execution via either C++ or Rust implementations, Fabric Spark with the Native Execution Engine (via Velox and Apache Gluten) does as well. And guess what? There are plenty of additional optimizations still planned for Fabric Spark and the Native Execution Engine that will continue to improve performance in the coming year. I look forward to seeing where things stand in 2026 😁.
+>
+> Regardless of your current data scale, consider potential data growth, maturity, and feature support so you aren’t setting yourself up for a required engine replatform as your data grows beyond the bounds of being small or you require a more mature set of capabilities.
