@@ -47,10 +47,10 @@ Most benchmarks that are published are too query-heavy and miss the reality that
 
 | Engine       | Version                                   |
 | ------------ | ----------------------------------------- |
-| Daft         | 0.5.7                                    |
-| Delta-rs     | 0.18.3                                    |
+| Daft         | 0.5.7                                     |
+| Delta-rs     | 1.0.2 (0.25.5 for Daft)                   |
 | DuckDB       | 1.3.1                                     |
-| Polars       | 1.30.0                                    |
+| Polars       | 1.31.0                                    |
 | Spark        | Fabric Runtime 1.3 (Spark 3.5, Delta 3.2) |
 
 ## Spark Core -> Cluster Map
