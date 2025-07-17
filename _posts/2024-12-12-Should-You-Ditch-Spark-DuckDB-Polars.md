@@ -79,6 +79,8 @@ Since sampling a large table as the source for an incremental load is not someth
 
 # Benchmark Analysis
 
+> ℹ️ After reading this blog, see my [refresh of this benchmark](https://milescole.dev/data-engineering/2025/06/30/Spark-v-DuckDb-v-Polars-v-Daft-Revisited.html) updated on 6/30/2025 which covers new insights, includes Daft in the mix, and an intro to [LakeBench](https://github.com/mwc360/LakeBench), the benchmark behind this blog post.
+
 ## Performance
 
 ### 10GB Scale
@@ -165,13 +167,15 @@ Selecting a compute engine isn’t just about raw performance—it’s also abou
 
 | **Engine** | SQL Interface | DataFrame API | Native Delta Reader      | Native Delta Writer  | Local Development | Live Monitoring Capabilities | OneLake Auth Setup |
 |------------|---------------|---------------|--------------------------|----------------------|-------------------|------------------------------|--------------------|
-| **Spark**  | Yes           | Yes           | Yes                      | Yes                  | Poor              | Good but w/ a steep learning curve | Excellent    |
+| **Spark**  | Yes           | Yes           | Yes                      | Yes                  | Great             | Good but w/ a steep learning curve | Excellent    |
 | **DuckDB** | Yes           | Yes††         | Yes _(via Delta Kernel)_ | No                   | Great             | Poor                         | Ok                 |
 | **Polars** | Yes†          | Yes           | Yes                      | Yes _(via Delta-rs)_ | Great             | Very Poor                    | Partial            |
 
 > _† Corrected 12/16/24, Polars does support a SQL interface. This has been decently mature since 0.17.0 (June 2023)._
 
 > _†† Corrected 12/16/24: DuckDB supports a DataFrame-like API through its [Relational API](https://duckdb.org/docs/api/python/relational_api) and [Expression API](https://duckdb.org/docs/api/python/expression), introduced in version 0.7.0 (August 2022). Additionally, DuckDB is developing an experimental [Spark API](https://duckdb.org/docs/api/python/spark_api), enabling Spark users to run workloads using the DuckDB engine while leveraging the familiar Spark DataFrame API. This feature facilitates seamless migration of lightweight Spark jobs to DuckDB with near-zero code changes, while also allowing users to start with the DuckDB Spark API and transition to the Spark engine as data scales beyond DuckDB's optimal range._
+
+> _† Updated 7/17/25, I'd rate local development with Spark as beeing 'great' with caveats. After recently working on a contribution to OSS Delta-Spark, I really didn't know how powerful IntelliJ made developing in Spark. Rich debugging, fantastic linting, dependency tracking, code navigation, etc., it's quite amazing. The only caveat is that it's not relevant for PySpark development. I love VS Code, but it's not quite as rich and out-of-the-box for developing in Spark._
 
 #### My Analysis  
 - **SQL and DataFrame API**: ~~While you can use a DataFrame abstraction library like Ibis or SQLFrame, Spark is the only engine I benchmarked that natively supports both SQL and a DataFrame API. Having both presents tremendous flexibility in building data engineering pipelines. Most Spark developers I know heavily use both the SparkSQL and the DataFrame API.~~ _Corrected 12/16/24: All engines support both a SQL interface and a DataFrame API, enabling programmatic chaining of transformations that can be executed via lazy evaluation. Spark offers the most robust capabilities through SparkSQL and its DataFrame API. However, Polars (DataFrame-first) and DuckDB (SQL-first) are both making significant progress in enhancing their secondary query construction models. Notably, DuckDB is actively developing a [Spark API](https://duckdb.org/docs/api/python/spark_api), allowing Spark users to leverage DuckDB with familiar syntax while providing a seamless path (_fingers crossed, this is still experimental_) to switch to Spark’s distributed compute engine as data volumes scale._
