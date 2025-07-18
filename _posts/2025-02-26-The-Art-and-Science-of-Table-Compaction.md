@@ -186,7 +186,12 @@ Below are the results with the bugfix in Fabric, again we see that Auto Compacti
 
 
 # How to Enable Auto Compaction
-While auto compaction _can_ be enabled at the session level with `spark.conf.set('spark.databricks.delta.autoCompact.enabled', 'true')`, until the referenced bug that impacts larger tables is fixed, I would suggest enabling it at the table level for tables under 1GB in size:
+At the session level:
+```python
+spark.conf.set('spark.databricks.delta.autoCompact.enabled', 'true')
+```
+
+At the table level:
 ```sql
 CREATE TABLE dbo.ac_enabled_table
 TBLPROPERTIES ('delta.autoOptimize.autoCompact' = 'true')
@@ -194,7 +199,8 @@ TBLPROPERTIES ('delta.autoOptimize.autoCompact' = 'true')
 
 It can also be enabled on existing tables with:
 ```sql
-ALTER TABLE dbo.ac_enabled_table SET TBLPROPERTIES ('delta.autoOptimize.autoCompact' = 'true')
+ALTER TABLE dbo.ac_enabled_table
+SET TBLPROPERTIES ('delta.autoOptimize.autoCompact' = 'true')
 ```
 
 ## Tuning Auto Compaction
