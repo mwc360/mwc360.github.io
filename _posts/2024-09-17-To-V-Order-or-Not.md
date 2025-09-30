@@ -59,20 +59,20 @@ To understand _when to enable or disable V-Order_, we need to identify which wor
 2. **Fabric Warehouse**: Expect to see around a 10% improvement in read query performance but a 10-20% performance hit when writing data.
 3. **SQL Endpoint (Fabric Warehouse)**: This is an extension of the Fabric Warehouse as it uses the same engine; anticipate a 10% read improvement here as well.
 
-**Fabric Spark does NOT benefit from V-Order.** While it's rare, it's technically possible that V-Order can result in Parquet files smaller than non-V-Ordered files. However, in this case, Spark would only indirectly benefit by reading less data. It does **not** benefit from the VertiPaq-style sorting and encoding. V-Order impacts Fabric Spark in three ways:
+**Fabric Spark does NOT inherently benefit from V-Order.** While I haven't experience it to be the norm, V-Order can result in Parquet files smaller than non-V-Ordered files. However, in this case, Spark would only indirectly benefit by reading less data. It does **not** benefit from the VertiPaq-style sorting and encoding. For cases where V-Order doesn't result in smaller, more compressed Parquet files, V-Order impacts Fabric Spark in three ways:
 
-- **Write Performance**: Enabling V-Order results in writes up to 33% slower.
-- **Read Performance**: Enabling V-Order results in reads up to 50% slower.
-- **File Sizes**: Enabling V-Order results in Parquet files up to 6% larger.
+- **Write Performance**: between 15-33% slower
+- **Read Performance**: between 20-50% slower
+- **File Sizes**: up to 6% larger
 
 While Power BI's VertiPaq storage format provides massive compression over uncompressed data, parquet files that are snappy-compressed (default in Fabric) already have two layers of compression, thus V-Order typically does not result in smaller files, just better sorted and encoded files for VertiPaq optimized engines.
 
 ## What About Optimized Write?
 It's worth mentioning Optimized Write here since it is enabled by default for the same reason that V-Order is—it helps improve performance of select downstream workloads. I blogged about [Optimized Write](https://milescole.dev/data-engineering/2024/08/16/A-Deep-Dive-into-Optimized-Write-in-Microsoft-Fabric.html) back in August; if you haven't read the post, it's worth a read. Optimized Write can be a godsend but can also plague you with unnecessary slower writes. Knowing what it does and when to use it is critical.
 
-Optimized Write is important for both Power BI Direct Lake and Fabric Warehouse / SQL Endpoint performance, as both data readers prefer larger Parquet files than Spark does. The default Bin Size setting of Optimized Write generates the optimal file size to improve performance of both of these workloads but can have a negative impact on Spark unless you are partitioning your Delta tables.
+Optimized Write is important for both Power BI Direct Lake and Fabric Warehouse / SQL Endpoint performance, as both data readers prefer somewhat larger row-groups than Spark does. The default Bin Size setting of Optimized Write generates the optimal file size to improve performance of both of these workloads but can have a negative impact on Spark unless you are partitioning your Delta tables.
 
-My general guidance here is to evaluate Optimized Write just like you'd evaluate V-Order: learn what it is, form a hypothesis, and test on your own data. Knowing that it requires shuffling data across executors before writing and this has a massive performance impact on Spark, unless your Delta tables are partitioned or you are prioritizing SQL Endpoint, Fabric Warehouse, or Direct Lake performance, it should be disabled.
+My general guidance here is to evaluate Optimized Write just like you'd evaluate V-Order: learn what it is, form a hypothesis, and test on your own data. Knowing that it requires shuffling data across executors before writing and this has a massive performance impact on Spark, unless your Delta tables are partitioned or you are prioritizing SQL Endpoint, Fabric Warehouse, or Direct Lake performance, it should generally be disabled.
 
 ## When Should I Use V-Order?
 
