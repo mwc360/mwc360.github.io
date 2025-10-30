@@ -34,12 +34,16 @@ The table below contains the three Delta table features (plus one that requires 
 
 > ⚠️ Seeing `Yes` in the table **does not** necessarily mean you can enable that feature via the Fabric Runtime, just that your can read from a table that already has it enabled by another platform using Delta Lake.
 
-| Table Feature              | Runtime 1.1 (Delta Lake 2.2.0)      | Runtime 1.2 (Delta Lake 2.4.0)      | Runtime 1.3 (Delta Lake 3.2)|
-|----------------------------|-------------------------------------|-------------------------------------|-------------------------------------|
-| Default Columns            | Yes†                                | Yes†                                | Yes                                 |
-| V2 Checkpoints             | No                                  | No                                  | Yes                                 |
-| Liquid Clustering          | Yes if v2Checkpoints are dropped††  | Yes if v2Checkpoints are dropped††  | Yes                                 |
-| Deletion Vectors           | No                                  | Yes                                 | Yes                                 |
+| Table Feature              | Runtime 1.2 (Delta Lake 2.4.0)      | Runtime 1.3 (Delta Lake 3.2) | Runtime 2.0 EPP (Delta Lake 4.0) |
+|----------------------------|-------------------------------------|------------------------------|----------------------------------|
+| Default Columns            | Yes†                                | Yes                          | Yes                              |
+| V2 Checkpoints             | No                                  | Yes                          | Yes                              |
+| Liquid Clustering††        | Yes if v2Checkpoints are dropped    | Yes                          | Yes                              |
+| Deletion Vectors           | Yes                                 | Yes                          | Yes                              |
+| Column Mapping             | Yes                                 | Yes                          | Yes                              |
+| TimestampNTZ               | Yes                                 | Yes                          | Yes                              |
+| Variant Type               | No                                  | No                           | Yes                              |
+| Type Widening              | No                                  | No                           | Yes                              |
 
 > †† Databricks currently enables V2 Checkpoints by default when using Liquid Clustering. However, Liquid Clustering by itself is a writer table protocol and not a reader protocol, that means we can drop V2 Checkpoints after enabling Liquid Clustering to allow Fabric Runtimes prior to 1.3 to read from Liquid Clustered tables. This not a straightforward process, see [how to drop V2 Checkpoints](#How-to-Drop-V2-Checkpoints).
 
@@ -71,24 +75,28 @@ At this time it is not possible to disable V2 Checkpoints on creation of a Liqui
 # Delta Writer Feature Compatability
 The below table contains the Delta table features which not all [Apache Spark Runtimes in Fabric](https://learn.microsoft.com/en-us/fabric/data-engineering/runtime) can write to.
 
-| Table Feature              | Runtime 1.1 (Delta Lake 2.2)        | Runtime 1.2 (Delta Lake 2.4)        | Runtime 1.3 Preview (Delta Lake 3.1)|
-|----------------------------|-------------------------------------|-------------------------------------|-------------------------------------|
-| Default Columns            | No                                  | No                                  | Yes                                 |
-| V2 Checkpoints             | No                                  | No                                  | Yes                                 |
-| Liquid Clustering          | No                                  | No                                  | Yes                                 |
-| Identity Columns           | No                                  | No                                  | No                                  |
-| Row Tracking               | No                                  | No                                  | No                                  |
-| Domain Metadata            | No                                  | No                                  | Yes                                 |
-| Iceberg Compatibility V1   | No                                  | No                                  | No, TBD for GA†                     |
-| Deletion Vectors           | No                                  | Yes                                 | Yes                                 |
+| Table Feature              | Runtime 1.2 (Delta Lake 2.4)        | Runtime 1.3 Preview (Delta Lake 3.1)| Runtime 2.0 EPP (Delta Lake 4.0) |
+|----------------------------|-------------------------------------|-------------------------------------|----------------------------------|
+| Default Columns            | No                                  | Yes                                 | Yes                              |
+| Generated Columns          | Yes                                 | Yes                                 | Yes                              |
+| V2 Checkpoints             | No                                  | Yes                                 | Yes                              |
+| Liquid Clustering          | No                                  | Yes                                 | Yes                              |
+| Identity Columns           | No                                  | No                                  | Yes                              |
+| Row Tracking               | No                                  | No                                  | Yes                              |
+| Domain Metadata            | No                                  | Yes                                 | Yes                              |
+| Iceberg Compatibility V1   | No                                  | No, TBD for GA†                     | Yes                              |
+| Deletion Vectors           | Yes                                 | Yes                                 | Yes                              |
+| Column Mapping             | Yes                                 | Yes                                 | Yes                              |
+| TimestampNTZ               | Yes                                 | Yes                                 | Yes                              |
+| Variant Type               | No                                  | No                                  | Yes                              |
+| Type Widening              | No                                  | No                                  | Yes                              |
+| Collations                 | No                                  | No                                  | Yes                              |
 
 > † Iceberg Compatibility V1 is enabled via Delta 3.1, however it appears that Fabric Runtime 1.3 Preview is missing a class to support the Iceberg metadata, hopefully this will be fixed before GA.
 
 
 # Bulk Evaluating Delta Tables for Compatibility
 Now we have somewhat of a decoder ring, although still pretty nuanced to understand. Since every business using Power BI and Delta Lake should be evaluating migrating to use Direct Lake over Import/DirectQuery/Dual storage mode, I created a [PySpark library](https://pypi.org/project/onelake-shortcut-tools/) that can be used to evaluate your existing Delta Tables in Databricks. It will return a dataframe report with information highlighting your Delta Tables with boolean indicators showing whether or not they can be read or written to from the different Fabric runtimes.
-
-In a future release I plan to integrate some form of support for automatically creating from resulting data via the [Shortcuts REST API](https://learn.microsoft.com/en-us/fabric/onelake/onelake-shortcuts-rest-api).
 
 Simply install the library on your cluster from PyPi via the `%pip` magic command:
 ```
@@ -101,7 +109,7 @@ from onelake_shortcut_tools.compatibility_checker import CompatibilityChecker
 df = CompatibilityChecker(
     catalog_names=['catalog1', 'catalog2'], 
     schema_names=[], 
-    fabric_runtime='1.2'
+    fabric_runtime='1.3'
 ).evaluate()
 
 display(df)
