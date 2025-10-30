@@ -82,7 +82,7 @@ The below table contains the Delta table features which not all [Apache Spark Ru
 | V2 Checkpoints             | No                                  | Yes                                 | Yes                              |
 | Liquid Clustering          | No                                  | Yes                                 | Yes                              |
 | Identity Columns           | No                                  | No                                  | Yes                              |
-| Row Tracking               | No                                  | No                                  | Yes                              |
+| Row Tracking               | No                                  | Yes                                  | Yes                              |
 | Domain Metadata            | No                                  | Yes                                 | Yes                              |
 | Iceberg Compatibility V1   | No                                  | No, TBD for GA†                     | Yes                              |
 | Deletion Vectors           | Yes                                 | Yes                                 | Yes                              |
