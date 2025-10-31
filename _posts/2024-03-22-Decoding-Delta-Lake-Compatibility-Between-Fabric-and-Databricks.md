@@ -22,7 +22,7 @@ _So please, if anyone has already discovered the decoder ring, please drop me a 
 Here are the key insights:
 1. **Databricks Delta Lake vs. Open-Source Delta Lake:** The version of Delta Lake that Databricks says is used in its [Runtimes](https://learn.microsoft.com/en-us/azure/databricks/release-notes/runtime/) is not the same as open-source Delta Lake within the same major and minor version. 
 
-    > ⚠️ Databricks, the benevolent creator of Delta Lake, introduces new Delta Lake features in Databricks runtimes before they are publically accessible in the open-sourced Delta Lake project. For example, Liquid Clustering is first available in Databricks Runtime 14.1 which runs Delta Lake 3.0.0, however open source Delta Lake doesn't contain the Liquid Clustering table writer feature till version 3.1.0.
+    > ⚠️ Databricks, the benevolent creator of Delta Lake, introduces new Delta Lake features in Databricks runtimes before they are publically accessible in the open-sourced Delta Lake project. For example, Liquid Clustering is first available in Databricks Runtime 14.x which runs Delta Lake 3.0.0, however open source Delta Lake doesn't contain the Liquid Clustering table writer feature till version 3.1.0.
 
 1. **Documentation Can Be Wrong:** If documentation seems to conflict with other sources OR it doesn't pass the _smell test_, always test to confirm delta table behavior. At the time of writing this post the [delta.io/delta](https://docs.delta.io/3.1.0/delta-default-columns.html) documentation incorrectly stated that enabling Default Columns on a table would prevent it from being read by versions before 3.1.X (I submitted a PR to fix this).
 1. **The Compatibility Specification Has Changed:** Compatibility before Delta Lake 2.3.0 was based on protocol versions which added something like `minimumReaderVersion=3, minimumWriterVersion=7` to the transaction log of your Delta table, these minimum reader and writer version numbers entirely determined whether you could read from the table. Starting with Delta Lake 2.3.0, the concept of [Table Features](https://delta.io/blog/2023-07-27-delta-lake-table-features/#:~:text=What%20are%20Delta%20Lake%20Table%20Features%3F%20Delta%20Lake,management%20mechanism%20for%20Delta%20Lake%20tables%20and%20clients.) was introduced to replace the more ridgid protocol version, it allows for specific features to be feature flagged therefore allowing more flexibility and a high level of interoperability between different Delta versions.
@@ -45,7 +45,7 @@ The table below contains the three Delta table features (plus one that requires 
 | Variant Type               | No                                  | No                           | Yes                              |
 | Type Widening              | No                                  | No                           | Yes                              |
 
-> †† Databricks currently enables V2 Checkpoints by default when using Liquid Clustering. However, Liquid Clustering by itself is a writer table protocol and not a reader protocol, that means we can drop V2 Checkpoints after enabling Liquid Clustering to allow Fabric Runtimes prior to 1.3 to read from Liquid Clustered tables. This not a straightforward process, see [how to drop V2 Checkpoints](#How-to-Drop-V2-Checkpoints).
+> †† Databricks enables V2 Checkpoints by default when using Liquid Clustering. However, Liquid Clustering by itself is a writer table protocol and not a reader protocol, that means we can drop V2 Checkpoints after enabling Liquid Clustering to allow Fabric Runtimes prior to 1.3 to read from Liquid Clustered tables. This not a straightforward process, see [how to drop V2 Checkpoints](#How-to-Drop-V2-Checkpoints).
 
 ### Dropping Table Features to Enable Read OR Write Compatibility
 There are currently two Delta table features that can be dropped:
@@ -75,16 +75,16 @@ At this time it is not possible to disable V2 Checkpoints on creation of a Liqui
 # Delta Writer Feature Compatability
 The below table contains the Delta table features which not all [Apache Spark Runtimes in Fabric](https://learn.microsoft.com/en-us/fabric/data-engineering/runtime) can write to.
 
-| Table Feature              | Runtime 1.2 (Delta Lake 2.4)        | Runtime 1.3 Preview (Delta Lake 3.1)| Runtime 2.0 EPP (Delta Lake 4.0) |
+| Table Feature              | Runtime 1.2 (Delta Lake 2.4)        | Runtime 1.3 Preview (Delta Lake 3.2)| Runtime 2.0 EPP (Delta Lake 4.0) |
 |----------------------------|-------------------------------------|-------------------------------------|----------------------------------|
 | Default Columns            | No                                  | Yes                                 | Yes                              |
 | Generated Columns          | Yes                                 | Yes                                 | Yes                              |
 | V2 Checkpoints             | No                                  | Yes                                 | Yes                              |
 | Liquid Clustering          | No                                  | Yes                                 | Yes                              |
 | Identity Columns           | No                                  | No                                  | Yes                              |
-| Row Tracking               | No                                  | Yes                                  | Yes                              |
+| Row Tracking               | No                                  | Yes                                 | Yes                              |
 | Domain Metadata            | No                                  | Yes                                 | Yes                              |
-| Iceberg Compatibility V1   | No                                  | No, TBD for GA†                     | Yes                              |
+| Iceberg Compatibility V2   | No                                  | Yes†                                | Yes†                             |
 | Deletion Vectors           | Yes                                 | Yes                                 | Yes                              |
 | Column Mapping             | Yes                                 | Yes                                 | Yes                              |
 | TimestampNTZ               | Yes                                 | Yes                                 | Yes                              |
@@ -92,7 +92,7 @@ The below table contains the Delta table features which not all [Apache Spark Ru
 | Type Widening              | No                                  | No                                  | Yes                              |
 | Collations                 | No                                  | No                                  | Yes                              |
 
-> † Iceberg Compatibility V1 is enabled via Delta 3.1, however it appears that Fabric Runtime 1.3 Preview is missing a class to support the Iceberg metadata, hopefully this will be fixed before GA.
+> † Iceberg Compatibility V2 is enabled via Delta 3.2, however Fabric Runtime 1.3 is doesn't pre-install the delta-iceberg package to support writing the Iceberg metadata.
 
 
 # Bulk Evaluating Delta Tables for Compatibility
