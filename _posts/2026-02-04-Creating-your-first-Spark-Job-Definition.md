@@ -123,7 +123,7 @@ For configuration-driven pipelines (for example, a list of objects or tables to 
 
 These files can be referenced as **Reference Files** and stored in OneLake or ADLS Gen2.
 
-## Runtime Control Flow
+## 2. Runtime Control Flow
 
 For higher-level control flow, the kind of things you normally override in a notebook cell via Pipeline parameters, you should use **command-line arguments**.
 
@@ -174,7 +174,7 @@ args.debug
 
 # Additional Gotchas
 
-There's a few things that us notebook-developers take for grantid because the notebook UX is all about convience and agility:
+There's a few things that us notebook-developers take for granted because the notebook UX is all about convience and agility:
 
 1. **`spark` is not automatically defined**
 
