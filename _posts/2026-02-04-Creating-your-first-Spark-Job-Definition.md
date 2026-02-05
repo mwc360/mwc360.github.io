@@ -21,7 +21,7 @@ This post is meant for anyone who learned Spark through notebooks and is now sta
 A Spark Job Definition is effectively a way to run a packaged Spark application, Fabric's version of executing a `spark-submit` job. You define:
 
 - what code should run (the **entry point**),
-- which files or resources should be shipped with it,
+- which code files or resources should be shipped with it,
 - and which **command-line arguments** should control its behavior.
 
 Unlike a notebook, there is no interactive editor or cell output, but this is arguably not a missing feature, it's the whole point... an SJD is not meant for exploration; it is meant to deterministically run a Spark application.
@@ -35,11 +35,11 @@ You can think of it as:
 
 At a high level, creating an SJD revolves around five things which you will commonly configure:
 
-1. **Entry Point** – the `.py` or `.scala` file that Spark executes
-2. **Reference Files** [OPTIONAL] – configuration files or resources shipped with the job
+1. **Entry Point** – the `.py`, `.scala`, or `.r` file that Spark executes
+2. **Reference Files** [OPTIONAL] – additional `.py`, `.scala`, or `.r` files that can be referenced from your entry point via `import module_name`.
 3. **Command-Line Arguments** [OPTIONAL] – runtime parameters
-4. **Lakehouse Reference** [OPTIONAL] – the default metastore context for tables 
-4. **Environment Reference** [OPTIONAL] – the Environment context that includes public and custom libraries, Spark pool (a.k.a. cluster) configuration, spark configs, and reference files 
+4. **Lakehouse Reference** – the default metastore context for tables 
+4. **Environment Reference** – the Environment context that includes public and custom libraries, Spark pool (a.k.a. cluster) configuration, spark configs, and reference files 
 
 If you understand the purpose of each of these, you will be well on your way to running your first successful SJD.
 
@@ -121,7 +121,24 @@ There are two methods available, both of which are frequently used as they serve
 
 For configuration-driven pipelines (for example, a list of objects or tables to process), YAML files are highly recommended. They are readable, easy to edit, and trivial to parse using the [`pyyaml`](https://pypi.org/project/PyYAML/) library. For you Rust lovers out there, there's even a Rust based [pyyaml-rs](https://pypi.org/project/pyyaml-rs/) library in case your config data is massive.
 
-These files can be referenced as **Reference Files** and stored in OneLake or ADLS Gen2.
+```yml
+tables:
+  - name: table_1
+    config1: ....
+  - name: table_2
+    config1: ....
+    dependencies:
+      - table_1
+```
+
+These files can either be built into your Python Wheel or JAR (for tight coupling of framework and configuration), or staged in OneLake and imported via full ABFSS path or default Lakehouse reference.
+
+```python
+import yaml
+
+with open('File/...', "r") as f:
+    table_registry = yaml.safe_load(f)
+```
 
 ## 2. Runtime Control Flow
 
@@ -136,6 +153,7 @@ def parse_args(argv):
     p = argparse.ArgumentParser()
     p.add_argument("--zone", type=lambda s: s.lower(), required=True)
     p.add_argument("--load-group", type=int, default=0)
+    p.add_argument("--config-file-url", required=True)
     p.add_argument("--compression", choices=["snappy", "zstd"], default="snappy")
     p.add_argument("--debug", action="store_true")
 
@@ -147,7 +165,7 @@ The `argparse` library that comes included in Python gives you validation, help 
 Your arguments are then provided to the SJD like this:
 
 ```bash
---zone bronze --load-group 1 --compression zstd --debug
+--zone bronze --load-group 1 --config-file-uri Files/.../table_registry.yml --compression zstd --debug
 ```
 
 And parsed inside your executable:
@@ -164,6 +182,7 @@ Which exposes them as attributes of a named Python object (i.e. `args`):
 ```python
 args.zone
 args.load_group
+args.config_file_uri
 args.compression
 args.debug
 ```
@@ -202,7 +221,7 @@ SJDs make implicit behavior explicit — which is both the challenge and the ben
 
 # Putting It All Together
 
-A typical SJD entry point ends up looking something like this:
+A typical SJD entry point ends up looking something like this _(`my_elt_package` contains the the locally built and tested business logic, transformations, etc.)_:
 
 ```python
 from pyspark.sql import SparkSession
@@ -210,10 +229,21 @@ import sys
 import logging
 import argparse
 
+# import your python packge
+from my_elt_package import Controller
+
+# if using yaml for configs
+import yaml 
+def load_table_registry(path: str) -> dict:
+    with open(path, "r") as f:
+        table_registry = yaml.safe_load(f)
+    return table_registry
+
 def parse_args(argv):
     p = argparse.ArgumentParser()
     p.add_argument("--zone", type=lambda s: s.lower(), required=True)
     p.add_argument("--load-group", type=int, default=0)
+    p.add_argument("--config-file-url", required=True)
     p.add_argument("--compression", choices=["snappy", "zstd"], default="snappy")
     p.add_argument("--debug", action="store_true", help="Enable DEBUG logging")
     return p.parse_args(argv)
@@ -248,19 +278,25 @@ def main(argv: list[str]) -> None:
     spark = create_spark("myApp", args.debug)
 
     logger.info("=" * 80)
-    logger.info(f"Starting load group {args.load_group}...")
+    logger.info(f"Starting load group {args.load_group} for zone {args.zone}...")
     logger.info("=" * 80)
 
     # main executable code
-    (
-        spark.range(1).write
-            .option("compression", args.compression)
-            .mode("overwrite")
-            .saveAsTable(f"{args.zone}.test_sjd")
+    table_registry = load_table_registry(args.config_file_uri)
+
+    controller = Controller(
+        spark=spark,
+        config={
+            load_group = args.load_group, 
+            compression = args.compression
+        },
+        table_registry=table_registry
     )
 
+    controller.run_pipeline(zone=args.zone)
+
     logger.info("=" * 80)
-    logger.info(f"Completed load group {args.load_group}...")
+    logger.info(f"Completed load group {args.load_group} for zone {args.zone}...")
     logger.info("=" * 80)
 
 if __name__ == "__main__":
@@ -274,7 +310,7 @@ Because the executable logic lives inside `main()`, it can be imported and calle
 import sjd_main as job
 
 def test_bronze_is_created(spark):
-    job.main(["--zone", "bronze", "--load-group", "1"])
+    job.main(["--zone", "bronze", "--config-file-uri", "C:/user/dev/table_registry.yml", "--load-group", "1"])
     assert spark.catalog.tableExists("bronze.test_sjd")
 ```
 
