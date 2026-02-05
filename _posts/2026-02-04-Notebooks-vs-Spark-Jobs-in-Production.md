@@ -108,7 +108,7 @@ But interactivity does not disappear; it simply moves earlier in the process. Yo
 
 By the time you execute an SJD, you are supposed to already know what it will do and have executes tests that prove it works as expected. An SJD is nothing more than a Spark job API contract, it expects certain inputs, and in return it will run your code. Bad code == bad result, good code == good result.
 
-⚠️ WARNING - _controversial claim_: notebooks shine when you need to explore, explain, visualize, or teach. They are phenomenal for data science and experimentation, but they are arguably not ideal for most production use cases. Production data engineering and data science workloads are typically extremely binary:
+**⚠️ WARNING - _controversial claim_**: notebooks shine when you need to explore, explain, visualize, or teach. They are phenomenal for data science and experimentation, but they are arguably not ideal for most production use cases. Production data engineering and data science workloads are typically extremely binary:
 - Did I get the data from A to Z?
 - Did it arrive on time?
 - Did the dataset get scored?
