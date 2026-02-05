@@ -8,7 +8,7 @@ thumbnail: "assets/img/thumbnails/feature-img/pexels-googledeepmind-25626517.jpe
 published: True
 ---
 
-Coming from a notebook-first Spark background, I wanted to write the introduction to Spark Job Definitions (SJDs) that I wish I had when I first encountered them. If you are first interest in _why_ you might want to use a Spark Job Definition over a Notebook, see my blog [here]()
+Coming from a notebook-first Spark background, I wanted to write the introduction to Spark Job Definitions (SJDs) that I wish I had when I first encountered them. If you are first interest in _why_ you might want to use a Spark Job Definition over a Notebook, see my blog [here](https://milescole.dev/data-engineering/2026/02/04/Notebooks-vs-Spark-Jobs-in-Production.html).
 
 My first job was in finance, and I learned Spark much later while consulting in environments where **everything ran in notebooks**. That wasn't unique to any one company — it's simply how most consulting teams work. So when I first opened a Spark Job Definition while exploring additional things I could do in Synapse, my reaction was:
 
