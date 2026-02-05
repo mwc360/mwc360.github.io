@@ -25,9 +25,11 @@ So if you only use notebooks today, no judgement, you're in good company. In thi
 Beyond performance, cost, and clever optimizations, a good data engineer should optimize for reliability as a first principle.
 
 Why? I'll propose it algebraically:
+
 $$
 f(\text{stakeholderSatisfaction}) = \text{dataTimeliness} \times \text{TCO} \times \text{securityExpectations} \times (\text{reliability})^{10}
 $$
+
 You can build the fastest pipeline with the lowest TCO and perfect security posture, and none of it matters if the data only arrives correctly 95% of the time.
 
 What is good performance if data doesn't reliably get from A to Z? Will your CFO care about your cost savings if a regression adds extra zeros to sales figures?
@@ -36,8 +38,8 @@ One bad incident can undo months of tuning, cost optimization, and feature work.
 
 If reliability is the goal, then the levers we control as data engineers start to matter a lot. In practice, three things show up again and again as predictors of whether a pipeline stays healthy over time:
 - **Testing** → determines how often we prevent incidents in the first place
-- **Modularity** → determines how fast we recover when a portion of your complex code base breaks
-- **Governance** → determines who can introduce change into production
+- **Modularity** → determines how fast we recover when a portion of your complex code base breaks and how testable your code is
+- **Governance** → determines who can introduce a change into production
 
 Surely there are others, however few would disagree that these are high predictors of being able to achieve high reliability.
 
@@ -46,7 +48,7 @@ Surely there are others, however few would disagree that these are high predicto
 
 Notebooks _can_ be tested. But if this were a conference talk and I asked, "Who runs unit tests against their notebook code before every release?", I'd expect a lot of uncomfortable silence.
 
-In my years of consulting before Microsoft, I never once saw a real test suite for notebook-based pipelines — not from customers, and not from teams I worked on. There might be CI validating that a SQL project builds or that a Python wheel compiles, but never a meaningful assertion that the pipeline produced the expected result or a utility does what it is supposed to.
+In my years of consulting before Microsoft, I never once saw a real test suite for notebook-based pipelines — not from customers, and not from teams I worked on. There might be CI validating that a SQL project builds or that a Python wheel compiles, but never a meaningful assertion that a pipeline produces the expected result or a utility does what it is supposed to.
 
 ```python
 assert my_elt_func(df) == exepected_result
@@ -96,17 +98,17 @@ In other words, I had to think about things that directly shape data pipeline re
 There's an uncomfortable truth hiding here:
 > If the barrier to running production code is near zero, then the barrier to breaking production is near zero too. Notebooks are easy to create, and they are just as easy to mutate. There is no inherent guardrail beyond human discipline.
 
-Spark Job Definitions, by contrast, require packaging, interfaces, and intent. They are less convenient, and that inconvenience is arguably not a flaw, it's nature of complex data engineering that requires better habits. Going back to our premise around what drives reliability, your job not having a built-in IDE adds a layer of healthy friction to govern how easy it is to make a change, a change that could be untested and regretted.
+Spark Job Definitions, by contrast, require packaging, interfaces, and intent. They are less convenient, and that inconvenience is arguably not a flaw, it's the nature of complex data engineering that requires better habits. Going back to our premise around what drives reliability, your job not having a built-in IDE adds a layer of healthy friction to govern how easy it is to make a change, a change that could be untested and regretted.
 
 ## What About Interactivity?
 
 Spark Job Definitions are not interactive, and that is usually framed as a downside, but I'll push back by asking _"does it really make sense for a production job to ship with a built-in IDE"?_ IDE's are meant to make developing code easier and a Notebook is functionallity an executable script with a built-in IDE. Sure we could lock the production notebook to be read-only in our production workspace, but that doesn't change the fact that it's still a notebook that comes with the necessary overhead IDEs require to do things like nicely visualize cell outputs, snapshots, and such. While an SJD wouldn't be meaningfully faster compared to when run with a Notebook with 20 cells, the UI cost is certainly not zero. 
 
-Consider a website built via Square Spark vs. one deployed via conventional methods (building web app locally, and then publishing the compiled package to a hosting service): which website would you trust to run a billion dollar business? I would certainly not trust the Square Space implementation because the barrier to making a breaking change is too low.
+Consider a website built via Square vs. one deployed via conventional methods (building web app locally, and then publishing the compiled package to a hosting service): which website would you trust to run a billion dollar business? I would certainly not trust the Square Space implementation because the barrier to making a breaking change is too low, it ships with an IDE. You are not more than 2-3 clicks away from making a change that could disrupt opterations (_sorry, I accidentally deleted the order form_).
 
 But interactivity does not disappear; it simply moves earlier in the process. You still explore and debug locally. You still test in notebooks if that helps. You still validate behavior before release.
 
-By the time you execute an SJD, you are supposed to already know what it will do and have executes tests that prove it works as expected. An SJD is nothing more than a Spark job API contract, it expects certain inputs, and in return it will run your code. Bad code == bad result, good code == good result.
+By the time you execute an SJD, you are supposed to already know what it will do and have executed tests that prove it works as expected. An SJD is nothing more than a Spark job API contract, it expects certain inputs, and in return it will run your code. Bad code == bad result, good code == good result.
 
 **⚠️ WARNING - _controversial claim_**: notebooks shine when you need to explore, explain, visualize, or teach. They are phenomenal for data science and experimentation, but they are arguably not ideal for most production use cases. Production data engineering and data science workloads are typically extremely binary:
 - Did I get the data from A to Z?
@@ -115,7 +117,7 @@ By the time you execute an SJD, you are supposed to already know what it will do
 - Did it arrive in the right shape?
 - Did it break anything downstream?
 
-There's nothing about most production workloads that _requires_ the use of notebooks, it's a convenience thing: _I can ship the thing I used to interactively develop my solution while benefitting from ease of further code changes, and it comes with the ability to interweave documentation with code._
+There's nothing about most production workloads that _requires_ the use of notebooks, it's a convenience thing: _I can ship the thing I used to interactively develop my solution while benefitting from ease of making further code changes, and it comes with the ability to interweave documentation with code._
 
 While notebooks optimize for convenience, Spark Job Definitions optimize for intent. If reliability is your first principle, intent should always come before convenience.
 
