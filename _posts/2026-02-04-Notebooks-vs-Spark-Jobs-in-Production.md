@@ -27,7 +27,7 @@ Beyond performance, cost, and clever optimizations, a good data engineer should 
 Why? I'll propose it algebraically:
 
 $$
-f(\text{stakeholderSatisfaction}) = \text{dataTimeliness} \times \text{TCO} \times \text{securityExpectations} \times (\text{reliability})^{10}
+\text{stakeholderSatisfaction} = \text{dataTimeliness} \times \text{TCO} \times \text{securityExpectations} \times (\text{reliability})^{10}
 $$
 
 You can build the fastest pipeline with the lowest TCO and perfect security posture, and none of it matters if the data only arrives correctly 95% of the time.
@@ -77,11 +77,11 @@ If your transformation logic, shared utilities, or dataframe operators are worth
 
 This section hits closest to home for me.
 
-I run an internal Spark workload at Microsoft. For a long time, I ran it via notebooks, even after I had already refactored all logic into Python packages. The notebook was just the entry point.
+I run a low-risk internal Spark workload at Microsoft where the use case requires frequently adjusting input parameters. For a long time, I ran it via notebooks, even after I had already refactored all logic into Python packages. The notebook was just the entry point.
 
 But notebooks made it too easy to be lazy:
 
-> _I'm not going to schedule this job because I'll just open the Notebook when needed, modify the one or two lines of code for testing scenario x/y/z and run. So easy!_
+> _I'm not going to schedule this job because I'll just open the Notebook before results are needed, modify the one or two lines of code to adjust the execution context and run. So easy!_
 
 Because it was so easy to modify, I avoided formalizing various behaviors. There was no stable interface. No clear contract. No forced decision about what should be configurable and what should not.
 
