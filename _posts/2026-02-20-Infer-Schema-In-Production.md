@@ -12,13 +12,13 @@ Schema inference is convenient. In production or benchmarking, it is often a sil
 
 > Should you infer schema in your production code?
 
-To show the impact I want to highlight a [benchmark](https://www.fourmoo.com/2026/02/18/microsoft-fabric-why-warehouse-beats-lakehouse-by-233-in-speed-and-278-in-capacity-savings/) that included Fabric Spark on a single 19GB CSV input file ([100M Contoso dataset, sales table](https://github.com/sql-bi/Contoso-Data-Generator-V2-Data/releases/tag/ready-to-use-data)) for the benchmark. While there were a number of issue with this benchmark that inadvertantly make Spark appear to be slow, this is only focused on the impact of inferring schema and practical recommendations.
+To show the impact I want to highlight a [benchmark](https://www.fourmoo.com/2026/02/18/microsoft-fabric-why-warehouse-beats-lakehouse-by-233-in-speed-and-278-in-capacity-savings/) that included Fabric Spark on a single 19GB CSV input file ([100M Contoso dataset, sales table](https://github.com/sql-bi/Contoso-Data-Generator-V2-Data/releases/tag/ready-to-use-data)) for the benchmark. While there were a number of issue with this benchmark that inadvertently make Spark appear to be slow, this is only focused on the impact of inferring schema and practical recommendations.
 
 # Why do I need to define schema and what does schema inference solve for?
-The simple reality is that not all file types are created as equal and ideal inputs for data engineering. Some data types like Parquet and Avro, self contain metadata headers which describe the schema, so that your engine of choice (i.e. Spark) doesn't have to do any extra work to know how to inperpert the bytes of data that are being read.
+The simple reality is that not all file types are created as ideal inputs for data engineering tasks. Some data types like Parquet and Avro, self contain metadata headers which describe the schema, so that your engine of choice (i.e. Spark) doesn't have to do any extra work to know how to interpret the bytes of data that are being read.
 
-Others like, CSV, and JSON are really just text files with an implicit schema contract. 
-- **CSV**: the contract is that columns are separated by commas, and rows are separated by line breaks. Enclosed double quotes explicitly indicate something is a string, but everything else is generally up for interpretation. There's no excplicit integers, floats, etc.
+Others, like CSV and JSON, are really just text files with an implicit schema contract. 
+- **CSV**: the contract is that columns are separated by commas, and rows are separated by line breaks. Enclosed double quotes explicitly indicate something is a string, but everything else is generally up for interpretation. There's no explicit integers, floats, etc.
 - **JSON**: the contract all revolves around braces `{}` and brackets `[]` and other string characters to positionally indicate when a thing begins and ends. JSON has much more than can be explicitly inferred, but, the challenge still exists where an engine needs to parse the JSON structure and map it into a schema.
 
 If there's any takeaway here it is that defining schema or needing to infer schema is not an engine problem, it is a file type problem. If files don't provide full instruction on how to accurately know the meaning behind bytes of data, the engine needs to do potentially a lot of extra work to read the data.
@@ -55,10 +55,10 @@ If a double scan wasn't bad enough, Schema inference also blocks predicate pushd
 
 Is the answer to remove the `option("inferSchema", "true")` line? No, because Spark will otherwise read nearly all data types in a CSV as strings. So we still need to know the schema and apply it in an efficient way, especially if this is a job that we want to put into production.
 
-While some other types like JSON support a `option("sampleRatio", "0.1")` type of parameter to same files, this option is not available for CSV files, and regardess, you will get much better performance by following other techniques.
+While some other types like JSON support a `option("sampleRatio", "0.1")` type of parameter to same files, this option is not available for CSV files, and regardless, you will get much better performance by following other techniques.
 
 ### Option 1: Sample and define an static Struct in your source code
-While you could read the entire CSV into memory as part of your dev process, call `df.schema`, and then throw the Struct into your source code, this could takes hours on a massive CSV dataset. As a fast alternative, you could read the first N rows of the raw text file, write the output to storage, and then sample that:
+While you could read the entire CSV into memory as part of your dev process, call `df.schema`, and then throw the Struct into your source code, this could take hours on a massive CSV dataset. As a fast alternative, you could read the first N rows of the raw text file, write the output to storage, and then sample that:
 
 ```python
 sample_lines = spark.read.text("Files/contoso_100m/sales.csv").limit(1000)
