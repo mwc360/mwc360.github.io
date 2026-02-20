@@ -100,6 +100,6 @@ To recap where we improved from I've created the following table for the impact 
 | ------------------------- | -------------- | ---- |
 | CSV -> Delta: Infer Schema              | 00:02:16       | 2,720 |
 | CSV -> Delta: Schema Sampling Trick     | 00:01:05       | 1,300 |
-| CSV -> Delta: **Statically Defined Schema** | **00:01:01**       | **1220** |
+| CSV -> Delta: **Statically Defined Schema** | **00:01:01**       | **1,220** |
 
 > Schema inference is convenient. Convenience is expensive at scale. In production and in benchmarking, define your schema.
