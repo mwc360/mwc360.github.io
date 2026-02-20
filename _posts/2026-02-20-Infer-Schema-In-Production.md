@@ -29,6 +29,7 @@ If there's any takeaway here it is that defining schema or needing to infer sche
 Back to the benchmark example. I ran this on a Spark Pool with 4 x 8-core workers (5 Medium nodes). The first step is reading in an innocous Constoso sales CSV file and saving as a Delta table:
 
 > Note: this ignores the partitioning in the original benchmark as this dataset isn't big enough to be partitioned. I'll cover the theory and best practices on partitioning in another blog.
+
 ```python
 import pyspark.sql.functions as sf
 df = spark.read.format("csv") \
@@ -69,9 +70,11 @@ schema = spark.read.option("header", "true") \
     .csv("Files/tmp/sales_sample") \
     .schema
 ```
+
 _This runs in about 3-4 seconds. Easy._
 
 I then created a static `schema` variable:
+
 ```python
 schema = StructType([StructField('OrderKey', IntegerType(), True)...])
 ```
