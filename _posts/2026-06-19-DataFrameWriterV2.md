@@ -165,6 +165,30 @@ On the Delta side, this is gated by a `TableCapability.AUTOMATIC_SCHEMA_EVOLUTIO
 
 In other words: if you are on delta-spark built against Spark 4.2, `withSchemaEvolution()` is the new, explicit replacement for `.option("mergeSchema", "true")` on V2 appends and overwrites.
 
+## MERGE finally has a DataFrame API (Spark 4.0+)
+
+For years, the only way to do `MERGE INTO` from Python/Scala was either raw SparkSQL or Delta's `DeltaTable.merge(...)` builder. Spark 4.0 added a Spark-native DataFrame entry point and like the rest of the V2-era APIs, it's table-oriented and explicit.
+
+The shape is `df.mergeInto(target, condition)`, not `df.writeTo(target).merge(...)`. It's presumably kept separate because merge needs a join condition and a chain of `whenMatched` / `whenNotMatched` / `whenNotMatchedBySource` clauses that don't fit the create/append/overwrite builder shape:
+
+```python
+source.alias("s") \
+    .mergeInto("dbo.orders", expr("dbo.orders.id = s.id")) \
+    .whenMatched().updateAll() \
+    .whenNotMatched().insertAll() \
+    .whenNotMatchedBySource().delete() \
+    .merge()
+```
+
+`df.mergeInto(...)` does not return a `DataFrameWriterV2` — it returns a separate `MergeIntoWriter`. But it sits on the same V2 foundations. From [`MergeIntoWriter.scala`](https://github.com/apache/spark/blob/master/sql/core/src/main/scala/org/apache/spark/sql/classic/MergeIntoWriter.scala) the builder produces a `MergeIntoTable` logical plan against an `UnresolvedRelation` with V2 multi-part identifier resolution and the V2 `requireWritePrivileges` model — the same plan SQL `MERGE INTO` produces. Providers implement it through V2 row-level operations (Iceberg via `SupportsRowLevelOperations`; Delta via its own analyzer rules that route to the existing Delta MERGE execution).
+
+`MergeIntoWriter` also has its own `withSchemaEvolution()` builder method, separate from the one on `DataFrameWriterV2` but conceptually identical: explicit, builder-set, no magic `option("mergeSchema", "true")` required.
+
+What this means in practice:
+
+- For new Delta merge code in Python/Scala, `df.mergeInto(...)` is now the V2-native equivalent of `DeltaTable.forName(...).merge(...)`. It's not faster, but it doesn't require importing `delta.tables` and it plays naturally with the rest of the V2 DataFrame surface.
+- `DeltaTable.merge(...)` is not going away — it still exposes Delta-specific knobs — but `df.mergeInto(...)` is the cross-provider, Spark way to express the same operation.
+
 ## Replace semantics are clearer (and Delta knows the difference)
 
 Delta has special-cased V2's create/replace behavior for a long time. From [`CreateDeltaTableLike.scala`](https://github.com/delta-io/delta/blob/master/spark/src/main/scala/org/apache/spark/sql/delta/commands/CreateDeltaTableLike.scala):
