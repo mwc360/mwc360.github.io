@@ -188,6 +188,7 @@ What this means in practice:
 
 - For new Delta merge code in Python/Scala, `df.mergeInto(...)` is now the V2-native equivalent of `DeltaTable.forName(...).merge(...)`. It's not faster, but it doesn't require importing `delta.tables` and it plays naturally with the rest of the V2 DataFrame surface.
 - `DeltaTable.merge(...)` is not going away — it still exposes Delta-specific knobs — but `df.mergeInto(...)` is the cross-provider, Spark way to express the same operation.
+- If merging based on paths instead of catalog references, you will need to continue using the `DeltaTable.merge(...)` builder, the new Spark API requires a catalog reference for the table being merged into.
 
 ## Replace semantics are clearer (and Delta knows the difference)
 

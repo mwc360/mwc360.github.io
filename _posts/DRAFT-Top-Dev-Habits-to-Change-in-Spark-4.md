@@ -22,3 +22,4 @@ The post is a collection of top habits in 2026 that I see customers and people i
 1. Writing single use data pipelines
 1. Stop speaking in bronze, silver, gold
 1. Tuning configs without A/B testing
+1. df.mergeInto()
