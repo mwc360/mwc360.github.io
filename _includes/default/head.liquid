@@ -20,21 +20,11 @@
     <script defer src="{{ '/assets/js/code-blocks.js' | relative_url }}"></script>
 
     <!-- CSS -->
+    <link rel="preload" href="{{ '/assets/fonts/source-sans-3/SourceSans3-Latin.woff2' | relative_url }}" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="{{ '/assets/css/main.css' | relative_url }}">
 
     <!--Favicon-->
     <link rel="shortcut icon" href="{{ site.favicon | relative_url }}" type="image/x-icon">
-
-    {% if page.bootstrap %}
-    <!-- Bootstrap-4.1.3 isolation CSS -->
-    <link rel="stylesheet" type="text/css" href="{{ '/assets/css/vendor/bootstrap-iso.min.css' | relative_url }}">
-    <!-- JQuery 3.3.1 -->
-    <script defer src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-    <!-- Bootstrap 4.1.3 compiled and minified JavaScript -->
-    <script defer src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
-    <!-- Popper, a dependency of Bootstrap-->
-    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
-    {% endif %}
 
     <!-- KaTeX 0.16.9 -->
     {% if site.katex or site.theme_settings.katex %}
@@ -81,7 +71,7 @@
 
     <!-- Twitter Cards -->
     <meta name="twitter:title" content="{{ page.title | default: site.title }}">
-    <meta name="twitter:description" content="{{ page.content | default: site.header_text | strip_html | strip_newlines | truncate: 160 }}">
+    <meta name="twitter:description" content="{{ page.description | default: page.excerpt | default: site.description | strip_html | strip_newlines | truncate: 160 }}">
     {% if site.data.social.twitter %}
     <meta name="twitter:creator" content="@{{ site.data.social.twitter }}">
     <meta name="twitter:site" content="@{{ site.data.social.twitter }}">

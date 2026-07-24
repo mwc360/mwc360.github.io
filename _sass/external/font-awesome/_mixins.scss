@@ -1,3 +1,5 @@
+@use "sass:string";
+
 // mixins
 // --------------------------
 
@@ -51,7 +53,7 @@
   @extend .fa-solid;
 
   &::before {
-    content: unquote("\"#{ $fa-var }\"");
+    content: string.unquote("\"#{ $fa-var }\"");
   }
 }
 
@@ -60,7 +62,7 @@
   @extend .fa-regular;
 
   &::before {
-    content: unquote("\"#{ $fa-var }\"");
+    content: string.unquote("\"#{ $fa-var }\"");
   }
 }
 
@@ -69,7 +71,7 @@
   @extend .fa-brands;
 
   &::before {
-    content: unquote("\"#{ $fa-var }\"");
+    content: string.unquote("\"#{ $fa-var }\"");
   }
 }
 

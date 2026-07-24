@@ -110,8 +110,14 @@ header {
   }
 
   .post-content {
-    @extend %padding-post;
+    width: min(100%, 960px);
+    margin: 0 auto;
+    padding: clamp(1.5rem, 4vw, 3rem) clamp(1.25rem, 4vw, 2.5rem) 0;
     padding-bottom: 0;
+
+    &.has-post-layout {
+      width: min(100%, 1440px);
+    }
   }
 
   footer {

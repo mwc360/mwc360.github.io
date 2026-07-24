@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Incremental liquid clustering — Fabric Runtime 2.0</title>
+<style>
+:root{
+  --bg:#faf9f5; --card:#ffffff; --inset:#f1efe8;
+  --text:#1a1a17; --text-2:#5f5e5a; --text-3:#888780;
+  --border:#d3d1c7; --accent:#185fa5;
+  --ok-bg:#9FE1CB; --ok-bd:#1D9E75; --ok-tx:#04342C;
+  --new-bg:#FAC775; --new-bd:#BA7517; --new-tx:#412402;
+  --hot-bg:#F7C1C1; --hot-bd:#E24B4A; --hot-tx:#501313;
+  --red:#A32D2D; --green:#0F6E56;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#1f1e1b; --card:#2a2926; --inset:#34332f;
+    --text:#f1efe8; --text-2:#b4b2a9; --text-3:#888780;
+    --border:#444441; --accent:#85b7eb;
+    --ok-bg:#085041; --ok-bd:#5DCAA5; --ok-tx:#9FE1CB;
+    --new-bg:#633806; --new-bd:#EF9F27; --new-tx:#FAC775;
+    --hot-bg:#791F1F; --hot-bd:#F09595; --hot-tx:#F7C1C1;
+    --red:#F09595; --green:#5DCAA5;
+  }
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.6;}
+.wrap{max-width:840px;margin:0 auto;padding:2.5rem 1.25rem 4rem;}
+h1{font-size:26px;font-weight:600;margin:0 0 4px;}
+h2{font-size:19px;font-weight:600;margin:2.5rem 0 4px;}
+.sub{color:var(--text-2);font-size:14px;margin:0 0 1.25rem;}
+button{background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;padding:8px 14px;cursor:pointer;font-family:inherit;}
+button:hover{background:var(--inset);}
+button:active{transform:scale(0.98);}
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 1rem;}
+.push{margin-left:auto;}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;}
+.card.hi{border:2px solid var(--accent);}
+.card h3{font-size:15px;font-weight:600;margin:0 0 2px;}
+.card .desc{font-size:13px;color:var(--text-2);margin:0 0 12px;}
+.cubes{display:flex;flex-direction:column;gap:8px;min-height:96px;}
+.cube{border:1px dashed var(--border);border-radius:8px;padding:8px 10px;}
+.cube.sealed{background:var(--inset);border-style:solid;}
+.cube .clbl{font-size:12px;color:var(--text-2);margin:0 0 6px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+.cube .seal{color:var(--text-3);}
+.files{display:flex;flex-wrap:wrap;gap:4px;}
+.more{display:inline-flex;align-items:center;height:24px;padding:0 8px;border-radius:4px;font-size:11px;color:var(--text-2);background:var(--inset);}
+.stat{background:var(--inset);border-radius:8px;padding:10px;}
+.stat .lbl{margin:0;font-size:12px;color:var(--text-3);}
+.stat .val{margin:0;font-size:20px;font-weight:600;}
+.statgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;}
+.msg{margin:8px 0 0;font-size:12px;color:var(--text-3);min-height:1.4em;}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--text-2);flex-wrap:wrap;margin-top:12px;}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;}
+.axis{display:flex;justify-content:space-between;font-size:11px;color:var(--text-3);border-top:1px solid var(--border);padding-top:6px;margin-top:8px;}
+.cfg .row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
+.cfg .name{font-size:13px;color:var(--text-2);font-family:ui-monospace,Menlo,Consolas,monospace;}
+.cfg .cur{font-size:16px;font-weight:600;}
+.cfg .hint{margin:6px 0 0;font-size:12px;color:var(--text-3);}
+input[type=range]{width:100%;accent-color:var(--accent);}
+.verdict{margin:10px 0 0;font-size:13px;min-height:1.5em;}
+footer{margin-top:3rem;font-size:12px;color:var(--text-3);border-top:1px solid var(--border);padding-top:1rem;}
+footer a{color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Incremental liquid clustering</h1>
+<p class="sub">How Fabric Runtime 2.0 clusters only what needs it — vs. the standard strategy that rewrites every file in a partial Z-Cube on each run. A cube stays partial (and keeps being rewritten) until it crosses <code>MIN_CUBE_SIZE</code> (100&nbsp;GB default), becoming stable and skipped; <code>OPTIMIZE</code> packs cubes up to <code>TARGET_CUBE_SIZE</code> (150&nbsp;GB default) before spilling data into the next cube.</p>
+
+<h2>Full rewrite vs. incremental</h2>
+<p class="sub">Append batches of 4 files (4&nbsp;GB), then run <code>OPTIMIZE</code> on both tables. On the standard side, the partial Z-Cube is fully rewritten every run — even for a 4&nbsp;GB append. Fast-forward simulates 20 cycles of a 4&nbsp;GB append followed by <code>OPTIMIZE</code> — the realistic small-batch pattern where full-rewrite cost compounds. Cubes crossing 100&nbsp;GB become stable and are skipped; data past the 150&nbsp;GB target spills into a new cube.</p>
+
+<div class="toolbar">
+  <button onclick="appendData()">+ Append 4 files (4 GB)</button>
+  <button onclick="fastForward()">Fast-forward 20× (append + OPTIMIZE)</button>
+  <button onclick="runOptimize()">Run OPTIMIZE</button>
+  <button onclick="runOptimizeFull()">OPTIMIZE FULL</button>
+  <label style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--text-2);cursor:pointer;"><input type="checkbox" id="keysChanged" style="accent-color:var(--accent);"> cluster keys / provider changed</label>
+  <button class="push" onclick="resetSim()">Reset</button>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h3>Standard (Runtime 1.3 / OSS)</h3>
+    <p class="desc">Rewrites every file in partial Z-Cubes; stable cubes (over 100 GB) are skipped, packed to a 150 GB target</p>
+    <div class="cubes" id="cubesA"></div>
+    <div class="statgrid">
+      <div class="stat"><p class="lbl">Table size</p><p class="val" id="sizeA">0</p></div>
+      <div class="stat"><p class="lbl">Total data rewritten</p><p class="val" id="rwA" style="color:var(--red);">0</p></div>
+    </div>
+    <p class="msg" id="msgA"></p>
+  </div>
+  <div class="card hi">
+    <h3>Incremental (Runtime 2.0)</h3>
+    <p class="desc">Selects only unclustered, small, or unhealthy files — cube size is irrelevant to cost</p>
+    <div class="cubes" id="cubesB"></div>
+    <div class="statgrid">
+      <div class="stat"><p class="lbl">Table size</p><p class="val" id="sizeB">0</p></div>
+      <div class="stat"><p class="lbl">Total data rewritten</p><p class="val" id="rwB" style="color:var(--green);">0</p></div>
+    </div>
+    <p class="msg" id="msgB"></p>
+  </div>
+</div>
+
+<div class="legend">
+  <span><span class="sw" style="background:var(--ok-bg);border:1px solid var(--ok-bd);"></span> clustered (has Z-Cube metadata)</span>
+  <span><span class="sw" style="background:var(--new-bg);border:1px solid var(--new-bd);"></span> unclustered (no Z-Cube metadata yet)</span>
+  <span><span class="sw" style="background:var(--new-bg);border:2px dashed var(--hot-bd);"></span> new file being clustered</span>
+  <span><span class="sw" style="background:var(--hot-bg);border:1px solid var(--hot-bd);"></span> clustered file being rewritten</span>
+</div>
+
+<h2>Auto reclustering</h2>
+<p class="sub">Each bar is a file's min–max value range on the clustering column. Two separate things happen during <code>OPTIMIZE</code>: <strong>new (unclustered) files are always selected</strong> for clustering — no thresholds involved — while <strong>auto reclustering</strong> decides whether to additionally pull in <em>already-clustered</em> files whose ranges overlap, gated by the two configs below. Skipping effectiveness is the share of data a query reads that it actually needs (100% = zero overlap).</p>
+
+<div class="grid2" style="margin-bottom:1rem;">
+  <div class="card cfg">
+    <div class="row"><span class="name">…autoRecluster.minOffendingFiles</span><span class="cur" id="mofOut">4</span></div>
+    <input type="range" min="2" max="8" step="1" value="4" id="mof" oninput="cfgChanged()">
+    <p class="hint">Min files in an overlapping group before reclustering triggers (default 4, must be ≥ 2)</p>
+  </div>
+  <div class="card cfg">
+    <div class="row"><span class="name">…autoRecluster.minOverlapThreshold</span><span class="cur" id="motOut">0.75</span></div>
+    <input type="range" min="0.3" max="1" step="0.05" value="0.75" id="mot" oninput="cfgChanged()">
+    <p class="hint">Overlap score a file pair must exceed to count as overlapping (default 0.75, lower = more aggressive)</p>
+  </div>
+</div>
+
+<div class="toolbar">
+  <button onclick="addFile(0.15)">+ Append narrow file</button>
+  <button onclick="addFile(0.45)">+ Append wide file</button>
+  <button onclick="optimizeRc()">Run OPTIMIZE</button>
+  <button onclick="optimizeRcFull()">OPTIMIZE FULL</button>
+  <button class="push" onclick="resetRc()">Reset</button>
+</div>
+
+<div class="card">
+  <div id="bars"></div>
+  <div class="axis"><span>Jan</span><span>Apr</span><span>Jul</span><span>Oct</span><span>Dec</span></div>
+  <div class="statgrid">
+    <div class="stat"><p class="lbl">Largest overlapping group</p><p class="val" id="grpOut">0 files</p></div>
+    <div class="stat"><p class="lbl">Skipping effectiveness</p><p class="val" id="scOut">0%</p></div>
+  </div>
+  <p class="verdict" id="verdict"></p>
+</div>
+
+<div class="legend">
+  <span><span class="sw" style="background:var(--ok-bg);border:1px solid var(--ok-bd);"></span> clustered</span>
+  <span><span class="sw" style="background:var(--new-bg);border:1px solid var(--new-bd);"></span> new / unclustered — always clustered on next OPTIMIZE</span>
+  <span><span class="sw" style="background:var(--new-bg);border:2px dashed var(--hot-bd);"></span> new file being clustered</span>
+  <span><span class="sw" style="background:var(--hot-bg);border:1px solid var(--hot-bd);"></span> clustered file pulled in by auto recluster</span>
+</div>
+
+<footer>
+  Simplified for illustration: overlap is shown on one dimension and scored as intersection ÷ smaller range. The real engine scores overlap across all clustering dimensions (Hilbert curve for 2+ columns).
+  Sources: <a href="https://learn.microsoft.com/en-us/fabric/data-engineering/liquid-clustering">Liquid clustering — Microsoft Learn</a>
+</footer>
+
+</div>
+<script>
+var MIN_CUBE=102400, TARGET_CUBE=153600, FILE_CAP=1024, APPEND_FILE=1024;
+var cubesA, cubesB, pendA, pendB, rwTotA, rwTotB;
+function newCube(){return {files:[],sealed:false};}
+function cubeSize(c){return c.files.reduce(function(t,f){return t+f.s;},0);}
+function poolSize(files){return files.reduce(function(t,f){return t+f.s;},0);}
+function tableSize(cubes,pend){return cubes.reduce(function(t,c){return t+cubeSize(c);},0)+poolSize(pend);}
+function fmt(mb){
+  if(mb>=1024){var g=mb/1024;return (g>=100?Math.round(g):(Math.round(g*10)/10))+' GB';}
+  return Math.round(mb)+' MB';
+}
+function lbl(mb){return mb>=1024?(Math.round(mb/1024*10)/10)+'G':Math.round(mb)+'M';}
+function resetSim(){
+  cubesA=[newCube()]; cubesB=[newCube()]; pendA=[]; pendB=[];
+  for(var i=0;i<3;i++){cubesA[0].files.push({s:1024});cubesB[0].files.push({s:1024});}
+  rwTotA=0; rwTotB=0;
+  msg('msgA',''); msg('msgB','');
+  drawSides();
+}
+function msg(id,t){document.getElementById(id).textContent=t;}
+function fileBlock(f,mode){
+  var bg,bd,tx,extra='';
+  if(mode==='hot'){bg='var(--hot-bg)';bd='var(--hot-bd)';tx='var(--hot-tx)';}
+  else if(mode==='newhl'){bg='var(--new-bg)';bd='var(--hot-bd)';tx='var(--new-tx)';extra='border-style:dashed;border-width:2px;';}
+  else if(mode==='new'){bg='var(--new-bg)';bd='var(--new-bd)';tx='var(--new-tx)';}
+  else{bg='var(--ok-bg)';bd='var(--ok-bd)';tx='var(--ok-tx)';}
+  return '<span style="display:inline-flex;align-items:center;justify-content:center;min-width:26px;padding:0 4px;height:24px;border-radius:4px;font-size:11px;background:'+bg+';border:1px solid '+bd+';color:'+tx+';'+extra+'">'+lbl(f.s)+'</span>';
+}
+function drawSide(elId,cubes,pend,hlMode){
+  var out='';
+  cubes.forEach(function(c,ci){
+    var sz=cubeSize(c);
+    if(!c.files.length&&!c.sealed)return;
+    if(c.sealed){
+      if(hlMode==='fullkeys'){
+        out+='<div class="cube sealed" style="border-color:var(--hot-bd);"><p class="clbl"><span>Z-Cube '+(ci+1)+' \u00b7 '+fmt(sz)+'</span><span class="seal" style="color:var(--red);">keys changed \u2014 reclustering</span></p></div>';
+      }else{
+        out+='<div class="cube sealed"><p class="clbl"><span>Z-Cube '+(ci+1)+' \u00b7 '+fmt(sz)+'</span><span class="seal">stable &gt; 100 GB \u2014 skipped</span></p></div>';
+      }
+      return;
+    }
+    var blocks=c.files.map(function(f){
+      return fileBlock(f,(hlMode==='all'||hlMode==='full'||hlMode==='fullkeys')?'hot':'ok');
+    }).join('');
+    out+='<div class="cube"><p class="clbl"><span>Z-Cube '+(ci+1)+' \u00b7 '+fmt(sz)+' \u00b7 '+c.files.length.toLocaleString()+' files</span><span class="seal">partial</span></p><div class="files">'+blocks+'</div></div>';
+  });
+  if(pend.length){
+    var phl=(hlMode==='all'||hlMode==='uncl'||hlMode==='full'||hlMode==='fullkeys');
+    var pblocks=pend.map(function(f){return fileBlock(f,phl?'newhl':'new');}).join('');
+    out+='<div class="cube" style="border-color:var(--new-bd);"><p class="clbl"><span>Unclustered \u00b7 '+fmt(poolSize(pend))+' \u00b7 '+pend.length.toLocaleString()+' files</span><span class="seal">no Z-Cube metadata yet</span></p><div class="files">'+pblocks+'</div></div>';
+  }
+  document.getElementById(elId).innerHTML=out;
+}
+function drawSides(hlA,hlB){
+  drawSide('cubesA',cubesA,pendA,hlA);
+  drawSide('cubesB',cubesB,pendB,hlB);
+  document.getElementById('sizeA').textContent=fmt(tableSize(cubesA,pendA));
+  document.getElementById('sizeB').textContent=fmt(tableSize(cubesB,pendB));
+  document.getElementById('rwA').textContent=fmt(rwTotA);
+  document.getElementById('rwB').textContent=fmt(rwTotB);
+}
+function pushFiles(pend,count,size){for(var i=0;i<count;i++)pend.push({s:size});}
+function appendData(){
+  pushFiles(pendA,4,APPEND_FILE);
+  pushFiles(pendB,4,APPEND_FILE);
+  msg('msgA','4 files (4 GB) landed in the unclustered pool \u2014 no Z-Cube metadata yet.');
+  msg('msgB','4 files (4 GB) landed in the unclustered pool \u2014 no Z-Cube metadata yet.');
+  drawSides();
+}
+function mergeToFiles(totalMB){
+  var out=[];
+  while(totalMB>0){var sz=Math.min(FILE_CAP,totalMB);out.push({s:sz});totalMB-=sz;}
+  return out;
+}
+function optimizeCosts(){
+  var costA=poolSize(pendA), costB=poolSize(pendB), nB=pendB.length;
+  cubesA.forEach(function(c){if(!c.sealed)costA+=cubeSize(c);});
+  return {costA:costA,costB:costB,nB:nB};
+}
+function commitOptimize(){
+  var noteA=repack(cubesA,pendA,true), noteB=repack(cubesB,pendB,false);
+  pendA.length=0; pendB.length=0;
+  return {noteA:noteA,noteB:noteB};
+}
+function repack(cubes,pend,fullRewrite){
+  var stable=cubes.filter(function(c){return c.sealed;});
+  var partial=cubes.filter(function(c){return !c.sealed;});
+  var pool=[];
+  if(fullRewrite){
+    var tot=poolSize(pend);
+    partial.forEach(function(c){tot+=cubeSize(c);});
+    pool=mergeToFiles(tot);
+  }else{
+    partial.forEach(function(c){pool=pool.concat(c.files);});
+    pool=pool.concat(mergeToFiles(poolSize(pend)));
+  }
+  var rebuilt=[], cur=newCube(), note='', spilled=false;
+  pool.forEach(function(f){
+    if(cubeSize(cur)>=TARGET_CUBE){rebuilt.push(cur);cur=newCube();spilled=true;}
+    cur.files.push(f);
+  });
+  if(cur.files.length)rebuilt.push(cur);
+  rebuilt.forEach(function(c){
+    if(cubeSize(c)>MIN_CUBE&&!c.sealed){c.sealed=true;note=' A Z-Cube crossed MIN_CUBE_SIZE (100 GB) \u2014 now stable and skipped.';}
+  });
+  if(spilled)note+=' Data exceeded TARGET_CUBE_SIZE (150 GB) \u2014 packed to target, remainder spilled into a new cube.';
+  var next=stable.concat(rebuilt);
+  cubes.length=0;
+  next.forEach(function(c){cubes.push(c);});
+  if(!cubes.length)cubes.push(newCube());
+  return note;
+}
+function runOptimize(){
+  var costs=optimizeCosts();
+  drawSides('all','uncl');
+  var openA=cubesA.filter(function(c){return !c.sealed&&c.files.length;}).length;
+  msg('msgA',costs.costA?('Clustering '+pendA.length+' new file'+(pendA.length===1?'':'s')+' and rewriting ALL files in '+openA+' partial Z-Cube'+(openA===1?'':'s')+' \u2014 '+fmt(costs.costA)+' rewritten. Stable cubes skipped.'):'Nothing to cluster and all cubes stable.');
+  msg('msgB',costs.costB?('Clustering only the '+costs.nB.toLocaleString()+' new file'+(costs.nB===1?'':'s')+' \u2014 '+fmt(costs.costB)+' written. Clustered files untouched, no matter the cube size.'):'Nothing to do \u2014 no unclustered files.');
+  setTimeout(function(){
+    rwTotA+=costs.costA; rwTotB+=costs.costB;
+    var n=commitOptimize();
+    if(n.noteA)msg('msgA',document.getElementById('msgA').textContent+n.noteA);
+    if(n.noteB)msg('msgB',document.getElementById('msgB').textContent+n.noteB);
+    drawSides();
+  },1800);
+}
+function runOptimizeFull(){
+  var keys=document.getElementById('keysChanged').checked;
+  if(keys){
+    var totA=tableSize(cubesA,pendA), totB=tableSize(cubesB,pendB);
+    drawSides('fullkeys','fullkeys');
+    msg('msgA','OPTIMIZE FULL with changed cluster keys: stable Z-Cubes no longer match \u2014 reclustering EVERYTHING ('+fmt(totA)+').');
+    msg('msgB','OPTIMIZE FULL with changed cluster keys: stable Z-Cubes no longer match \u2014 reclustering EVERYTHING ('+fmt(totB)+').');
+    setTimeout(function(){
+      rwTotA+=totA; rwTotB+=totB;
+      [[cubesA,pendA],[cubesB,pendB]].forEach(function(pair){
+        var cubes=pair[0], pend=pair[1];
+        var pool=mergeToFiles(tableSize(cubes,pend));
+        pend.length=0;
+        var rebuilt=[], cur=newCube();
+        pool.forEach(function(f){
+          if(cubeSize(cur)>=TARGET_CUBE){rebuilt.push(cur);cur=newCube();}
+          cur.files.push(f);
+        });
+        if(cur.files.length)rebuilt.push(cur);
+        rebuilt.forEach(function(c){c.sealed=cubeSize(c)>MIN_CUBE;});
+        cubes.length=0;
+        rebuilt.forEach(function(c){cubes.push(c);});
+        if(!cubes.length)cubes.push(newCube());
+      });
+      msg('msgA',document.getElementById('msgA').textContent+' Z-Cubes rebuilt under the new keys.');
+      msg('msgB',document.getElementById('msgB').textContent+' Z-Cubes rebuilt under the new keys.');
+      drawSides();
+    },1800);
+    return;
+  }
+  var costA=poolSize(pendA), costB=poolSize(pendB);
+  cubesA.forEach(function(c){if(!c.sealed)costA+=cubeSize(c);});
+  cubesB.forEach(function(c){if(!c.sealed)costB+=cubeSize(c);});
+  drawSides('full','full');
+  msg('msgA',costA?('OPTIMIZE FULL: reclustering unclustered data + all partial Z-Cubes \u2014 '+fmt(costA)+' rewritten. Stable cubes retained: cluster keys and provider unchanged.'):'OPTIMIZE FULL: nothing to recluster \u2014 all cubes stable and keys unchanged.');
+  msg('msgB',costB?('OPTIMIZE FULL: reclustering unclustered data + all partial Z-Cubes \u2014 '+fmt(costB)+' rewritten. Stable cubes retained: cluster keys and provider unchanged.'):'OPTIMIZE FULL: nothing to recluster \u2014 all cubes stable and keys unchanged.');
+  setTimeout(function(){
+    rwTotA+=costA; rwTotB+=costB;
+    repack(cubesA,pendA,true);
+    repack(cubesB,pendB,true);
+    pendA.length=0; pendB.length=0;
+    drawSides();
+  },1800);
+}
+function fastForward(){
+  var ffA=0, ffB=0, notes={noteA:'',noteB:''};
+  for(var i=0;i<20;i++){
+    pushFiles(pendA,4,APPEND_FILE);
+    pushFiles(pendB,4,APPEND_FILE);
+    var c=optimizeCosts();
+    ffA+=c.costA; ffB+=c.costB;
+    rwTotA+=c.costA; rwTotB+=c.costB;
+    var n=commitOptimize();
+    if(n.noteA)notes.noteA=n.noteA;
+    if(n.noteB)notes.noteB=n.noteB;
+  }
+  msg('msgA','20 cycles of append (4 GB) + OPTIMIZE: '+fmt(ffA)+' rewritten to fold in '+fmt(20*4*APPEND_FILE)+' of new data.'+notes.noteA);
+  msg('msgB','20 cycles of append (4 GB) + OPTIMIZE: '+fmt(ffB)+' written for '+fmt(20*4*APPEND_FILE)+' of new data.'+notes.noteB);
+  drawSides();
+}
+
+var files;
+function resetRc(){
+  files=[{lo:0,hi:25,c:1},{lo:25,hi:50,c:1},{lo:50,hi:75,c:1},{lo:75,hi:100,c:1}];
+  var v=document.getElementById('verdict'); v.textContent=''; v.style.color='var(--text-2)';
+  renderRc();
+}
+function score(a,b){
+  var inter=Math.min(a.hi,b.hi)-Math.max(a.lo,b.lo);
+  if(inter<=0)return 0;
+  return inter/Math.min(a.hi-a.lo,b.hi-b.lo);
+}
+function comps(){
+  var thr=parseFloat(document.getElementById('mot').value), n=files.length;
+  var adj=[], anyOverlap=false, i, j;
+  for(i=0;i<n;i++)adj.push([]);
+  for(i=0;i<n;i++)for(j=i+1;j<n;j++){
+    var sc=score(files[i],files[j]);
+    if(sc>0)anyOverlap=true;
+    if(sc>thr){adj[i].push(j);adj[j].push(i);}
+  }
+  var seen=[], list=[];
+  for(i=0;i<n;i++)seen.push(0);
+  for(i=0;i<n;i++){
+    if(seen[i]||!adj[i].length)continue;
+    var comp=[], stack=[i]; seen[i]=1;
+    while(stack.length){var u=stack.pop();comp.push(u);adj[u].forEach(function(v2){if(!seen[v2]){seen[v2]=1;stack.push(v2);}});}
+    list.push(comp);
+  }
+  return {list:list,anyOverlap:anyOverlap};
+}
+function renderRc(hl){
+  hl=hl||{};
+  var out='';
+  files.forEach(function(f,i){
+    var bg, bd, extra='';
+    if(hl[i]==='rc'){bg='var(--hot-bg)';bd='var(--hot-bd)';}
+    else if(hl[i]==='new'){bg='var(--new-bg)';bd='var(--hot-bd)';extra='border-style:dashed;border-width:2px;';}
+    else if(f.c){bg='var(--ok-bg)';bd='var(--ok-bd)';}
+    else{bg='var(--new-bg)';bd='var(--new-bd)';}
+    out+='<div style="position:relative;height:18px;margin:4px 0;"><div style="position:absolute;left:'+f.lo+'%;width:'+(f.hi-f.lo)+'%;height:100%;border-radius:4px;background:'+bg+';border:1px solid '+bd+';'+extra+'"></div></div>';
+  });
+  document.getElementById('bars').innerHTML=out;
+  var c=comps(), biggest=0;
+  c.list.forEach(function(cp){if(cp.length>biggest)biggest=cp.length;});
+  document.getElementById('grpOut').textContent=biggest+' files';
+  var totW=files.reduce(function(t,f){return t+(f.hi-f.lo);},0);
+  var sorted=files.slice().sort(function(x,y){return x.lo-y.lo;});
+  var union=0, curLo=null, curHi=null;
+  sorted.forEach(function(f){
+    if(curLo===null){curLo=f.lo;curHi=f.hi;return;}
+    if(f.lo<=curHi){curHi=Math.max(curHi,f.hi);}
+    else{union+=curHi-curLo;curLo=f.lo;curHi=f.hi;}
+  });
+  if(curLo!==null)union+=curHi-curLo;
+  var eff=totW?Math.round(union/totW*100):100;
+  var el=document.getElementById('scOut');
+  el.textContent=eff+'%';
+  el.style.color=eff>=90?'var(--green)':(eff>=70?'inherit':'var(--red)');
+}
+function cfgChanged(){
+  document.getElementById('mofOut').textContent=document.getElementById('mof').value;
+  document.getElementById('motOut').textContent=parseFloat(document.getElementById('mot').value).toFixed(2);
+  renderRc();
+}
+function addFile(wFrac){
+  var w=Math.round(100*wFrac*(0.7+Math.random()*0.6));
+  var lo=Math.round(Math.random()*(100-w));
+  files.push({lo:lo,hi:lo+w,c:0});
+  document.getElementById('verdict').textContent='';
+  renderRc();
+}
+function optimizeRc(){
+  var mof=parseInt(document.getElementById('mof').value,10);
+  var thr=parseFloat(document.getElementById('mot').value).toFixed(2);
+  var c=comps(), v=document.getElementById('verdict');
+  var newIdx=[]; files.forEach(function(f,i){if(!f.c)newIdx.push(i);});
+  var pulled=[], biggest=0;
+  c.list.forEach(function(cp){
+    if(cp.length>biggest)biggest=cp.length;
+    if(cp.length>=mof)cp.forEach(function(i){if(files[i].c&&pulled.indexOf(i)<0)pulled.push(i);});
+  });
+  if(!newIdx.length&&!pulled.length){
+    v.style.color='var(--text-2)';
+    if(biggest>=2)v.textContent='No new data to cluster. '+biggest+' clustered files overlap above the '+thr+' threshold, but the group is below minOffendingFiles = '+mof+' — auto recluster leaves them in place.';
+    else if(c.anyOverlap)v.textContent='No new data to cluster. Some overlap exists, but no file pair exceeds the '+thr+' threshold — layout left alone.';
+    else v.textContent='No new data and no overlap — nothing to do.';
+    renderRc(); return;
+  }
+  var hl={};
+  newIdx.forEach(function(i){hl[i]='new';});
+  pulled.forEach(function(i){hl[i]='rc';});
+  renderRc(hl);
+  v.style.color='var(--red)';
+  var t='Clustering '+newIdx.length+' new file'+(newIdx.length===1?'':'s')+' (always selected).';
+  if(pulled.length){
+    t+=' Auto recluster pulled in '+pulled.length+' overlapping clustered file'+(pulled.length===1?'':'s')+' (group of '+biggest+' \u2265 minOffendingFiles = '+mof+').';
+  }else if(biggest>=2){
+    t+=' Overlapping clustered files exist, but the group of '+biggest+' is below minOffendingFiles = '+mof+' — they stay in place.';
+  }else if(c.anyOverlap){
+    t+=' Some overlap exists but no pair exceeds the '+thr+' threshold — clustered files stay in place.';
+  }
+  v.textContent=t;
+  setTimeout(function(){
+    var set=newIdx.concat(pulled);
+    var picked=set.map(function(i){return files[i];}).sort(function(x,y){return x.lo-y.lo;});
+    var keep=files.filter(function(f,i){return set.indexOf(i)<0;});
+    var regions=[];
+    picked.forEach(function(f){
+      var last=regions[regions.length-1];
+      if(last&&f.lo<=last.hi){last.hi=Math.max(last.hi,f.hi);last.cnt++;}
+      else regions.push({lo:f.lo,hi:f.hi,cnt:1});
+    });
+    var rebuilt=[];
+    regions.forEach(function(r){
+      var pieces=Math.max(1,Math.round(r.cnt*0.7)), w=(r.hi-r.lo)/pieces;
+      for(var k=0;k<pieces;k++)rebuilt.push({lo:Math.round(r.lo+k*w),hi:Math.round(r.lo+(k+1)*w),c:1});
+    });
+    files=keep.concat(rebuilt).sort(function(x,y){return x.lo-y.lo;});
+    renderRc();
+    var c2=comps();
+    var residual=false;
+    for(var i=0;i<files.length&&!residual;i++)for(var j=i+1;j<files.length;j++){if(score(files[i],files[j])>0){residual=true;break;}}
+    v.style.color='var(--green)';
+    var done='Wrote '+rebuilt.length+' clustered file'+(rebuilt.length===1?'':'s')+' from '+newIdx.length+' new + '+pulled.length+' reclustered.';
+    if(residual)done+=' Some overlap remains with files below the auto recluster thresholds — tolerated to save write cost.';
+    v.textContent=done;
+  },1800);
+}
+function optimizeRcFull(){
+  var v=document.getElementById('verdict');
+  var n=files.length;
+  var hl={};
+  files.forEach(function(f,i){hl[i]=f.c?'rc':'new';});
+  renderRc(hl);
+  v.style.color='var(--red)';
+  v.textContent='OPTIMIZE FULL: reclustering all '+n+' files — thresholds ignored, full rewrite.';
+  setTimeout(function(){
+    var lo=Math.min.apply(null,files.map(function(f){return f.lo;}));
+    var hi=Math.max.apply(null,files.map(function(f){return f.hi;}));
+    var pieces=Math.max(2,Math.round(n*0.7)), w=(hi-lo)/pieces, rebuilt=[];
+    for(var k=0;k<pieces;k++)rebuilt.push({lo:Math.round(lo+k*w),hi:Math.round(lo+(k+1)*w),c:1});
+    files=rebuilt;
+    renderRc();
+    v.style.color='var(--green)';
+    v.textContent='Full recluster complete: '+pieces+' tight, non-overlapping files. Higher write cost, theoretical-optimum layout.';
+  },1800);
+}
+resetSim(); resetRc();
+</script>
+</body>
+</html>

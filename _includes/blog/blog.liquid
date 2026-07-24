@@ -3,23 +3,36 @@
     <article><section class="post-content"><p>There are no blog posts</p></section></article>
     {% endunless %}
     {% for post in paginator.posts %}
-    <div class="post-teaser">
-        {% if post.thumbnail %}
-        <div class="post-img">
-            <a aria-label="{{ post.title }}" href="{{ post.url | relative_url }}">
-                <img alt="{{ post.title }}" src="{{ post.thumbnail | relative_url }}">
-            </a>
-        </div>
-        {% endif %}
-        <span>
-          <header>
-            <h1>
+    {% assign post_words = post.content | strip_html | number_of_words %}
+    {% assign read_minutes = post_words | plus: 149 | divided_by: 150 %}
+    <article class="post-entry">
+        <div class="post-entry-heading{% if post.thumbnail %} has-thumbnail{% endif %}">
+          <p class="post-entry-meta">
+            {% if post.categories.first %}
+              <span class="post-entry-category">{{ post.categories.first | replace: "-", " " }}</span>
+              <span aria-hidden="true">·</span>
+            {% endif %}
+            <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%B %-d, %Y" }}</time>
+            <span aria-hidden="true">·</span>
+            <span>{{ read_minutes }} min read</span>
+          </p>
+          <header class="post-entry-header">
+            <h2>
               <a aria-label="{{ post.title }}" class="post-link" href="{{ post.url | relative_url }}">
                 {{ post.title }}
               </a>
-            </h1>
-            {% include blog/post_info.liquid author=post.author date=post.date %}
+            </h2>
           </header>
+          {% if post.thumbnail %}
+          <div class="post-entry-image">
+              <a aria-label="{{ post.title }}" href="{{ post.url | relative_url }}">
+                  <img alt="" src="{{ post.thumbnail | relative_url }}" loading="lazy" decoding="async">
+              </a>
+          </div>
+          {% endif %}
+
+        </div>
+        <div class="post-entry-summary">
           {% if site.excerpt or site.theme_settings.excerpt %}
               <div class="excerpt">
                   {% if site.excerpt == "truncate" %}
@@ -29,8 +42,8 @@
                   {% endif %}
               </div>
           {% endif %}
-      </span>
-    </div>
+        </div>
+    </article>
     {% endfor %}
 </div>
 

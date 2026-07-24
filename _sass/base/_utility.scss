@@ -16,19 +16,7 @@
 }
 
 %padding-post {
-  padding: $padding-x-small $padding-x-large;
-  @media (max-width: $xl-break) {
-    padding: $padding-x-small ($padding-large * 2);
-  }
-  @media (max-width: $l-break) {
-    padding: $padding-x-small $padding-large;
-  }
-  @media (max-width: $m-break) {
-    padding: $padding-x-small $padding-medium;
-  }
-  @media (max-width: $sm-break) {
-    padding: $padding-x-small $padding-small;
-  }
+  padding: clamp(1.5rem, 4vw, 3rem) max(1.25rem, calc((100vw - 1200px) / 2));
 }
 
 %padding-header {

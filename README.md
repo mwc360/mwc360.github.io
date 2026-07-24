@@ -12,11 +12,10 @@ A free and open-source [Jekyll](https://jekyllrb.com) theme. Based on Rohan Chan
 * Portfolio 🗂, Gallery 🖼 pages for your projects
 * Multi comments 💬 options  
 * Tags compatibility 🏷
-* Handle _Bootstrap_'ed pages: [Get Bootstrap](https://getbootstrap.com/)
 * 🔎 Search feature: [Simple-Jekyll-Search](https://github.com/christian-fei/Simple-Jekyll-Search)
 * Math Rendering : [KateX](https://github.com/Khan/KaTeX)
 * Diagram Rendering: [Mermaid-js](https://github.com/mermaid-js/mermaid)
-* 🖋 Nice fonts: [Font Awesome](https://fontawesome.com/), [Source Sans Pro](https://fonts.google.com/specimen/Source+Sans+Pro), [Pacifico](https://fonts.google.com/specimen/Pacifico?selection.family=Pacifico) 
+* 🖋 Locally hosted [Source Sans 3](https://fonts.google.com/specimen/Source+Sans+3) variable typography and [Font Awesome](https://fontawesome.com/) icons
 * Seo Tags: [Jekyll-seo-tag](https://github.com/jekyll/jekyll-seo-tag)
 * 🛠 Syntax Highlighting: Easily customisable [Base16](https://github.com/chriskempson/base16)
 * 💡 Light and dark theme supported
@@ -315,7 +314,6 @@ hide_title: true                                  # Hide the title when displayi
 feature-img: "assets/img/sample.png"              # Add a feature-image to the post
 thumbnail: "assets/img/thumbnails/sample-th.png"  # Add a thumbnail image on blog view
 color: rgb(80,140,22)                             # Add the specified color as feature image, and change link colors in post
-bootstrap: true                                   # Add bootstrap to the page
 tags: [sample, markdown, html]
 ---
 ```
@@ -326,8 +324,15 @@ If you don't have a thumbnail you can still use the same image as the feature on
 The background used when `color` is set comes from `lineart.png` from [xukimseven](https://github.com/xukimseven) 
 you can edit it in the config file (`_config.yml > color_image`). If you want another one, put it in `/assets/img` as well. 
 
-The **bootstrap** is not mandatory and is only useful if you want to add bootstrapped content in your page. 
-It will respect the page and theme layout, mind the padding on the sides.
+### Interactive content
+
+Markdown posts can embed self-contained interactive HTML without MDX. Place the HTML file in the repository and use:
+
+```liquid
+{% include interactive.html src="/incremental-liquid-clustering.html" title="Incremental liquid clustering" height="1200" %}
+```
+
+The interactive runs in a sandboxed iframe and includes a link to open it in a separate tab.
 
 #### Post excerpt
 

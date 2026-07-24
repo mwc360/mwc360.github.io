@@ -51,6 +51,10 @@ pre .rouge-table,
   overflow: auto;
 }
 
+div.highlighter-rouge > .highlight > pre.highlight {
+  padding: 0;
+}
+
 .rouge-table * {
   font-size: 1em;
 }
@@ -168,6 +172,7 @@ table.rouge-table {
     /* line numbers*/
     &.gutter,
     &.rouge-gutter {
+      padding-left: 0.85em;
       padding-right: 1em;
       width: 2em;
       color: var(--base04);
@@ -184,8 +189,8 @@ table.rouge-table {
 
   pre {
     margin: 0;
-    padding-top: 1em;
-    padding-bottom: 1.35em;
+    padding-top: 0.85em;
+    padding-bottom: 0.85em;
   }
 }
 

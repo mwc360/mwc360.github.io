@@ -1,8 +1,8 @@
 /* TYPOGRAPHY */
-$font-family-main: 'Source Sans Pro', Helvetica, Arial, sans-serif;
-$font-family-headings: 'Source Sans Pro', Helvetica, Arial, sans-serif;
-$font-family-logo: 'Source Sans Pro', Helvetica, Arial, sans-serif;
-$font-size: 1.25em;
+$font-family-main: 'Source Sans 3', 'Segoe UI', Helvetica, Arial, sans-serif;
+$font-family-headings: 'Source Sans 3', 'Segoe UI', Helvetica, Arial, sans-serif;
+$font-family-logo: 'Source Sans 3', 'Segoe UI', Helvetica, Arial, sans-serif;
+$font-size: 1.125rem;
 
 $monospace: Consolas, Menlo, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace, sans-serif !default;
 $font-size-code: 0.85em !default;
@@ -50,6 +50,8 @@ html, html[data-theme="light"] {
   --border: rgba(0, 0, 0, 0.2);
   --blockquote-border: #0969da;
   --surface-shadow: rgba(0, 0, 0, 0.1);
+  --surface: #ffffff;
+  --surface-hover: #f6f8fa;
   --table-header: #eaeef2;
   --table-header-border: #afb8c1;
   --table-stripe: #f6f8fa;
@@ -87,6 +89,8 @@ html[data-theme="dark"] {
   --border: #30363d;
   --blockquote-border: #58a6ff;
   --surface-shadow: rgba(1, 4, 9, 0.6);
+  --surface: #161b22;
+  --surface-hover: #21262d;
   --table-header: #21262d;
   --table-header-border: #484f58;
   --table-stripe: #161b22;

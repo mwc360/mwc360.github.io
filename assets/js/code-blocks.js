@@ -144,10 +144,208 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   document.querySelectorAll('.post-content table:not(.rouge-table):not(.dataframe)').forEach(function (table) {
+    if (table.parentElement.classList.contains('markdown-table-wrapper')) {
+      return;
+    }
+
+    const container = document.createElement('div');
     const wrapper = document.createElement('div');
+    const toolbar = document.createElement('div');
+    const expandButton = document.createElement('button');
+    container.className = 'markdown-table-container';
     wrapper.className = 'markdown-table-wrapper';
+    toolbar.className = 'markdown-table-toolbar';
+    expandButton.type = 'button';
+    expandButton.className = 'markdown-table-expand';
+    expandButton.innerHTML = '<svg aria-hidden="true" viewBox="0 0 16 16"><path d="M3.75 1a.75.75 0 0 1 0 1.5H2.5v1.25a.75.75 0 0 1-1.5 0v-2A.75.75 0 0 1 1.75 1Zm8.5 0h2a.75.75 0 0 1 .75.75v2a.75.75 0 0 1-1.5 0V2.5h-1.25a.75.75 0 0 1 0-1.5ZM1 12.25a.75.75 0 0 1 1.5 0v1.25h1.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1-.75-.75Zm13.25-.75a.75.75 0 0 1 .75.75v2a.75.75 0 0 1-.75.75h-2a.75.75 0 0 1 0-1.5h1.25v-1.25a.75.75 0 0 1 .75-.75Z"></path></svg>';
+    expandButton.setAttribute('aria-label', 'Expand table');
+    expandButton.title = 'Expand table';
     table.classList.add('markdown-table');
-    table.before(wrapper);
+    table.before(container);
+    toolbar.append(expandButton);
     wrapper.append(table);
+    container.append(toolbar, wrapper);
+
+    expandButton.addEventListener('click', function () {
+      const dialog = document.createElement('dialog');
+      const panel = document.createElement('div');
+      const dialogHeader = document.createElement('div');
+      const title = document.createElement('strong');
+      const closeButton = document.createElement('button');
+      const content = document.createElement('div');
+      const expandedTable = table.cloneNode(true);
+
+      dialog.className = 'markdown-table-dialog';
+      panel.className = 'markdown-table-dialog-panel';
+      dialogHeader.className = 'markdown-table-dialog-header';
+      title.textContent = 'Expanded table';
+      closeButton.type = 'button';
+      closeButton.className = 'markdown-table-dialog-close';
+      closeButton.textContent = 'Close';
+      content.className = 'markdown-table-dialog-content';
+
+      dialogHeader.append(title, closeButton);
+      content.append(expandedTable);
+      panel.append(dialogHeader, content);
+      dialog.append(panel);
+      document.body.append(dialog);
+
+      closeButton.addEventListener('click', function () {
+        dialog.close();
+      });
+      dialog.addEventListener('click', function (event) {
+        if (event.target === dialog) {
+          dialog.close();
+        }
+      });
+      dialog.addEventListener('close', function () {
+        dialog.remove();
+        expandButton.focus();
+      });
+
+      dialog.showModal();
+    });
+  });
+
+  const postContent = document.querySelector('article .post-content');
+  if (!postContent) {
+    return;
+  }
+
+  const headings = [...postContent.querySelectorAll('h1, h2, h3')];
+  const usedIds = new Set();
+
+  headings.forEach(function (heading, index) {
+    const headingText = heading.textContent.trim();
+    let id = heading.id || heading.textContent
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
+
+    id = id || 'section-' + (index + 1);
+    const baseId = id;
+    let suffix = 2;
+    while (usedIds.has(id) || document.getElementById(id) && document.getElementById(id) !== heading) {
+      id = baseId + '-' + suffix;
+      suffix += 1;
+    }
+
+    heading.id = id;
+    heading.dataset.tocLabel = headingText;
+    heading.style.scrollMarginTop = '1.5rem';
+    usedIds.add(id);
+
+    const anchor = document.createElement('a');
+    anchor.className = 'heading-anchor';
+    anchor.href = '#' + id;
+    anchor.textContent = '#';
+    anchor.setAttribute('aria-label', 'Link to ' + headingText);
+    heading.append(anchor);
+  });
+
+  if (headings.length >= 2) {
+    const layout = document.createElement('div');
+    const postBody = document.createElement('div');
+    const toc = document.createElement('aside');
+    const tocDetails = document.createElement('details');
+    toc.className = 'post-toc';
+    toc.setAttribute('aria-label', 'Table of contents');
+    tocDetails.open = false;
+    layout.className = 'post-layout';
+    postBody.className = 'post-body';
+    postContent.classList.add('has-post-layout');
+
+    const summary = document.createElement('summary');
+    summary.textContent = 'On this page';
+
+    const list = document.createElement('ol');
+    const links = new Map();
+    headings.forEach(function (heading) {
+      const item = document.createElement('li');
+      item.className = 'toc-level-' + heading.tagName.slice(1);
+
+      const link = document.createElement('a');
+      link.href = '#' + heading.id;
+      link.textContent = heading.dataset.tocLabel;
+      links.set(heading.id, link);
+      item.append(link);
+      list.append(item);
+    });
+
+    while (postContent.firstChild) {
+      postBody.append(postContent.firstChild);
+    }
+
+    tocDetails.append(summary, list);
+    toc.append(tocDetails);
+    layout.append(postBody, toc);
+    postContent.append(layout);
+    const updateTocLayout = function () {
+      layout.classList.toggle('toc-collapsed', !tocDetails.open);
+    };
+    tocDetails.addEventListener('toggle', updateTocLayout);
+    updateTocLayout();
+
+    let ticking = false;
+    const updateActiveTocLink = function () {
+      let activeHeading = headings[0];
+      headings.forEach(function (heading) {
+        if (heading.getBoundingClientRect().top <= 180) {
+          activeHeading = heading;
+        }
+      });
+
+      links.forEach(function (link, id) {
+        const isActive = id === activeHeading.id;
+        link.classList.toggle('is-active', isActive);
+        if (isActive) {
+          link.setAttribute('aria-current', 'location');
+        } else {
+          link.removeAttribute('aria-current');
+        }
+      });
+      ticking = false;
+    };
+
+    window.addEventListener('scroll', function () {
+      if (!ticking) {
+        window.requestAnimationFrame(updateActiveTocLink);
+        ticking = true;
+      }
+    }, { passive: true });
+    updateActiveTocLink();
+  }
+
+  if (window.location.hash) {
+    window.requestAnimationFrame(function () {
+      const target = document.getElementById(window.location.hash.slice(1));
+      if (target) {
+        target.scrollIntoView();
+      }
+    });
+  }
+
+  postContent.querySelectorAll('img').forEach(function (image) {
+    image.loading = 'lazy';
+    image.decoding = 'async';
+
+    if (image.closest('figure')) {
+      return;
+    }
+
+    const paragraph = image.closest('p');
+    if (!paragraph || paragraph.textContent.trim() || paragraph.children.length !== 1) {
+      return;
+    }
+
+    const media = image.parentElement.tagName === 'A' ? image.parentElement : image;
+    const figure = document.createElement('figure');
+    figure.className = 'post-figure';
+    paragraph.before(figure);
+    figure.append(media);
+
+    paragraph.remove();
   });
 });

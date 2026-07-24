@@ -15,13 +15,7 @@ layout: default
         </div>
     </header>
     <section class="post-content">
-    {% if page.bootstrap %}
-        <div class="bootstrap-iso">
-            {% endif %}
-            {{ content }}
-            {% if page.bootstrap %}
-        </div>
-        {% endif %}
+        {{ content }}
     </section>
     <!-- Tag list for portfolio -->
     {% capture tag_list %}{{ page.tags | join: "|" }}{% endcapture %}

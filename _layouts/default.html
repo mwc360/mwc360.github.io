@@ -8,11 +8,12 @@
   {% capture _head %}{% include default/head.liquid %}{% endcapture %}
   {{ _head | split: " " | join: " "}}
   <body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
     {% capture _navbar %}{% include default/navbar.liquid %}{% endcapture %}
     {{ _navbar | split: " " | join: " "}}
-    <div class="content">
+    <main id="main-content" class="content" tabindex="-1">
       {{ content }}
-    </div>
+    </main>
     {% capture _footer %}{% include default/footer.liquid %}{% endcapture %}
     {{ _footer | split: " " | join: " "}}
   </body>
