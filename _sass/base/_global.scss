@@ -2,6 +2,33 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar {
+  width: 18px;
+  height: 18px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar-thumb {
+  min-width: 32px;
+  min-height: 32px;
+  border: 2px solid var(--scrollbar-track);
+  border-radius: 10px;
+  background: var(--scrollbar-thumb);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+*::-webkit-scrollbar-corner {
+  background: var(--scrollbar-track);
 }
 
 figure {
@@ -141,11 +168,11 @@ summary {
 }
 
 blockquote {
-  border-left: 2px solid #9fd2e3;
+  border-left: 2px solid var(--blockquote-border);
   margin: 1em 1em;
   padding: 0.75em 1em;
   background-color: var(--blockquote);
-  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 2px var(--surface-shadow);
 }
 
 blockquote *:last-child,
@@ -165,6 +192,57 @@ th {
   padding: 0.5em 1em;
   border: 1px solid var(--border);
   text-align: left;
+}
+
+.markdown-table-wrapper {
+  width: 100%;
+  margin: 1.25em 0;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 1px 2px var(--surface-shadow);
+
+  .markdown-table {
+    display: table;
+    min-width: 100%;
+    margin: 0;
+    border-collapse: collapse;
+    table-layout: auto;
+
+    th,
+    td {
+      padding: 0.65em 0.85em;
+      border: 0;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--table-header);
+      color: var(--h2);
+      font-weight: 600;
+      white-space: nowrap;
+      border-bottom: 1px solid var(--table-header-border);
+    }
+
+    th:last-child,
+    td:last-child {
+      border-right: 0;
+    }
+
+    tbody tr:nth-child(even) {
+      background: var(--table-stripe);
+    }
+
+    tbody tr:hover {
+      background: var(--table-hover);
+    }
+
+    tbody tr:last-child td {
+      border-bottom: 0;
+    }
+  }
 }
 
 table,
@@ -215,7 +293,6 @@ ul {
 hr {
   border: 0;
   border-top: 1px solid var(--border);
-  border-bottom: 1px solid #fff;
   margin: 1em 0;
 }
 

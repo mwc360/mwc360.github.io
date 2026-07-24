@@ -9,7 +9,7 @@ avatar: # assets/img/Untitled.png                         # Empty for no avatar 
 favicon: assets/mcole.ico                             # Icon displayed in the tab
 
 # Header and footer text
-header_text: a microsoft data platform blog  # Change Blog header text
+header_text: an opinionated data engineering blog  # Change Blog header text
 header_feature_image: assets/img/header/triangular.jpeg
 header_feature_image_responsive: true
 footer_text: >
@@ -32,7 +32,7 @@ color_theme: auto                                       # auto, dark or light
 # Comments
 comments:
   disqus_shortname:                                     # Your discus shortname for comments
-  cusdis_app_id: e76f9815-75f3-41be-ac18-0a0caa6d7807   # Your cusdis data-app-id
+  cusdis_app_id:                                         # Your cusdis data-app-id
   utterances:                                           # Enable by filling below information. For more info, go to https://utteranc.es
     repo:                                               # your public comments repository (e.g. owner/repo)
     issue-term:                                         # Issue term (e.g. "comment" consider issues with this word in the title as comments)
@@ -48,6 +48,10 @@ collections:
     permalink: /:collection/:name
 
 # BUILD SETTINGS
+kramdown:
+  syntax_highlighter_opts:
+    block:
+      line_numbers: true
 sass:
   style: compressed
 plugins: [jekyll-paginate, jekyll-seo-tag, jekyll-feed]
