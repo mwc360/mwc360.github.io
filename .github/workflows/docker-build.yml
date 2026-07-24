@@ -2,32 +2,38 @@ name: Build
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
+
+permissions:
+  contents: read
 
 jobs:
-  image:
-
+  github-pages:
+    name: GitHub Pages compatibility
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        # The jekyll/builder is used by GitHub pages
-        docker-image: [ 'jekyll/builder', 'sylhare/jekyll' ]
 
     steps:
       - uses: actions/checkout@v4
-      - name: Build with Docker
-        continue-on-error: true
+      - name: Build with the GitHub Pages toolchain
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./
+          destination: ./_site
+          future: true
+          verbose: true
+
+  jekyll-current:
+    name: Current Jekyll (pinned)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the site
         run: |
-          cd assets && docker build .
-      - name: Build the site in the container
-        run: |
-          docker run \
-          -v ${{ github.workspace }}:/srv/jekyll -v ${{ github.workspace }}/_site:/srv/jekyll/_site \
-          ${{ matrix.docker-image }}:latest /bin/bash -c "chmod -R 777 /srv/jekyll && jekyll build --future"
-      - name: Pull docker images
-        continue-on-error: true
-        run: |
-          docker pull sylhare/type-on-strap
-          docker pull sylhare/jekyll
+          docker run --rm \
+            -v "${{ github.workspace }}:/srv/jekyll" \
+            -v "${{ github.workspace }}/_site:/srv/jekyll/_site" \
+            sylhare/jekyll@sha256:c03ebce9ef2aed0a43d99658f801c211330cad609e4c443eb3893c84dd347652 \
+            /bin/bash -c "chmod -R 777 /srv/jekyll && jekyll build --future"
