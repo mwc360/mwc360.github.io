@@ -4,66 +4,140 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Incremental liquid clustering — Fabric Runtime 2.0</title>
+<script>
+  (() => {
+    const params = new URLSearchParams(window.location.search);
+    const param = params.get("scoutTheme");
+    const theme =
+      param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+    if (params.get("embedded") === "1") {
+      document.documentElement.classList.add("is-embedded");
+      if (params.get("context") === "1") document.documentElement.classList.add("with-context");
+    }
+  })();
+</script>
+<script>
+  window.addEventListener("message", (event) => {
+    if (event.data?.type === "scout-theme" && ["light", "dark"].includes(event.data.theme)) {
+      document.documentElement.setAttribute("data-theme", event.data.theme);
+    }
+  });
+</script>
 <style>
-:root{
-  --bg:#faf9f5; --card:#ffffff; --inset:#f1efe8;
-  --text:#1a1a17; --text-2:#5f5e5a; --text-3:#888780;
-  --border:#d3d1c7; --accent:#185fa5;
-  --ok-bg:#9FE1CB; --ok-bd:#1D9E75; --ok-tx:#04342C;
-  --new-bg:#FAC775; --new-bd:#BA7517; --new-tx:#412402;
-  --hot-bg:#F7C1C1; --hot-bd:#E24B4A; --hot-tx:#501313;
-  --red:#A32D2D; --green:#0F6E56;
+:root {
+  color-scheme: light;
+  --cp-bg: #f7f4ef;
+  --cp-bg-elevated: #fcfbf8;
+  --cp-surface: #ffffff;
+  --cp-surface-soft: #f5f5f5;
+  --cp-border: #dedede;
+  --cp-border-strong: #919191;
+  --cp-text: #242424;
+  --cp-text-muted: #5c5c5c;
+  --cp-text-soft: #6f6f6f;
+  --cp-accent: #b11f4b;
+  --cp-accent-hover: #9a1a41;
+  --cp-accent-soft: rgba(177, 31, 75, 0.08);
+  --cp-accent-fg: #ffffff;
+  --cp-success: #16a34a;
+  --cp-danger: #dc2626;
+  --cp-warning: #f59e0b;
+  --cp-link: #0078d4;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+  --cp-overlay: rgba(255, 255, 255, 0.8);
+  --cp-panel: rgba(255, 255, 255, 0.86);
+  --cp-panel-strong: rgba(255, 255, 255, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.55);
+  --cp-highlight: rgba(177, 31, 75, 0.12);
 }
-@media (prefers-color-scheme: dark){
-  :root{
-    --bg:#1f1e1b; --card:#2a2926; --inset:#34332f;
-    --text:#f1efe8; --text-2:#b4b2a9; --text-3:#888780;
-    --border:#444441; --accent:#85b7eb;
-    --ok-bg:#085041; --ok-bd:#5DCAA5; --ok-tx:#9FE1CB;
-    --new-bg:#633806; --new-bd:#EF9F27; --new-tx:#FAC775;
-    --hot-bg:#791F1F; --hot-bd:#F09595; --hot-tx:#F7C1C1;
-    --red:#F09595; --green:#5DCAA5;
-  }
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --cp-bg: #3d3b3a;
+  --cp-bg-elevated: #343231;
+  --cp-surface: #292929;
+  --cp-surface-soft: #2e2e2e;
+  --cp-border: #474747;
+  --cp-border-strong: #5f5f5f;
+  --cp-text: #dedede;
+  --cp-text-muted: #919191;
+  --cp-text-soft: #b0b0b0;
+  --cp-accent: #fd8ea1;
+  --cp-accent-hover: #fb7b91;
+  --cp-accent-soft: rgba(253, 142, 161, 0.14);
+  --cp-accent-fg: #1a1a1a;
+  --cp-success: #4ade80;
+  --cp-danger: #f87171;
+  --cp-warning: #fbbf24;
+  --cp-link: #4da6ff;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --cp-overlay: rgba(41, 41, 41, 0.88);
+  --cp-panel: rgba(41, 41, 41, 0.72);
+  --cp-panel-strong: rgba(41, 41, 41, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.04);
+  --cp-highlight: rgba(253, 142, 161, 0.12);
+}
+html[data-theme="dark"] {
+  --cp-bg: #0d1117;
+  --cp-bg-elevated: #161b22;
+  --cp-surface: #161b22;
+  --cp-surface-soft: #21262d;
+  --cp-border: #30363d;
+  --cp-border-strong: #484f58;
+  --cp-text: #c9d1d9;
+  --cp-text-muted: #8b949e;
+  --cp-text-soft: #8b949e;
+  --cp-panel: rgba(22, 27, 34, 0.72);
+  --cp-panel-strong: rgba(22, 27, 34, 0.96);
 }
 *{box-sizing:border-box;}
-body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.6;}
+body{margin:0;background:var(--cp-surface);color:var(--cp-text);font-family:"Segoe UI",Aptos,Calibri,-apple-system,BlinkMacSystemFont,sans-serif;font-size:16px;line-height:1.6;}
 .wrap{max-width:840px;margin:0 auto;padding:2.5rem 1.25rem 4rem;}
-h1{font-size:26px;font-weight:600;margin:0 0 4px;}
+.is-embedded,.is-embedded body{overflow:hidden;}
+.is-embedded body{background:transparent;}
+.is-embedded .wrap{padding:0.25rem 0 1rem;}
+.is-embedded.with-context .wrap{padding-top:0;}
+.is-embedded h1,.is-embedded h1 + .sub{display:none;}
+.is-embedded.with-context h1,.is-embedded.with-context h1 + .sub{display:block;}
+h1{font-size:32px;font-weight:600;margin:0 0 4px;}
 h2{font-size:19px;font-weight:600;margin:2.5rem 0 4px;}
-.sub{color:var(--text-2);font-size:14px;margin:0 0 1.25rem;}
-button{background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;padding:8px 14px;cursor:pointer;font-family:inherit;}
-button:hover{background:var(--inset);}
+.sub{color:var(--cp-text-muted);font-size:14px;margin:0 0 1.25rem;}
+code,.cfg .name{font-family:Consolas,"Courier New",Courier,monospace;}
+button{background:var(--cp-surface);border:1px solid var(--cp-border);border-radius:0.625rem;color:var(--cp-text);font-size:14px;padding:8px 14px;cursor:pointer;font-family:inherit;}
+button:hover{background:var(--cp-surface-soft);border-color:var(--cp-link);color:var(--cp-link);}
 button:active{transform:scale(0.98);}
+button:focus-visible,#rangeWrap:focus-visible{outline:2px solid var(--cp-link);outline-offset:3px;}
 .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 1rem;}
 .push{margin-left:auto;}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;}
-.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;}
-.card.hi{border:2px solid var(--accent);}
+.card{background:var(--cp-surface);border:1px solid var(--cp-border);border-radius:16px;padding:1rem 1.25rem;box-shadow:0 0 2px var(--cp-border),0 1px 2px var(--cp-border);}
+.card.hi{border:2px solid var(--cp-link);}
 .card h3{font-size:15px;font-weight:600;margin:0 0 2px;}
-.card .desc{font-size:13px;color:var(--text-2);margin:0 0 12px;}
+.card .desc{font-size:13px;color:var(--cp-text-muted);margin:0 0 12px;}
 .cubes{display:flex;flex-direction:column;gap:8px;min-height:96px;}
-.cube{border:1px dashed var(--border);border-radius:8px;padding:8px 10px;}
-.cube.sealed{background:var(--inset);border-style:solid;}
-.cube .clbl{font-size:12px;color:var(--text-2);margin:0 0 6px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;}
-.cube .seal{color:var(--text-3);}
+.cube{border:1px dashed var(--cp-border-strong);border-radius:0.625rem;padding:8px 10px;}
+.cube.sealed{background:var(--cp-surface-soft);border-style:solid;}
+.cube .clbl{font-size:12px;color:var(--cp-text-muted);margin:0 0 6px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+.cube .seal{color:var(--cp-text-soft);}
 .files{display:flex;flex-wrap:wrap;gap:4px;}
-.more{display:inline-flex;align-items:center;height:24px;padding:0 8px;border-radius:4px;font-size:11px;color:var(--text-2);background:var(--inset);}
-.stat{background:var(--inset);border-radius:8px;padding:10px;}
-.stat .lbl{margin:0;font-size:12px;color:var(--text-3);}
+.more{display:inline-flex;align-items:center;height:24px;padding:0 8px;border-radius:4px;font-size:11px;color:var(--cp-text-muted);background:var(--cp-surface-soft);}
+.stat{background:var(--cp-surface-soft);border-radius:0.625rem;padding:10px;}
+.stat .lbl{margin:0;font-size:12px;color:var(--cp-text-soft);}
 .stat .val{margin:0;font-size:20px;font-weight:600;}
 .statgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;}
-.msg{margin:8px 0 0;font-size:12px;color:var(--text-3);min-height:1.4em;}
-.legend{display:flex;gap:16px;font-size:12px;color:var(--text-2);flex-wrap:wrap;margin-top:12px;}
+.msg{margin:8px 0 0;font-size:12px;color:var(--cp-text-soft);min-height:1.4em;}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--cp-text-muted);flex-wrap:wrap;margin-top:12px;}
 .sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;}
-.axis{display:flex;justify-content:space-between;font-size:11px;color:var(--text-3);border-top:1px solid var(--border);padding-top:6px;margin-top:8px;}
+.axis{display:flex;justify-content:space-between;font-size:11px;color:var(--cp-text-soft);border-top:1px solid var(--cp-border);padding-top:6px;margin-top:8px;}
 .cfg .row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
-.cfg .name{font-size:13px;color:var(--text-2);font-family:ui-monospace,Menlo,Consolas,monospace;}
+.cfg .name{font-size:13px;color:var(--cp-text-muted);}
 .cfg .cur{font-size:16px;font-weight:600;}
-.cfg .hint{margin:6px 0 0;font-size:12px;color:var(--text-3);}
-input[type=range]{width:100%;accent-color:var(--accent);}
+.cfg .hint{margin:6px 0 0;font-size:12px;color:var(--cp-text-soft);}
+input[type=range],input[type=checkbox]{accent-color:var(--cp-link);}
 .verdict{margin:10px 0 0;font-size:13px;min-height:1.5em;}
-footer{margin-top:3rem;font-size:12px;color:var(--text-3);border-top:1px solid var(--border);padding-top:1rem;}
-footer a{color:var(--accent);}
+footer{margin-top:3rem;font-size:12px;color:var(--cp-text-soft);border-top:1px solid var(--cp-border);padding-top:1rem;}
+footer a{color:var(--cp-link);}
+.byline{margin:.75rem 0 0;color:var(--cp-text-muted);font-weight:600;}
 </style>
 </head>
 <body>
@@ -80,7 +154,7 @@ footer a{color:var(--accent);}
   <button onclick="fastForward()">Fast-forward 20× (append + OPTIMIZE)</button>
   <button onclick="runOptimize()">Run OPTIMIZE</button>
   <button onclick="runOptimizeFull()">OPTIMIZE FULL</button>
-  <label style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--text-2);cursor:pointer;"><input type="checkbox" id="keysChanged" style="accent-color:var(--accent);"> cluster keys / provider changed</label>
+  <label style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--cp-text-muted);cursor:pointer;"><input type="checkbox" id="keysChanged"> cluster keys / provider changed</label>
   <button class="push" onclick="resetSim()">Reset</button>
 </div>
 
@@ -91,7 +165,7 @@ footer a{color:var(--accent);}
     <div class="cubes" id="cubesA"></div>
     <div class="statgrid">
       <div class="stat"><p class="lbl">Table size</p><p class="val" id="sizeA">0</p></div>
-      <div class="stat"><p class="lbl">Total data rewritten</p><p class="val" id="rwA" style="color:var(--red);">0</p></div>
+      <div class="stat"><p class="lbl">Total data rewritten</p><p class="val" id="rwA" style="color:var(--cp-danger);">0</p></div>
     </div>
     <p class="msg" id="msgA"></p>
   </div>
@@ -101,21 +175,21 @@ footer a{color:var(--accent);}
     <div class="cubes" id="cubesB"></div>
     <div class="statgrid">
       <div class="stat"><p class="lbl">Table size</p><p class="val" id="sizeB">0</p></div>
-      <div class="stat"><p class="lbl">Total data rewritten</p><p class="val" id="rwB" style="color:var(--green);">0</p></div>
+      <div class="stat"><p class="lbl">Total data rewritten</p><p class="val" id="rwB" style="color:var(--cp-success);">0</p></div>
     </div>
     <p class="msg" id="msgB"></p>
   </div>
 </div>
 
 <div class="legend">
-  <span><span class="sw" style="background:var(--ok-bg);border:1px solid var(--ok-bd);"></span> clustered (has Z-Cube metadata)</span>
-  <span><span class="sw" style="background:var(--new-bg);border:1px solid var(--new-bd);"></span> unclustered (no Z-Cube metadata yet)</span>
-  <span><span class="sw" style="background:var(--new-bg);border:2px dashed var(--hot-bd);"></span> new file being clustered</span>
-  <span><span class="sw" style="background:var(--hot-bg);border:1px solid var(--hot-bd);"></span> clustered file being rewritten</span>
+  <span><span class="sw" style="background:var(--cp-surface-soft);border:1px solid var(--cp-success);"></span> clustered (has Z-Cube metadata)</span>
+  <span><span class="sw" style="background:var(--cp-accent-soft);border:1px solid var(--cp-warning);"></span> unclustered (no Z-Cube metadata yet)</span>
+  <span><span class="sw" style="background:var(--cp-accent-soft);border:2px dashed var(--cp-danger);"></span> new file being clustered</span>
+  <span><span class="sw" style="background:var(--cp-highlight);border:1px solid var(--cp-danger);"></span> clustered file being rewritten</span>
 </div>
 
 <h2>Auto reclustering</h2>
-<p class="sub">Each bar is a file's min–max value range on the clustering column. Two separate things happen during <code>OPTIMIZE</code>: <strong>new (unclustered) files are always selected</strong> for clustering — no thresholds involved — while <strong>auto reclustering</strong> decides whether to additionally pull in <em>already-clustered</em> files whose ranges overlap, gated by the two configs below. Skipping effectiveness is the share of data a query reads that it actually needs (100% = zero overlap).</p>
+<p class="sub">Each bar is a file's min–max value range on the clustering column. Two separate things happen during <code>OPTIMIZE</code>: <strong>new (unclustered) files are always selected</strong> for clustering — no thresholds involved — while <strong>auto reclustering</strong> decides whether to additionally pull in <em>already-clustered</em> files whose ranges overlap, gated by the two configs below. Skipping effectiveness = (files with stats − average overlap depth) / total files: the fraction of files a random point query can skip. Unclustered files have no stats and are always scanned, so they drag the score down until they are clustered.</p>
 
 <div class="grid2" style="margin-bottom:1rem;">
   <div class="card cfg">
@@ -131,33 +205,39 @@ footer a{color:var(--accent);}
 </div>
 
 <div class="toolbar">
-  <button onclick="addFile(0.15)">+ Append narrow file</button>
-  <button onclick="addFile(0.45)">+ Append wide file</button>
+  <label style="display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--cp-text-muted);">new file date range <input type="range" min="7" max="220" step="1" value="60" id="newW" style="width:110px;"> <span id="newWOut" style="font-weight:600;color:var(--cp-text);">60 days</span></label>
   <button onclick="optimizeRc()">Run OPTIMIZE</button>
   <button onclick="optimizeRcFull()">OPTIMIZE FULL</button>
   <button class="push" onclick="resetRc()">Reset</button>
 </div>
 
 <div class="card">
-  <div id="bars"></div>
+  <div id="rangeWrap" role="button" tabindex="0" aria-label="Append a new file range to the date chart" style="cursor:crosshair;">
+    <div style="position:relative;height:22px;margin-bottom:2px;">
+      <span id="ghostHint" style="font-size:11px;color:var(--cp-text-soft);">hover over the chart to place a new file, click to append it</span>
+      <div id="ghost" style="display:none;align-items:center;justify-content:center;position:absolute;top:0;height:18px;border-radius:4px;background:var(--cp-accent-soft);border:2px dashed var(--cp-danger);opacity:0.75;pointer-events:none;"></div>
+    </div>
+    <div id="bars"></div>
+  </div>
   <div class="axis"><span>Jan</span><span>Apr</span><span>Jul</span><span>Oct</span><span>Dec</span></div>
   <div class="statgrid">
-    <div class="stat"><p class="lbl">Largest overlapping group</p><p class="val" id="grpOut">0 files</p></div>
+    <div class="stat"><p class="lbl">Max overlap depth</p><p class="val" id="grpOut">1 file</p></div>
     <div class="stat"><p class="lbl">Skipping effectiveness</p><p class="val" id="scOut">0%</p></div>
   </div>
   <p class="verdict" id="verdict"></p>
 </div>
 
 <div class="legend">
-  <span><span class="sw" style="background:var(--ok-bg);border:1px solid var(--ok-bd);"></span> clustered</span>
-  <span><span class="sw" style="background:var(--new-bg);border:1px solid var(--new-bd);"></span> new / unclustered — always clustered on next OPTIMIZE</span>
-  <span><span class="sw" style="background:var(--new-bg);border:2px dashed var(--hot-bd);"></span> new file being clustered</span>
-  <span><span class="sw" style="background:var(--hot-bg);border:1px solid var(--hot-bd);"></span> clustered file pulled in by auto recluster</span>
+  <span><span class="sw" style="background:var(--cp-surface-soft);border:1px solid var(--cp-success);"></span> clustered</span>
+  <span><span class="sw" style="background:var(--cp-accent-soft);border:1px solid var(--cp-warning);"></span> new / unclustered — always clustered on next OPTIMIZE</span>
+  <span><span class="sw" style="background:var(--cp-accent-soft);border:2px dashed var(--cp-danger);"></span> new file being clustered</span>
+  <span><span class="sw" style="background:var(--cp-highlight);border:1px solid var(--cp-danger);"></span> clustered file pulled in by auto recluster</span>
 </div>
 
 <footer>
   Simplified for illustration: overlap is shown on one dimension and scored as intersection ÷ smaller range. The real engine scores overlap across all clustering dimensions (Hilbert curve for 2+ columns).
   Sources: <a href="https://learn.microsoft.com/en-us/fabric/data-engineering/liquid-clustering">Liquid clustering — Microsoft Learn</a>
+  <p class="byline">Created by <a href="https://milescole.dev" target="_blank" rel="noopener noreferrer">Miles Cole</a> &middot; <a href="https://milescole.dev" target="_blank" rel="noopener noreferrer">milescole.dev</a></p>
 </footer>
 
 </div>
@@ -183,10 +263,10 @@ function resetSim(){
 function msg(id,t){document.getElementById(id).textContent=t;}
 function fileBlock(f,mode){
   var bg,bd,tx,extra='';
-  if(mode==='hot'){bg='var(--hot-bg)';bd='var(--hot-bd)';tx='var(--hot-tx)';}
-  else if(mode==='newhl'){bg='var(--new-bg)';bd='var(--hot-bd)';tx='var(--new-tx)';extra='border-style:dashed;border-width:2px;';}
-  else if(mode==='new'){bg='var(--new-bg)';bd='var(--new-bd)';tx='var(--new-tx)';}
-  else{bg='var(--ok-bg)';bd='var(--ok-bd)';tx='var(--ok-tx)';}
+  if(mode==='hot'){bg='var(--cp-highlight)';bd='var(--cp-danger)';tx='var(--cp-danger)';}
+  else if(mode==='newhl'){bg='var(--cp-accent-soft)';bd='var(--cp-danger)';tx='var(--cp-text)';extra='border-style:dashed;border-width:2px;';}
+  else if(mode==='new'){bg='var(--cp-accent-soft)';bd='var(--cp-warning)';tx='var(--cp-text)';}
+  else{bg='var(--cp-surface-soft)';bd='var(--cp-success)';tx='var(--cp-success)';}
   return '<span style="display:inline-flex;align-items:center;justify-content:center;min-width:26px;padding:0 4px;height:24px;border-radius:4px;font-size:11px;background:'+bg+';border:1px solid '+bd+';color:'+tx+';'+extra+'">'+lbl(f.s)+'</span>';
 }
 function drawSide(elId,cubes,pend,hlMode){
@@ -196,7 +276,7 @@ function drawSide(elId,cubes,pend,hlMode){
     if(!c.files.length&&!c.sealed)return;
     if(c.sealed){
       if(hlMode==='fullkeys'){
-        out+='<div class="cube sealed" style="border-color:var(--hot-bd);"><p class="clbl"><span>Z-Cube '+(ci+1)+' \u00b7 '+fmt(sz)+'</span><span class="seal" style="color:var(--red);">keys changed \u2014 reclustering</span></p></div>';
+        out+='<div class="cube sealed" style="border-color:var(--cp-danger);"><p class="clbl"><span>Z-Cube '+(ci+1)+' \u00b7 '+fmt(sz)+'</span><span class="seal" style="color:var(--cp-danger);">keys changed \u2014 reclustering</span></p></div>';
       }else{
         out+='<div class="cube sealed"><p class="clbl"><span>Z-Cube '+(ci+1)+' \u00b7 '+fmt(sz)+'</span><span class="seal">stable &gt; 100 GB \u2014 skipped</span></p></div>';
       }
@@ -210,7 +290,7 @@ function drawSide(elId,cubes,pend,hlMode){
   if(pend.length){
     var phl=(hlMode==='all'||hlMode==='uncl'||hlMode==='full'||hlMode==='fullkeys');
     var pblocks=pend.map(function(f){return fileBlock(f,phl?'newhl':'new');}).join('');
-    out+='<div class="cube" style="border-color:var(--new-bd);"><p class="clbl"><span>Unclustered \u00b7 '+fmt(poolSize(pend))+' \u00b7 '+pend.length.toLocaleString()+' files</span><span class="seal">no Z-Cube metadata yet</span></p><div class="files">'+pblocks+'</div></div>';
+    out+='<div class="cube" style="border-color:var(--cp-warning);"><p class="clbl"><span>Unclustered \u00b7 '+fmt(poolSize(pend))+' \u00b7 '+pend.length.toLocaleString()+' files</span><span class="seal">no Z-Cube metadata yet</span></p><div class="files">'+pblocks+'</div></div>';
   }
   document.getElementById(elId).innerHTML=out;
 }
@@ -351,7 +431,7 @@ function fastForward(){
 var files;
 function resetRc(){
   files=[{lo:0,hi:25,c:1},{lo:25,hi:50,c:1},{lo:50,hi:75,c:1},{lo:75,hi:100,c:1}];
-  var v=document.getElementById('verdict'); v.textContent=''; v.style.color='var(--text-2)';
+  var v=document.getElementById('verdict'); v.textContent=''; v.style.color='var(--cp-text-muted)';
   renderRc();
 }
 function score(a,b){
@@ -359,80 +439,127 @@ function score(a,b){
   if(inter<=0)return 0;
   return inter/Math.min(a.hi-a.lo,b.hi-b.lo);
 }
-function comps(){
+function overlapAnalysis(mof){
   var thr=parseFloat(document.getElementById('mot').value), n=files.length;
-  var adj=[], anyOverlap=false, i, j;
-  for(i=0;i<n;i++)adj.push([]);
+  var anyOverlap=false, aboveThr=false, i, j;
   for(i=0;i<n;i++)for(j=i+1;j<n;j++){
     var sc=score(files[i],files[j]);
     if(sc>0)anyOverlap=true;
-    if(sc>thr){adj[i].push(j);adj[j].push(i);}
+    if(sc>thr)aboveThr=true;
   }
-  var seen=[], list=[];
-  for(i=0;i<n;i++)seen.push(0);
-  for(i=0;i<n;i++){
-    if(seen[i]||!adj[i].length)continue;
-    var comp=[], stack=[i]; seen[i]=1;
-    while(stack.length){var u=stack.pop();comp.push(u);adj[u].forEach(function(v2){if(!seen[v2]){seen[v2]=1;stack.push(v2);}});}
-    list.push(comp);
-  }
-  return {list:list,anyOverlap:anyOverlap};
+  var maxDepth=1, offending={};
+  files.forEach(function(f){
+    var point=f.lo;
+    var cover=[];
+    files.forEach(function(g,gi){if(g.lo<=point&&point<g.hi)cover.push(gi);});
+    var stack=cover.filter(function(a){
+      return cover.some(function(b){return b!==a&&score(files[a],files[b])>thr;});
+    });
+    if(stack.length>maxDepth)maxDepth=stack.length;
+    if(mof&&stack.length>=mof)stack.forEach(function(gi){offending[gi]=true;});
+  });
+  return {maxDepth:maxDepth,offending:Object.keys(offending).map(Number),anyOverlap:anyOverlap,aboveThr:aboveThr};
 }
 function renderRc(hl){
   hl=hl||{};
   var out='';
-  files.forEach(function(f,i){
+  var order=files.map(function(f,i){return {f:f,i:i};}).sort(function(a,b){
+    if(a.f.c!==b.f.c)return a.f.c?1:-1;
+    if(!a.f.c)return b.i-a.i;
+    return a.f.lo-b.f.lo;
+  });
+  order.forEach(function(o){
+    var f=o.f, i=o.i;
     var bg, bd, extra='';
-    if(hl[i]==='rc'){bg='var(--hot-bg)';bd='var(--hot-bd)';}
-    else if(hl[i]==='new'){bg='var(--new-bg)';bd='var(--hot-bd)';extra='border-style:dashed;border-width:2px;';}
-    else if(f.c){bg='var(--ok-bg)';bd='var(--ok-bd)';}
-    else{bg='var(--new-bg)';bd='var(--new-bd)';}
-    out+='<div style="position:relative;height:18px;margin:4px 0;"><div style="position:absolute;left:'+f.lo+'%;width:'+(f.hi-f.lo)+'%;height:100%;border-radius:4px;background:'+bg+';border:1px solid '+bd+';'+extra+'"></div></div>';
+    if(hl[i]==='rc'){bg='var(--cp-highlight)';bd='var(--cp-danger)';}
+    else if(hl[i]==='new'){bg='var(--cp-accent-soft)';bd='var(--cp-danger)';extra='border-style:dashed;border-width:2px;';}
+    else if(f.c){bg='var(--cp-surface-soft)';bd='var(--cp-success)';}
+    else{bg='var(--cp-accent-soft)';bd='var(--cp-warning)';}
+    out+='<div style="position:relative;height:18px;margin:4px 0;"><div title="'+rangeLabel(f.lo,f.hi)+(f.c?'':' \u00b7 unclustered')+'" style="position:absolute;left:'+f.lo+'%;width:'+(f.hi-f.lo)+'%;height:100%;border-radius:4px;background:'+bg+';border:1px solid '+bd+';'+extra+'"></div></div>';
   });
   document.getElementById('bars').innerHTML=out;
-  var c=comps(), biggest=0;
-  c.list.forEach(function(cp){if(cp.length>biggest)biggest=cp.length;});
-  document.getElementById('grpOut').textContent=biggest+' files';
-  var totW=files.reduce(function(t,f){return t+(f.hi-f.lo);},0);
-  var sorted=files.slice().sort(function(x,y){return x.lo-y.lo;});
-  var union=0, curLo=null, curHi=null;
-  sorted.forEach(function(f){
-    if(curLo===null){curLo=f.lo;curHi=f.hi;return;}
-    if(f.lo<=curHi){curHi=Math.max(curHi,f.hi);}
-    else{union+=curHi-curLo;curLo=f.lo;curHi=f.hi;}
-  });
-  if(curLo!==null)union+=curHi-curLo;
-  var eff=totW?Math.round(union/totW*100):100;
+  var analysis=overlapAnalysis();
+  document.getElementById('grpOut').textContent=analysis.maxDepth+' file'+(analysis.maxDepth===1?'':'s');
+  var totalFiles=files.length;
+  var statsFiles=files.filter(function(f){return f.c;});
+  var avgDepth=statsFiles.reduce(function(t,f){return t+(f.hi-f.lo);},0)/100;
+  var effectiveness=totalFiles?Math.max(0,Math.min(1,(statsFiles.length-avgDepth)/totalFiles)):0;
+  var effectivenessPct=Math.round(effectiveness*100);
   var el=document.getElementById('scOut');
-  el.textContent=eff+'%';
-  el.style.color=eff>=90?'var(--green)':(eff>=70?'inherit':'var(--red)');
+  el.textContent=effectivenessPct+'%';
+  el.style.color=effectivenessPct>=70?'var(--cp-success)':(effectivenessPct>=50?'inherit':'var(--cp-danger)');
 }
 function cfgChanged(){
   document.getElementById('mofOut').textContent=document.getElementById('mof').value;
   document.getElementById('motOut').textContent=parseFloat(document.getElementById('mot').value).toFixed(2);
   renderRc();
 }
-function addFile(wFrac){
-  var w=Math.round(100*wFrac*(0.7+Math.random()*0.6));
-  var lo=Math.round(Math.random()*(100-w));
-  files.push({lo:lo,hi:lo+w,c:0});
+var MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var MDAYS=[31,28,31,30,31,30,31,31,30,31,30,31];
+function dateOf(pct){
+  var day=Math.max(0,Math.min(364,Math.round(pct/100*365)));
+  for(var month=0;month<12;month++){
+    if(day<MDAYS[month])return MONTHS[month]+' '+(day+1);
+    day-=MDAYS[month];
+  }
+  return 'Dec 31';
+}
+function rangeLabel(lo,hi){
+  return dateOf(lo)+' \u2192 '+dateOf(hi)+' \u00b7 '+Math.round((hi-lo)/100*365)+' days';
+}
+function ghostPos(event){
+  var wrap=document.getElementById('rangeWrap');
+  var bounds=wrap.getBoundingClientRect();
+  var x=(event.clientX-bounds.left)/bounds.width*100;
+  var days=parseInt(document.getElementById('newW').value,10);
+  var width=days/365*100;
+  var lo=Math.max(0,Math.min(100-width,x-width/2));
+  return {lo:lo,width:width};
+}
+function appendRange(position){
+  files.push({lo:Math.round(position.lo),hi:Math.round(position.lo+position.width),c:0});
   document.getElementById('verdict').textContent='';
   renderRc();
+}
+function initHoverAppend(){
+  var wrap=document.getElementById('rangeWrap');
+  var ghost=document.getElementById('ghost');
+  var hint=document.getElementById('ghostHint');
+  var widthOutput=document.getElementById('newWOut');
+  document.getElementById('newW').addEventListener('input',function(){widthOutput.textContent=this.value+' days';});
+  wrap.addEventListener('mousemove',function(event){
+    var position=ghostPos(event);
+    ghost.style.display='flex';
+    hint.style.visibility='hidden';
+    ghost.style.left=position.lo+'%';
+    ghost.style.width=position.width+'%';
+    ghost.innerHTML='<span style="font-size:10px;white-space:nowrap;color:var(--cp-text);padding:0 4px;overflow:visible;">'+rangeLabel(position.lo,position.lo+position.width)+'</span>';
+  });
+  wrap.addEventListener('mouseleave',function(){
+    ghost.style.display='none';
+    hint.style.visibility='visible';
+  });
+  wrap.addEventListener('click',function(event){
+    appendRange(ghostPos(event));
+  });
+  wrap.addEventListener('keydown',function(event){
+    if(event.key!=='Enter'&&event.key!==' ')return;
+    event.preventDefault();
+    var days=parseInt(document.getElementById('newW').value,10);
+    var width=days/365*100;
+    appendRange({lo:(100-width)/2,width:width});
+  });
 }
 function optimizeRc(){
   var mof=parseInt(document.getElementById('mof').value,10);
   var thr=parseFloat(document.getElementById('mot').value).toFixed(2);
-  var c=comps(), v=document.getElementById('verdict');
+  var analysis=overlapAnalysis(mof), v=document.getElementById('verdict');
   var newIdx=[]; files.forEach(function(f,i){if(!f.c)newIdx.push(i);});
-  var pulled=[], biggest=0;
-  c.list.forEach(function(cp){
-    if(cp.length>biggest)biggest=cp.length;
-    if(cp.length>=mof)cp.forEach(function(i){if(files[i].c&&pulled.indexOf(i)<0)pulled.push(i);});
-  });
+  var pulled=analysis.offending.filter(function(i){return files[i].c;});
   if(!newIdx.length&&!pulled.length){
-    v.style.color='var(--text-2)';
-    if(biggest>=2)v.textContent='No new data to cluster. '+biggest+' clustered files overlap above the '+thr+' threshold, but the group is below minOffendingFiles = '+mof+' — auto recluster leaves them in place.';
-    else if(c.anyOverlap)v.textContent='No new data to cluster. Some overlap exists, but no file pair exceeds the '+thr+' threshold — layout left alone.';
+    v.style.color='var(--cp-text-muted)';
+    if(analysis.aboveThr)v.textContent='No new data to cluster. Max overlap depth is '+analysis.maxDepth+', below minOffendingFiles = '+mof+' — auto recluster leaves the layout alone.';
+    else if(analysis.anyOverlap)v.textContent='No new data to cluster. Some overlap exists, but no file pair exceeds the '+thr+' threshold — layout left alone.';
     else v.textContent='No new data and no overlap — nothing to do.';
     renderRc(); return;
   }
@@ -440,13 +567,13 @@ function optimizeRc(){
   newIdx.forEach(function(i){hl[i]='new';});
   pulled.forEach(function(i){hl[i]='rc';});
   renderRc(hl);
-  v.style.color='var(--red)';
+  v.style.color='var(--cp-danger)';
   var t='Clustering '+newIdx.length+' new file'+(newIdx.length===1?'':'s')+' (always selected).';
   if(pulled.length){
-    t+=' Auto recluster pulled in '+pulled.length+' overlapping clustered file'+(pulled.length===1?'':'s')+' (group of '+biggest+' \u2265 minOffendingFiles = '+mof+').';
-  }else if(biggest>=2){
-    t+=' Overlapping clustered files exist, but the group of '+biggest+' is below minOffendingFiles = '+mof+' — they stay in place.';
-  }else if(c.anyOverlap){
+    t+=' Auto recluster pulled in '+pulled.length+' clustered file'+(pulled.length===1?'':'s')+' — '+analysis.maxDepth+' files overlap on a common range (\u2265 minOffendingFiles = '+mof+').';
+  }else if(analysis.aboveThr){
+    t+=' Overlap exists, but max depth '+analysis.maxDepth+' is below minOffendingFiles = '+mof+' — clustered files stay in place.';
+  }else if(analysis.anyOverlap){
     t+=' Some overlap exists but no pair exceeds the '+thr+' threshold — clustered files stay in place.';
   }
   v.textContent=t;
@@ -467,10 +594,9 @@ function optimizeRc(){
     });
     files=keep.concat(rebuilt).sort(function(x,y){return x.lo-y.lo;});
     renderRc();
-    var c2=comps();
     var residual=false;
     for(var i=0;i<files.length&&!residual;i++)for(var j=i+1;j<files.length;j++){if(score(files[i],files[j])>0){residual=true;break;}}
-    v.style.color='var(--green)';
+    v.style.color='var(--cp-success)';
     var done='Wrote '+rebuilt.length+' clustered file'+(rebuilt.length===1?'':'s')+' from '+newIdx.length+' new + '+pulled.length+' reclustered.';
     if(residual)done+=' Some overlap remains with files below the auto recluster thresholds — tolerated to save write cost.';
     v.textContent=done;
@@ -482,7 +608,7 @@ function optimizeRcFull(){
   var hl={};
   files.forEach(function(f,i){hl[i]=f.c?'rc':'new';});
   renderRc(hl);
-  v.style.color='var(--red)';
+  v.style.color='var(--cp-danger)';
   v.textContent='OPTIMIZE FULL: reclustering all '+n+' files — thresholds ignored, full rewrite.';
   setTimeout(function(){
     var lo=Math.min.apply(null,files.map(function(f){return f.lo;}));
@@ -491,11 +617,22 @@ function optimizeRcFull(){
     for(var k=0;k<pieces;k++)rebuilt.push({lo:Math.round(lo+k*w),hi:Math.round(lo+(k+1)*w),c:1});
     files=rebuilt;
     renderRc();
-    v.style.color='var(--green)';
+    v.style.color='var(--cp-success)';
     v.textContent='Full recluster complete: '+pieces+' tight, non-overlapping files. Higher write cost, theoretical-optimum layout.';
   },1800);
 }
-resetSim(); resetRc();
+function reportHeight(){
+  if (window.parent === window) return;
+  window.parent.postMessage({
+    type: 'interactive-resize',
+    height: document.documentElement.scrollHeight
+  }, '*');
+}
+resetSim(); resetRc(); initHoverAppend();
+if ('ResizeObserver' in window) {
+  new ResizeObserver(reportHeight).observe(document.body);
+}
+window.addEventListener('load', reportHeight);
 </script>
 </body>
 </html>

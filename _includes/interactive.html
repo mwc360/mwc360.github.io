@@ -1,10 +1,13 @@
-<div class="interactive-embed">
+<div class="interactive-embed{% if include.class %} {{ include.class }}{% endif %}">
   <iframe
     src="{{ include.src | relative_url }}"
     title="{{ include.title | default: 'Interactive blog content' }}"
     height="{{ include.height | default: 900 }}"
     loading="lazy"
+    scrolling="no"
+    data-theme-sync="true"
+    data-auto-height="true"
     sandbox="allow-scripts allow-forms allow-popups allow-downloads"
   ></iframe>
-  <p><a href="{{ include.src | relative_url }}" target="_blank" rel="noopener">Open interactive content in a new tab</a></p>
+  <p class="interactive-embed-link"><a href="{{ include.open_src | default: include.src | relative_url }}" target="_blank" rel="noopener">Open playground in a new tab</a></p>
 </div>

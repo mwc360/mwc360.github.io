@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Delta Lake deletion vectors — Fabric / Spark</title>
+<script>
+  (() => {
+    const param = new URLSearchParams(window.location.search).get("scoutTheme");
+    const theme =
+      param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+<script>
+  (function(){
+    var qp = new URLSearchParams(window.location.search);
+    if (qp.get("embedded") === "1") {
+      document.documentElement.classList.add("is-embedded");
+      if (qp.get("context") === "1") document.documentElement.classList.add("with-context");
+    }
+  })();
+</script>
+<script>
+  window.addEventListener("message", (event) => {
+    if (event.data?.type === "scout-theme" && ["light", "dark"].includes(event.data.theme)) {
+      document.documentElement.setAttribute("data-theme", event.data.theme);
+    }
+  });
+</script>
+<style>
+:root {
+  color-scheme: light;
+  --cp-bg: #f7f4ef;
+  --cp-bg-elevated: #fcfbf8;
+  --cp-surface: #ffffff;
+  --cp-surface-soft: #f5f5f5;
+  --cp-border: #dedede;
+  --cp-border-strong: #919191;
+  --cp-text: #242424;
+  --cp-text-muted: #5c5c5c;
+  --cp-text-soft: #6f6f6f;
+  --cp-accent: #b11f4b;
+  --cp-accent-hover: #9a1a41;
+  --cp-accent-soft: rgba(177, 31, 75, 0.08);
+  --cp-accent-fg: #ffffff;
+  --cp-success: #16a34a;
+  --cp-danger: #dc2626;
+  --cp-warning: #f59e0b;
+  --cp-link: #0078d4;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+  --cp-overlay: rgba(255, 255, 255, 0.8);
+  --cp-panel: rgba(255, 255, 255, 0.86);
+  --cp-panel-strong: rgba(255, 255, 255, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.55);
+  --cp-highlight: rgba(177, 31, 75, 0.12);
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --cp-bg: #3d3b3a;
+  --cp-bg-elevated: #343231;
+  --cp-surface: #292929;
+  --cp-surface-soft: #2e2e2e;
+  --cp-border: #474747;
+  --cp-border-strong: #5f5f5f;
+  --cp-text: #dedede;
+  --cp-text-muted: #919191;
+  --cp-text-soft: #b0b0b0;
+  --cp-accent: #fd8ea1;
+  --cp-accent-hover: #fb7b91;
+  --cp-accent-soft: rgba(253, 142, 161, 0.14);
+  --cp-accent-fg: #1a1a1a;
+  --cp-success: #4ade80;
+  --cp-danger: #f87171;
+  --cp-warning: #fbbf24;
+  --cp-link: #4da6ff;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --cp-overlay: rgba(41, 41, 41, 0.88);
+  --cp-panel: rgba(41, 41, 41, 0.72);
+  --cp-panel-strong: rgba(41, 41, 41, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.04);
+  --cp-highlight: rgba(253, 142, 161, 0.12);
+}
+html[data-theme="dark"] {
+  --cp-bg: #0d1117;
+  --cp-bg-elevated: #161b22;
+  --cp-surface: #161b22;
+  --cp-surface-soft: #21262d;
+  --cp-border: #30363d;
+  --cp-border-strong: #484f58;
+  --cp-text: #c9d1d9;
+  --cp-text-muted: #8b949e;
+  --cp-text-soft: #8b949e;
+  --cp-overlay: rgba(13, 17, 23, 0.88);
+  --cp-panel: rgba(22, 27, 34, 0.72);
+  --cp-panel-strong: rgba(22, 27, 34, 0.96);
+}
+*{box-sizing:border-box}
+::selection{background:var(--cp-link);color:var(--cp-surface)}
+html{background:var(--cp-surface)}
+body{margin:0;background:var(--cp-surface);color:var(--cp-text);font:16px/1.5 "Segoe UI",Aptos,Calibri,-apple-system,BlinkMacSystemFont,sans-serif}
+.wrap{max-width:900px;margin:0 auto;padding:2.5rem 1.25rem 2rem}
+.is-embedded,.is-embedded body{overflow:hidden;background:transparent}
+.is-embedded .wrap{padding:.25rem 0 .5rem}
+.is-embedded.with-context .wrap{padding-top:0}
+.is-embedded h1,.is-embedded h1+.sub{display:none}
+.is-embedded.with-context h1,.is-embedded.with-context h1+.sub{display:block}
+h1{font-size:32px;font-weight:600;margin:0 0 4px}
+h2{font-size:19px;font-weight:600;margin:2.5rem 0 4px}
+h3{font-size:15px;font-weight:600;margin:0}
+p{margin-top:0}
+.sub,.muted{color:var(--cp-text-muted);font-size:13px}
+.sub{font-size:14px;margin:0 0 1.25rem}
+code,.mono{font-family:Consolas,"Courier New",Courier,monospace}
+button{border:1px solid var(--cp-border);border-radius:0.625rem;background:var(--cp-surface);color:var(--cp-text);font:inherit;font-size:14px;font-weight:600;line-height:1.2;padding:8px 14px;cursor:pointer;transition:background .15s ease,border-color .15s ease,color .15s ease}
+button:hover{background:var(--cp-surface-soft);border-color:var(--cp-link);color:var(--cp-link)}
+button:active{transform:scale(.98)}
+button:focus-visible{outline:3px solid var(--cp-link);outline-offset:2px}
+button.primary{border-color:var(--cp-link);color:var(--cp-link)}
+button.destructive,button.rewrite{border-color:var(--cp-danger);color:var(--cp-danger)}
+button.destructive:hover,button.rewrite:hover{background:var(--cp-danger);border-color:var(--cp-danger);color:var(--cp-accent-fg)}
+button:disabled{cursor:not-allowed;opacity:.48;filter:none}
+button:disabled:hover{background:var(--cp-surface);border-color:var(--cp-border);color:var(--cp-text)}
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 1rem}
+.toolbar .push{margin-left:auto}
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:14px 18px;margin:0 0 12px;padding:12px 14px}
+.controls .sliderbox{display:flex;align-items:center;gap:10px;flex:1 1 240px;min-width:200px;font-size:13px;color:var(--cp-text-muted)}
+.controls .sliderbox label{white-space:nowrap}
+.controls .sliderbox input[type=range]{flex:1 1 auto;min-width:90px}
+.controls .cur{font-size:16px;font-weight:600;color:var(--cp-text);min-width:1.2em;text-align:right}
+.controls .actions{display:flex;flex-wrap:wrap;gap:8px}
+.compare{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.card{border:1px solid var(--cp-border);border-radius:16px;background:var(--cp-surface);padding:1rem 1.25rem;box-shadow:0 0 2px var(--cp-border),0 1px 2px var(--cp-border)}
+.card.hi{border:2px solid var(--cp-link)}
+.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin:0 0 1.25rem}
+.corestats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:0 0 10px}
+.stat{background:var(--cp-surface-soft);border-radius:0.625rem;padding:9px 11px;min-width:0}
+.stat .lbl{margin:0;font-size:11px;line-height:1.3;color:var(--cp-text-soft)}
+.stat .val{margin:2px 0 0;font-size:19px;font-weight:600}
+.stat .val.rewrite{color:var(--cp-danger)}
+.stat .val.ok{color:var(--cp-success)}
+.stat .hintline{margin:2px 0 0;font-size:10px;color:var(--cp-text-soft)}
+.cardhead{display:flex;justify-content:space-between;gap:10px;align-items:start;margin-bottom:12px}
+.desc{margin:3px 0 0;color:var(--cp-text-muted);font-size:12px}
+.badge{display:inline-flex;border:1px solid var(--cp-border);border-radius:99px;padding:2px 8px;color:var(--cp-text-muted);background:var(--cp-surface-soft);font-size:11px;white-space:nowrap}
+.disabled-path .badge{border-color:var(--cp-danger);color:var(--cp-danger)}
+.enabled-path .badge{border-color:var(--cp-link);color:var(--cp-link)}
+.snapshot-title{display:flex;justify-content:space-between;gap:8px;align-items:baseline;margin:14px 0 7px;font-size:12px}
+.snapshot-title strong{font-size:13px}
+.snapshot-title span{color:var(--cp-text-muted)}
+.files{display:flex;flex-direction:column;gap:8px}
+.artifact-pair{border:1px solid var(--cp-border);border-radius:12px;background:var(--cp-surface-soft);padding:8px}
+.data-file,.inactive-file{border:1px solid var(--cp-border);border-radius:10px;background:var(--cp-surface);padding:8px}
+.filetop{display:flex;justify-content:space-between;gap:8px;align-items:baseline;margin-bottom:6px;color:var(--cp-text-muted);font-size:11px}
+.file-name{color:var(--cp-text);font-weight:600}
+.lineage{margin:0 0 6px;color:var(--cp-link);font-size:10px}
+input[type=range]{width:100%;accent-color:var(--cp-link);cursor:pointer}
+.row.more{border-style:dashed;border-color:var(--cp-border-strong);color:var(--cp-text-soft);background:var(--cp-surface-soft)}
+.rows{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:3px}
+.row{display:grid;place-items:center;min-height:22px;border:1px solid var(--cp-border-strong);border-radius:4px;background:var(--cp-surface);color:var(--cp-text-muted);font:8px/1 Consolas,"Courier New",Courier,monospace;position:relative}
+.row.updated{border-color:var(--cp-link);color:var(--cp-link)}
+.row.deleted{border-color:var(--cp-danger);background:var(--cp-highlight);color:var(--cp-danger)}
+.row.deleted::after{content:"";position:absolute;left:2px;right:2px;top:50%;border-top:2px solid var(--cp-danger);transform:rotate(-18deg)}
+.connector{display:flex;align-items:center;gap:7px;margin:5px 8px;color:var(--cp-danger);font-size:10px;font-weight:600}
+.connector::before{content:"";width:2px;height:15px;background:var(--cp-danger)}
+.dv-file{border:1px solid var(--cp-danger);border-radius:10px;background:var(--cp-highlight);padding:7px}
+.dv-file .file-name{color:var(--cp-danger)}
+.dvset{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.pos{display:inline-flex;align-items:center;min-height:18px;padding:1px 7px;border:1px solid var(--cp-danger);border-radius:99px;background:var(--cp-danger);color:var(--cp-accent-fg);font:9px/1 Consolas,"Courier New",Courier,monospace;font-weight:700}
+.inactive-list{display:flex;flex-direction:column;gap:6px}
+.inactive-file{border-style:dashed;background:var(--cp-surface-soft);opacity:.7;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.inactive-file .file-name{text-decoration:line-through;text-decoration-color:var(--cp-danger)}
+.inactive-file .isize{color:var(--cp-text-muted);font-size:11px;white-space:nowrap}
+.empty{padding:14px;border:1px dashed var(--cp-border);border-radius:10px;color:var(--cp-text-soft);font-size:12px;text-align:center}
+.message{min-height:3.2em;margin:10px 0 0;color:var(--cp-text-muted);font-size:12px}
+.disabled-path .message strong{color:var(--cp-danger)}
+.enabled-path .message strong{color:var(--cp-link)}
+.flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:8px;align-items:stretch}
+.step{border:1px solid var(--cp-border);border-radius:10px;background:var(--cp-surface-soft);padding:10px}
+.step strong{display:block;font-size:13px}
+.step span{display:block;margin-top:2px;color:var(--cp-text-muted);font-size:11px}
+.arrow{align-self:center;color:var(--cp-link);font-size:20px}
+@keyframes cp-enter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes cp-pulse{0%,100%{box-shadow:0 0 0 0 var(--cp-accent-soft)}50%{box-shadow:0 0 0 4px var(--cp-accent-soft)}}
+.data-file.enter,.dv-file.enter,.inactive-file.enter{animation:cp-enter .55s ease both}
+.data-file.pending-file{animation:cp-pulse 1s ease-in-out infinite;border-color:var(--cp-warning)}
+.dv-file.pending-file{animation:cp-pulse 1s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.data-file.enter,.dv-file.enter,.inactive-file.enter,.data-file.pending-file,.dv-file.pending-file{animation:none}}
+.maintenance{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.meter{position:relative;height:12px;margin:10px 0 6px;overflow:hidden;border:1px solid var(--cp-border);border-radius:8px;background:var(--cp-surface-soft)}
+.meter .threshold{position:absolute;top:0;bottom:0;left:50%;width:2px;background:var(--cp-warning);z-index:1}
+.meterfill{height:100%;background:var(--cp-danger);transition:width .5s ease,background .3s ease}
+.meterfill.safe{background:var(--cp-success)}
+.metervs{color:var(--cp-text-soft);font-weight:400;font-size:12px}
+.tick{display:flex;justify-content:space-between;color:var(--cp-text-soft);font-size:11px}
+.note{margin-top:10px;padding:8px 10px;border-left:3px solid var(--cp-link);background:var(--cp-surface-soft);color:var(--cp-text-muted);font-size:12px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;color:var(--cp-text-muted);font-size:12px}
+.swatch{display:inline-block;width:12px;height:12px;border:1px solid var(--cp-border-strong);border-radius:3px;background:var(--cp-surface);vertical-align:-2px}
+.swatch.updated{border-color:var(--cp-link)}
+.swatch.deleted{border-color:var(--cp-danger);background:var(--cp-highlight)}
+.swatch.inactive{border-color:var(--cp-danger);background:var(--cp-surface-soft);opacity:.65}
+footer{margin-top:2rem;padding-top:1rem;border-top:1px solid var(--cp-border);color:var(--cp-text-soft);font-size:12px}
+footer a{color:var(--cp-link)}
+.byline{margin:.75rem 0 0;color:var(--cp-text-muted);font-weight:600}
+@media(max-width:860px){.compare,.maintenance{grid-template-columns:1fr}.scenario{min-width:0}}
+@media(max-width:640px){.flow{grid-template-columns:1fr}.arrow{justify-self:center;transform:rotate(90deg)}.toolbar .push{margin-left:0}}
+@media(max-width:380px){.wrap{padding-left:8px;padding-right:8px}.toolbar button{flex:1 1 100%}.card{padding:10px}.rows{grid-template-columns:repeat(10,minmax(0,1fr));gap:2px}.filetop{align-items:start;flex-direction:column;gap:2px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>Delta Lake deletion vectors</h1>
+  <p class="sub">Run one deterministic workload through two persistent paths and compare immediate Parquet rewrites with DV sidecars that hide row positions.</p>
+
+  <h2>Apply identical changes to both paths</h2>
+  <div class="controls card">
+    <div class="sliderbox">
+      <label for="rowCount">rows to change per action</label>
+      <input type="range" id="rowCount" min="1" max="9" step="1" value="1" aria-label="Number of rows to change per DELETE, UPDATE, or APPEND">
+      <span class="cur" id="rowCountOut">1</span>
+    </div>
+    <div class="actions">
+      <button type="button" class="destructive" id="deleteBtn">DELETE 1 row</button>
+      <button type="button" id="updateBtn">UPDATE 1 row</button>
+      <button type="button" id="appendBtn">APPEND 1 row</button>
+    </div>
+  </div>
+  <div class="toolbar" aria-label="Maintenance controls">
+    <button type="button" id="optimizeBtn">Run OPTIMIZE (&gt;5%)</button>
+    <button type="button" id="reorgBtn">Run REORG PURGE</button>
+    <button type="button" id="vacuumBtn">Run VACUUM</button>
+    <button type="button" class="push" id="resetBtn">Reset</button>
+  </div>
+
+  <h2>Current snapshot and retained history</h2>
+  <section class="compare">
+    <article class="card scenario disabled-path" aria-labelledby="disabledTitle">
+      <div class="cardhead">
+        <div><h3 id="disabledTitle">Deletion Vectors disabled</h3><p class="desc">Affected Parquet files become inactive; replacement files materialize the change.</p></div>
+        <span class="badge">copy on write</span>
+      </div>
+      <div class="corestats" id="disabledCore"></div>
+      <div class="snapshot-title"><strong>Current snapshot: active data files</strong><span>read by queries</span></div>
+      <div id="disabledFiles" class="files"></div>
+      <div class="snapshot-title"><strong>Inactive files</strong><span>not in current snapshot, accessed via time travel</span></div>
+      <div id="disabledInactive" class="inactive-list"></div>
+      <p id="disabledMessage" class="message"></p>
+    </article>
+
+    <article class="card scenario enabled-path hi" aria-labelledby="enabledTitle">
+      <div class="cardhead">
+        <div><h3 id="enabledTitle">Deletion Vectors enabled</h3><p class="desc">Source Parquet stays active; a directly linked DV sidecar marks hidden row positions.</p></div>
+        <span class="badge">merge on read</span>
+      </div>
+      <div class="corestats" id="enabledCore"></div>
+      <div class="snapshot-title"><strong>Current snapshot: data + linked DV</strong><span>combined by readers</span></div>
+      <div id="enabledFiles" class="files"></div>
+      <div class="snapshot-title"><strong>Inactive files</strong><span>not in current snapshot, accessed via time travel</span></div>
+      <div id="enabledInactive" class="inactive-list"></div>
+      <p id="enabledMessage" class="message"></p>
+    </article>
+  </section>
+
+  <h2>Why merge on read costs less to write</h2>
+  <p class="sub">Cumulative bytes each path physically writes to apply the same DELETE and UPDATE workload. Merge on read keeps source files intact and writes only tiny deletion-vector sidecars, so it avoids rewriting whole Parquet files.</p>
+  <div class="statgrid" id="summaryStats"></div>
+
+  <div class="legend" aria-label="Artifact legend">
+    <span><i class="swatch"></i> live physical row</span>
+    <span><i class="swatch updated"></i> updated row version</span>
+    <span><i class="swatch deleted"></i> row position hidden by linked DV</span>
+    <span><i class="swatch inactive"></i> inactive file, excluded from snapshot</span>
+  </div>
+
+  <h2>How the DV-enabled reader resolves a pair</h2>
+  <section class="card">
+    <div class="flow">
+      <div class="step"><strong>1. Read source Parquet</strong><span>Physical rows remain in the active <code>part-*.parquet</code> file.</span></div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="step"><strong>2. Apply its linked DV</strong><span><code>dv-part-*.bin</code> stores the deleted row positions for that source file.</span></div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="step"><strong>3. Return logical rows</strong><span>Marked positions are filtered; replacement UPDATE rows remain visible.</span></div>
+    </div>
+    <p class="note"><strong>What a <code>.bin</code> sidecar stores:</strong> a RoaringBitmap of only the deleted row positions (not one bit per row), so its size scales with the number of deletes, not the table size. Each DV is grouped with one source file, names that source, and lists the stored positions.</p>
+  </section>
+
+  <h2>DV density and maintenance</h2>
+  <section class="maintenance">
+    <div class="card">
+      <h3>Highest deleted-row ratio: <span id="densityLabel">0%</span> <span class="metervs">vs 5% threshold</span></h3>
+      <div class="meter" aria-hidden="true"><div class="threshold"></div><div class="meterfill safe" id="densityFill"></div></div>
+      <div class="tick"><span>0%</span><span>5%</span><span>10%</span></div>
+      <p class="desc">Largest deleted-row ratio across the DV-enabled files (marker = Delta's 5% <code>maxDeletedRowsRatio</code>). Cross it and OPTIMIZE auto-purges that file; REORG PURGE forces materialization at any ratio.</p>
+      <p id="maintenanceMessage" class="message"></p>
+    </div>
+    <div class="card">
+      <h3>OPTIMIZE, REORG PURGE, and VACUUM</h3>
+      <p class="desc"><code>OPTIMIZE</code> auto-purges a data file only when more than 5% of its rows are marked by its DV (Delta's default <code>maxDeletedRowsRatio</code> = 0.05). One delete against a file sits at the threshold, so it is retained; a second mark crosses it and the file is rewritten. <code>REORG TABLE ... APPLY (PURGE)</code> force-purges affected files regardless of ratio or for compliance. <code>VACUUM</code> later removes only unreferenced artifacts old enough for retention.</p>
+      <p id="vacuumMessage" class="message"></p>
+    </div>
+  </section>
+
+  <footer>
+    Simplified deterministic model: two 128 MB Parquet files, each modeled as ~20 logical rows shown through a 19-row sample window (the &#8943; box stands in for the rest). Copy-on-write rewrites an entire 128 MB file per change, while a deletion vector stores only the deleted row positions as an immutable RoaringBitmap sidecar (tens of bytes) &mdash; changing a file's DV retires the old bin and writes a new one with the cumulative positions. OPTIMIZE evaluates each file's deleted-row ratio against Delta's 5% <code>maxDeletedRowsRatio</code> default; UPDATE and APPEND write tiny new Parquet files. VACUUM uses a notional two-operation retention window, and unrelated small-file compaction is omitted so the maintenance actions isolate DV purge behavior.
+    Reference: <a href="https://learn.microsoft.com/en-us/fabric/data-engineering/delta-lake-deletion-vectors" target="_blank" rel="noopener noreferrer">Deletion vectors for Delta tables in Microsoft Fabric</a>.
+    <p class="byline">Created by <a href="https://milescole.dev" target="_blank" rel="noopener noreferrer">Miles Cole</a> &middot; <a href="https://milescole.dev" target="_blank" rel="noopener noreferrer">milescole.dev</a></p>
+  </footer>
+</main>
+<script>
+(function(){
+  "use strict";
+  var ROWS_PER_FILE=19, RETENTION_OPS=2;
+  var FILE_MB=128, FILE_BYTES=FILE_MB*1024*1024;
+  var ROW_BYTES=8*1024, DV_BYTES=45;
+  var FILE_ROWS=20;
+  var PURGE_RATIO=0.05;
+  function dvBytes(){ return DV_BYTES; }
+  function targetCount(){ var v=parseInt((el("rowCount")||{}).value,10); return isNaN(v)?1:v; }
+  var enabled, disabled, clock, nextRowNumber, history, vacuumMessage;
+  var STEP_MS=(new URLSearchParams(window.location.search).get("anim")==="0")?0:1100;
+  var busy=false, bornIds={}, retiredIds={}, pendingIds={}, dvTouched={};
+  var pendingMutateIds=[], pendingAppendN=3;
+  function pKey(isEnabled,id){return (isEnabled?"E":"D")+id;}
+  function actionEls(){return ["deleteBtn","updateBtn","appendBtn","optimizeBtn","reorgBtn","vacuumBtn","resetBtn","rowCount"].map(el);}
+  function setBusy(b){busy=b;actionEls().forEach(function(node){if(node)node.disabled=b;});}
+  function clearAnim(){bornIds={};retiredIds={};pendingIds={};dvTouched={};}
+  function snapshotIds(){
+    var m={active:{},inactive:{}};
+    [[enabled,true],[disabled,false]].forEach(function(pair){
+      pair[0].files.forEach(function(f){m.active[pKey(pair[1],f.id)]=true;});
+      pair[0].inactive.forEach(function(a){m.inactive[pKey(pair[1],a.id)]=true;});
+    });
+    return m;
+  }
+  function runPhased(prep,commit){
+    if(busy)return;
+    clearAnim();
+    var plan=prep();
+    if(!plan||!plan.proceed){ clearAnim(); render(); return; }
+    pendingIds=plan.pending||{};
+    render();
+    if(STEP_MS<=0){ finishPhased(commit); return; }
+    setBusy(true);
+    window.setTimeout(function(){ setBusy(false); finishPhased(commit); },STEP_MS);
+  }
+  function finishPhased(commit){
+    pendingIds={};
+    var before=snapshotIds();
+    dvTouched={};
+    commit();
+    var after=snapshotIds();
+    bornIds={};retiredIds={};
+    Object.keys(after.active).forEach(function(k){if(!before.active[k])bornIds[k]=true;});
+    Object.keys(after.inactive).forEach(function(k){if(!before.inactive[k])retiredIds[k]=true;});
+    render();
+  }
+
+  function el(id){return document.getElementById(id);}
+  function cloneRow(row){return {id:row.id,version:row.version,updated:row.updated};}
+  function rowNumber(id){return parseInt(id.slice(1),10);}
+  function makeRows(start,count){
+    var rows=[];
+    for(var i=0;i<count;i++){
+      rows.push({id:"R"+String(start+i).padStart(3,"0"),version:1,updated:false});
+    }
+    return rows;
+  }
+  function makeFile(state,rows,origin,big){
+    return {
+      id:"part-"+String(state.nextFile++).padStart(3,"0"),
+      rows:rows.map(cloneRow),
+      dv:{},
+      dvVersion:0,
+      big:big!==false,
+      origin:origin||"initial data"
+    };
+  }
+  function newState(isEnabled){
+    var state={
+      enabled:isEnabled,
+      nextFile:1,
+      files:[],
+      inactive:[],
+      filesRewritten:0,
+      bytesRewritten:0,
+      dvWriteBytes:0,
+      written:0,
+      message:"Ready. The same logical table begins in two matching Parquet files."
+    };
+    state.files.push(makeFile(state,makeRows(1,ROWS_PER_FILE)));
+    state.files.push(makeFile(state,makeRows(20,ROWS_PER_FILE)));
+    return state;
+  }
+  function reset(){
+    busy=false;
+    clearAnim();
+    clock=0;
+    nextRowNumber=39;
+    history=[];
+    enabled=newState(true);
+    disabled=newState(false);
+    vacuumMessage="No inactive artifacts yet. DELETE or UPDATE creates them immediately only on the disabled path.";
+    addEvent("RESET",[],"Both paths restored the same two 128 MB source files.","No rewrites or DV sidecars exist.");
+    setBusy(false);
+    render();
+  }
+  function dvName(file){return "dv-"+file.id+"-v"+(file.dvVersion||1)+".bin";}
+  function hiddenCount(file){return Object.keys(file.dv).length;}
+  function fileRowCount(file){return file.big?FILE_ROWS:file.rows.length;}
+  function fileBytes(file){return file.big?FILE_BYTES:file.rows.length*ROW_BYTES;}
+  function deletedRatio(file){var h=hiddenCount(file);return h?h/fileRowCount(file):0;}
+  function snapshotBytes(state){
+    return state.files.reduce(function(sum,file){
+      return sum+fileBytes(file)+(state.enabled&&hiddenCount(file)?dvBytes():0);
+    },0);
+  }
+  function compactSmall(state,command){
+    var small=state.files.filter(function(f){return !f.big&&hiddenCount(f)===0;});
+    if(small.length<2)return 0;
+    var rows=[];
+    small.forEach(function(f){
+      retireData(state,f,command+" compacted small files");
+      f.rows.forEach(function(r){rows.push(cloneRow(r));});
+    });
+    state.files=state.files.filter(function(f){return small.indexOf(f)<0;});
+    state.files.push(makeFile(state,rows,command+" compacted "+small.length+" small files into one",false));
+    state.written+=rows.length*ROW_BYTES;
+    state.filesRewritten+=small.length;
+    return small.length;
+  }
+  function visibleRows(state){
+    var rows=[];
+    state.files.forEach(function(file){
+      file.rows.forEach(function(row){
+        if(!file.dv[row.id])rows.push(cloneRow(row));
+      });
+    });
+    rows.sort(function(a,b){return rowNumber(a.id)-rowNumber(b.id);});
+    return rows;
+  }
+  function logicalIds(state){return visibleRows(state).map(function(row){return row.id;});}
+  function physicalRows(state){
+    return state.files.reduce(function(sum,file){return sum+file.rows.length;},0);
+  }
+  function maxDeletedRatio(){
+    return enabled.files.reduce(function(m,file){var r=deletedRatio(file);return r>m?r:m;},0);
+  }
+  function currentDvCount(){
+    return enabled.files.filter(function(file){return hiddenCount(file)>0;}).length;
+  }
+  function locations(state,ids){
+    var wanted={};
+    ids.forEach(function(id){wanted[id]=true;});
+    var found=[];
+    state.files.forEach(function(file){
+      file.rows.forEach(function(row,index){
+        if(wanted[row.id]&&!file.dv[row.id])found.push({file:file,row:row,index:index});
+      });
+    });
+    return found;
+  }
+  function uniqueFiles(found){
+    var seen={},names=[];
+    found.forEach(function(item){
+      if(!seen[item.file.id]){seen[item.file.id]=true;names.push(item.file.id);}
+    });
+    return names;
+  }
+  function shuffle(arr){
+    for(var i=arr.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=arr[i];arr[i]=arr[j];arr[j]=t;}
+    return arr;
+  }
+  function pickTargets(count){
+    var pools=shuffle(disabled.files.filter(function(f){return f.rows.length;}).slice())
+      .map(function(f){return shuffle(f.rows.map(function(r){return r.id;}));});
+    var picked=[];
+    while(picked.length<count){
+      var progressed=false;
+      for(var p=0;p<pools.length&&picked.length<count;p++){
+        if(pools[p].length){picked.push(pools[p].pop());progressed=true;}
+      }
+      if(!progressed)break;
+    }
+    return picked;
+  }
+  function retireData(state,file,reason){
+    state.inactive.push({
+      type:"data",
+      id:file.id+".parquet",
+      rows:file.rows.map(cloneRow),
+      bytes:fileBytes(file),
+      obsoleteAt:clock,
+      reason:reason
+    });
+  }
+  function retireDv(state,file,reason){
+    if(!hiddenCount(file))return;
+    state.inactive.push({
+      type:"dv",
+      id:dvName(file),
+      source:file.id+".parquet",
+      rows:[],
+      bytes:dvBytes(),
+      obsoleteAt:clock,
+      reason:reason
+    });
+  }
+  function applyEnabled(mode,ids){
+    var found=locations(enabled,ids);
+    var sources=uniqueFiles(found);
+    var byFile={};
+    found.forEach(function(item){
+      var e=byFile[item.file.id]||(byFile[item.file.id]={file:item.file,rows:[]});
+      e.rows.push(item.row);
+    });
+    var superseded=0;
+    Object.keys(byFile).forEach(function(fid){
+      var file=byFile[fid].file;
+      if(hiddenCount(file)>0){
+        retireDv(enabled,file,mode+" superseded the previous immutable DV bin");
+        file.dvVersion=(file.dvVersion||1)+1;
+        superseded++;
+      }else{
+        file.dvVersion=1;
+      }
+      byFile[fid].rows.forEach(function(row){file.dv[row.id]=true;});
+      dvTouched[pKey(true,file.id)]=true;
+    });
+    var supText=superseded?(" DV bins are immutable, so "+superseded+" existing bin"+(superseded===1?"":"s")+" retired and "+superseded+" new bin"+(superseded===1?"":"s")+" was written with the cumulative positions."):"";
+    if(mode==="UPDATE"){
+      var replacements=found.map(function(item){
+        return {id:item.row.id,version:item.row.version+1,updated:true};
+      });
+      enabled.files.push(makeFile(enabled,replacements,"UPDATE replacement rows",false));
+      enabled.dvWriteBytes+=sources.length*DV_BYTES+found.length*ROW_BYTES;
+      enabled.written+=sources.length*DV_BYTES+found.length*ROW_BYTES;
+      enabled.message="<strong>UPDATE:</strong> kept "+sources.length+" source file(s) active, wrote a fresh DV bin per file, and added one small file with the "+found.length+" new row version(s)."+supText;
+    }else{
+      enabled.dvWriteBytes+=sources.length*DV_BYTES;
+      enabled.written+=sources.length*DV_BYTES;
+      enabled.message="<strong>DELETE:</strong> kept "+sources.length+" source file(s) active and wrote a DV bin for each; no Parquet data file was rewritten."+supText;
+    }
+    return sources;
+  }
+  function applyDisabled(mode,ids){
+    var found=locations(disabled,ids);
+    var sources=uniqueFiles(found);
+    var affected={};
+    found.forEach(function(item){affected[item.file.id]=true;});
+    var next=[];
+    disabled.files.forEach(function(file){
+      if(!affected[file.id]){next.push(file);return;}
+      retireData(disabled,file,mode+" invalidated this source file");
+      disabled.filesRewritten++;
+      disabled.bytesRewritten+=FILE_BYTES;
+      disabled.written+=FILE_BYTES;
+      var replacementRows=[];
+      file.rows.forEach(function(row){
+        if(ids.indexOf(row.id)<0){
+          replacementRows.push(cloneRow(row));
+        }else if(mode==="UPDATE"){
+          replacementRows.push({id:row.id,version:row.version+1,updated:true});
+        }
+      });
+      if(replacementRows.length){
+        next.push(makeFile(disabled,replacementRows,"replacement for "+file.id+".parquet"));
+      }
+    });
+    disabled.files=next;
+    disabled.message="<strong>"+mode+":</strong> invalidated "+sources.length+" existing Parquet files and wrote "+sources.length+" replacement files. Crossed-out originals remain below but are not active in the current snapshot.";
+    return sources;
+  }
+  function mutate(mode){
+    runPhased(function(){
+      var ids=pickTargets(targetCount());
+      if(!ids.length){
+        disabled.message="<strong>"+mode+":</strong> no live rows remain to target.";
+        enabled.message="<strong>"+mode+":</strong> no live rows remain to target.";
+        return {proceed:false};
+      }
+      pendingMutateIds=ids;
+      var pending={};
+      locations(enabled,ids).forEach(function(item){pending[pKey(true,item.file.id)]=true;});
+      locations(disabled,ids).forEach(function(item){pending[pKey(false,item.file.id)]=true;});
+      var noun=ids.length+" row"+(ids.length===1?"":"s");
+      disabled.message="<strong>"+mode+":</strong> rewriting the Parquet file(s) holding "+noun+"\u2026";
+      enabled.message="<strong>"+mode+":</strong> writing deletion-vector bin(s) for "+noun+"\u2026";
+      return {proceed:true,pending:pending};
+    },function(){
+      var ids=pendingMutateIds;
+      clock++;
+      var enabledSources=applyEnabled(mode,ids);
+      var disabledSources=applyDisabled(mode,ids);
+      vacuumMessage="Inactive disabled-path originals are retained until they pass the illustrative "+RETENTION_OPS+"-operation VACUUM window.";
+      addEvent(
+        mode,
+        ids,
+        "Invalidated "+disabledSources.map(function(id){return id+".parquet";}).join(", ")+" and wrote one replacement for each.",
+        "Kept "+enabledSources.map(function(id){return id+".parquet";}).join(", ")+" active and linked "+enabledSources.length+" DV sidecars."
+      );
+    });
+  }
+  function append(){
+    runPhased(function(){
+      pendingAppendN=targetCount();
+      var n=pendingAppendN;
+      disabled.message="<strong>APPEND:</strong> writing one new Parquet file with "+n+" row"+(n===1?"":"s")+"\u2026";
+      enabled.message="<strong>APPEND:</strong> writing the same "+n+" row"+(n===1?"":"s")+" to one new Parquet file\u2026";
+      return {proceed:true,pending:{}};
+    },function(){
+      clock++;
+      var n=pendingAppendN;
+      var rows=makeRows(nextRowNumber,n);
+      nextRowNumber+=n;
+      disabled.files.push(makeFile(disabled,rows,"APPEND output",false));
+      enabled.files.push(makeFile(enabled,rows,"APPEND output",false));
+      disabled.written+=n*ROW_BYTES;
+      enabled.written+=n*ROW_BYTES;
+      disabled.message="<strong>APPEND:</strong> wrote one new Parquet file with "+n+" row"+(n===1?"":"s")+"; existing files stayed active.";
+      enabled.message="<strong>APPEND:</strong> wrote the same "+n+" logical row"+(n===1?"":"s")+" to one new Parquet file; existing files and DVs stayed unchanged.";
+      addEvent("APPEND",rows.map(function(row){return row.id;}),"Wrote one active Parquet file.","Wrote the same "+n+" logical rows to one active Parquet file.");
+    });
+  }
+  function eligibleDvFiles(){
+    return enabled.files.filter(function(file){
+      return hiddenCount(file)>0&&deletedRatio(file)>PURGE_RATIO;
+    });
+  }
+  function purgeDvFiles(force,command){
+    var purged=0, sidecars=0, next=[];
+    enabled.files.forEach(function(file){
+      var hidden=hiddenCount(file);
+      var shouldPurge=hidden>0&&(force||deletedRatio(file)>PURGE_RATIO);
+      if(!shouldPurge){next.push(file);return;}
+      retireData(enabled,file,command+" replaced this DV-bearing data file");
+      retireDv(enabled,file,command+" materialized its invalid positions");
+      enabled.filesRewritten++;
+      enabled.bytesRewritten+=fileBytes(file);
+      var rows=file.rows.filter(function(row){return !file.dv[row.id];});
+      if(rows.length){
+        var out=makeFile(enabled,rows,command+" purge output for "+file.id+".parquet",file.big);
+        enabled.written+=fileBytes(out);
+        next.push(out);
+      }
+      purged++;
+      sidecars++;
+    });
+    enabled.files=next;
+    return {files:purged,sidecars:sidecars};
+  }
+  function optimize(){
+    runPhased(function(){
+      var pending={};
+      eligibleDvFiles().forEach(function(f){pending[pKey(true,f.id)]=true;});
+      enabled.files.filter(function(f){return !f.big&&hiddenCount(f)===0;}).length>1&&
+        enabled.files.forEach(function(f){if(!f.big&&hiddenCount(f)===0)pending[pKey(true,f.id)]=true;});
+      disabled.files.filter(function(f){return !f.big;}).length>1&&
+        disabled.files.forEach(function(f){if(!f.big)pending[pKey(false,f.id)]=true;});
+      disabled.message="<strong>OPTIMIZE:</strong> bin-packing small files on this path\u2026";
+      enabled.message="<strong>OPTIMIZE:</strong> checking deleted-row ratios and bin-packing small files\u2026";
+      return {proceed:true,pending:pending};
+    },function(){
+      clock++;
+      var before=currentDvCount();
+      var result=purgeDvFiles(false,"OPTIMIZE");
+      var compEn=compactSmall(enabled,"OPTIMIZE");
+      var compDis=compactSmall(disabled,"OPTIMIZE");
+      disabled.message=compDis
+        ?"<strong>OPTIMIZE:</strong> compacted "+compDis+" small files into one; copy-on-write already materialized row-level changes, so there is no DV to purge."
+        :"<strong>OPTIMIZE:</strong> no small files to bin-pack and no DV-specific purge on this path.";
+      var enParts=[];
+      if(result.files)enParts.push("auto-purged "+result.files+" file(s) above the 5% ratio and retired "+result.sidecars+" linked sidecar(s)");
+      if(compEn)enParts.push("bin-packed "+compEn+" small files into one");
+      enabled.message=enParts.length
+        ?"<strong>OPTIMIZE:</strong> "+enParts.join(" and ")+"."
+        :(before
+          ?"<strong>OPTIMIZE:</strong> retained all "+before+" DV-bearing file(s) \u2014 each sits at or below the 5% deleted-row ratio \u2014 and found no small files to compact."
+          :"<strong>OPTIMIZE:</strong> found no active deletion vectors to purge and no small files to compact.");
+      vacuumMessage=(result.files||compEn||compDis)
+        ?"OPTIMIZE left the purged and compacted source files unreferenced. VACUUM can remove them only after retention."
+        :"OPTIMIZE created no unreferenced artifacts. VACUUM still only considers previously unreferenced artifacts that pass retention.";
+      addEvent(
+        "OPTIMIZE",
+        [],
+        compDis?"Bin-packed "+compDis+" small files into one on the copy-on-write path.":"No small-file compaction or DV rewrite was needed.",
+        (result.files?"Purged "+result.files+" file(s) above 5% and retired their DVs. ":"")+(compEn?"Bin-packed "+compEn+" small files into one.":(result.files?"":"Every DV-bearing file was at or below 5% and no small files needed compaction."))
+      );
+    });
+  }
+  function reorgPurge(){
+    runPhased(function(){
+      var targets=enabled.files.filter(function(f){return hiddenCount(f)>0;});
+      var pending={};
+      targets.forEach(function(f){pending[pKey(true,f.id)]=true;});
+      disabled.message="<strong>REORG PURGE:</strong> no soft-deleted rows on this path.";
+      enabled.message=targets.length
+        ?"<strong>REORG PURGE:</strong> force-materializing "+targets.length+" DV-bearing file(s)\u2026"
+        :"<strong>REORG PURGE:</strong> looking for active deletion vectors\u2026";
+      return {proceed:true,pending:pending};
+    },function(){
+      clock++;
+      var before=currentDvCount();
+      var result=purgeDvFiles(true,"REORG PURGE");
+      disabled.message="<strong>REORG PURGE:</strong> no soft-deleted rows or DV files exist on this path, so no additional rewrite was needed.";
+      enabled.message=result.files
+        ?"<strong>REORG PURGE:</strong> force-purged "+result.files+" DV-bearing file(s), including files at or below 5%, and retired their linked sidecars."
+        :"<strong>REORG PURGE:</strong> found no active deletion vectors to materialize.";
+      vacuumMessage=result.files
+        ?"REORG PURGE made "+result.files+" source file(s) and "+result.sidecars+" DV sidecar(s) unreferenced. VACUUM waits for retention before deleting them."
+        :"REORG PURGE created no unreferenced artifacts because no active DVs existed.";
+      addEvent(
+        "REORG PURGE",
+        [],
+        "No DV-specific rewrite; affected row changes were already physical.",
+        result.files
+          ?"Force-purged "+result.files+" of "+before+" DV-bearing file(s), regardless of the 5% OPTIMIZE threshold."
+          :"No active DV-bearing files required a forced purge."
+      );
+    });
+  }
+  function vacuumState(state){
+    var removed=[];
+    state.inactive=state.inactive.filter(function(artifact){
+      if(clock-artifact.obsoleteAt>=RETENTION_OPS){removed.push(artifact);return false;}
+      return true;
+    });
+    return removed;
+  }
+  function artifactSummary(items){
+    var data=items.filter(function(item){return item.type==="data";}).length;
+    var dvs=items.filter(function(item){return item.type==="dv";}).length;
+    return data+" data file(s), "+dvs+" DV sidecar(s)";
+  }
+  function vacuum(){
+    runPhased(function(){
+      disabled.message="<strong>VACUUM:</strong> scanning inactive artifacts against the retention window\u2026";
+      enabled.message="<strong>VACUUM:</strong> scanning inactive artifacts against the retention window\u2026";
+      return {proceed:true,pending:{}};
+    },function(){
+      clock++;
+      var disabledRemoved=vacuumState(disabled);
+      var enabledRemoved=vacuumState(enabled);
+      vacuumMessage=(disabledRemoved.length+enabledRemoved.length)
+        ?"VACUUM removed retention-eligible inactive artifacts: disabled path "+artifactSummary(disabledRemoved)+"; enabled path "+artifactSummary(enabledRemoved)+"."
+        :"VACUUM removed nothing; inactive artifacts have not yet passed the illustrative retention window.";
+      disabled.message="<strong>VACUUM:</strong> "+artifactSummary(disabledRemoved)+" removed. Active snapshot files were unchanged.";
+      enabled.message="<strong>VACUUM:</strong> "+artifactSummary(enabledRemoved)+" removed. Active data and linked DVs were unchanged.";
+      addEvent("VACUUM",[],"Removed "+artifactSummary(disabledRemoved)+" after retention checks.","Removed "+artifactSummary(enabledRemoved)+" after the same retention checks.");
+    });
+  }
+  function addEvent(action,ids,disabledText,enabledText){
+    history.unshift({action:action,ids:ids.slice(),disabled:disabledText,enabled:enabledText,clock:clock});
+    history=history.slice(0,6);
+  }
+  function rowHtml(row,index,hidden){
+    var label=row.id+" version "+row.version+", physical position "+(index+1)+(hidden?", hidden by deletion vector":", visible");
+    var cls="row"+(hidden?" deleted":(row.updated?" updated":""));
+    return '<span class="'+cls+'" role="img" aria-label="'+label+'" title="'+label+'">'+rowNumber(row.id)+'</span>';
+  }
+  function dataFileHtml(file,isEnabled){
+    var hidden=hiddenCount(file);
+    var logical=fileRowCount(file)-hidden;
+    var rows=file.rows.map(function(row,index){return rowHtml(row,index,!!file.dv[row.id]);}).join("");
+    if(file.big)rows+='<span class="row more" aria-hidden="true" title="'+FILE_MB+' MB file — more rows not shown">&#8943;</span>';
+    var size=file.big?(FILE_MB+' MB'):fmtBytes(file.rows.length*ROW_BYTES);
+    var key=pKey(isEnabled,file.id);
+    var fileCls="data-file"+(file.origin.indexOf("replacement")>=0?" replacement":"")+(bornIds[key]?" enter":"")+(pendingIds[key]?" pending-file":"");
+    var html='<div class="artifact-pair"><div class="'+fileCls+'">';
+    html+='<div class="filetop"><span class="file-name">'+file.id+'.parquet</span><span>'+size+' &middot; '+logical+' logical</span></div>';
+    if(file.origin!=="initial data")html+='<p class="lineage">'+file.origin+'</p>';
+    html+='<div class="rows">'+rows+'</div></div>';
+    if(isEnabled&&hidden){
+      var positions=[];
+      file.rows.forEach(function(row,index){
+        if(file.dv[row.id])positions.push(index);
+      });
+      var chips=positions.map(function(p){ return '<span class="pos" title="row position '+p+' deleted">'+p+'</span>'; }).join("");
+      var dvCls="dv-file"+(dvTouched[key]?" enter":"")+(pendingIds[key]?" pending-file":"");
+      html+='<div class="connector">marks deleted positions in '+file.id+'.parquet</div>';
+      html+='<div class="'+dvCls+'"><div class="filetop"><span class="file-name">'+dvName(file)+'</span><span>'+hidden+' deleted position'+(hidden===1?'':'s')+' &middot; '+fmtBytes(dvBytes())+' sidecar</span></div><div class="dvset">'+chips+'</div></div>';
+    }
+    return html+"</div>";
+  }
+  function renderFiles(state,target){
+    el(target).innerHTML=state.files.map(function(file){return dataFileHtml(file,state.enabled);}).join("")||'<div class="empty">No active files</div>';
+  }
+  function inactiveHtml(artifact,isEnabled){
+    var enter=retiredIds[pKey(isEnabled,artifact.id)]?" enter":"";
+    return '<div class="inactive-file'+enter+'"><span class="file-name">'+artifact.id+'</span><span class="isize">'+fmtBytes(artifact.bytes)+'</span></div>';
+  }
+  function renderInactive(state,target){
+    el(target).innerHTML=state.inactive.map(function(a){return inactiveHtml(a,state.enabled);}).join("")||'<div class="empty">No inactive artifacts retained</div>';
+  }
+  function fmtBytes(b){ if(b<1024)return b+" B"; if(b<1048576)return (Math.round(b/102.4)/10)+" KB"; if(b<1073741824)return (Math.round(b/104857.6)/10)+" MB"; return (Math.round(b/107374182.4)/10)+" GB"; }
+  function fmtMult(x){ if(x>=1e6)return (Math.round(x/1e5)/10)+"M"; if(x>=1e3)return (Math.round(x/100)/10)+"K"; if(x>=10)return String(Math.round(x)); return String(Math.round(x*10)/10); }
+  function statTile(label,value,cls,hint){
+    return '<div class="stat"><p class="lbl">'+label+'</p><p class="val'+(cls?' '+cls:'')+'">'+value+'</p>'+(hint?'<p class="hintline">'+hint+'</p>':'')+'</div>';
+  }
+  function renderSummary(){
+    var cow=disabled.bytesRewritten, mor=enabled.dvWriteBytes+enabled.bytesRewritten;
+    var reduction=mor>0?fmtMult(cow/mor)+"\u00d7 less":(cow>0?"\u221e":"\u2014");
+    el("summaryStats").innerHTML=
+      statTile("Copy-on-write data rewritten",fmtBytes(cow),"rewrite","whole 128 MB files rebuilt")+
+      statTile("Merge-on-read data written",fmtBytes(mor),"ok","DV sidecars, changed rows, and any OPTIMIZE purge rewrites")+
+      statTile("Write volume avoided",reduction,cow>mor?"ok":"","less data written on row-level changes");
+  }
+  function fmtRatioPct(x){ if(!isFinite(x)||x<=0)return "0%"; var p=x*100; if(p>=10)return Math.round(p)+"%"; if(p>=1)return (Math.round(p*10)/10)+"%"; return Number(p.toPrecision(2))+"%"; }
+  function coreTiles(state){
+    var snap=snapshotBytes(state), amp=snap>0?state.written/snap:0;
+    return statTile("Bytes written",fmtBytes(state.written),state.enabled?"ok":"rewrite","cumulative this session")+
+      statTile("Snapshot size",fmtBytes(snap),"","active files"+(state.enabled?" + DVs":""))+
+      statTile("Write amplification",fmtRatioPct(amp),state.enabled?"ok":"rewrite","bytes written \u00f7 snapshot size");
+  }
+  function render(){
+    renderFiles(disabled,"disabledFiles");
+    renderFiles(enabled,"enabledFiles");
+    renderInactive(disabled,"disabledInactive");
+    renderInactive(enabled,"enabledInactive");
+    el("disabledCore").innerHTML=coreTiles(disabled);
+    el("enabledCore").innerHTML=coreTiles(enabled);
+    renderSummary();
+    el("disabledMessage").innerHTML=disabled.message;
+    el("enabledMessage").innerHTML=enabled.message;
+
+    var ratio=maxDeletedRatio();
+    var fill=el("densityFill");
+    fill.style.width=Math.min(100,Math.round(ratio/0.10*1000)/10)+"%";
+    fill.classList.toggle("safe",ratio<=PURGE_RATIO);
+    el("densityLabel").textContent=(Math.round(ratio*1000)/10)+"%";
+    var dvFiles=currentDvCount();
+    var eligible=eligibleDvFiles().length;
+    el("maintenanceMessage").textContent=dvFiles===0
+      ?"No active DV marks. OPTIMIZE and REORG PURGE have nothing DV-specific to materialize."
+      :(eligible
+        ?eligible+" of "+dvFiles+" DV-bearing file(s) exceed the 5% deleted-row ratio; OPTIMIZE auto-purges those files."
+        :"All "+dvFiles+" DV-bearing file(s) sit at or below the 5% deleted-row ratio, so OPTIMIZE leaves them; REORG PURGE can force materialization.");
+    el("vacuumMessage").textContent=vacuumMessage;
+    reportHeight();
+  }
+  function reportHeight(){
+    if(window.parent===window)return;
+    window.requestAnimationFrame(function(){
+      window.parent.postMessage({type:"interactive-resize",height:document.documentElement.scrollHeight},"*");
+    });
+  }
+
+  function updateLabels(){
+    var n=targetCount();
+    el("rowCountOut").textContent=n;
+    el("deleteBtn").textContent="DELETE "+n+" row"+(n===1?"":"s");
+    el("updateBtn").textContent="UPDATE "+n+" row"+(n===1?"":"s");
+    el("appendBtn").textContent="APPEND "+n+" row"+(n===1?"":"s");
+  }
+
+  el("deleteBtn").addEventListener("click",function(){mutate("DELETE");});
+  el("updateBtn").addEventListener("click",function(){mutate("UPDATE");});
+  el("appendBtn").addEventListener("click",append);
+  el("optimizeBtn").addEventListener("click",optimize);
+  el("reorgBtn").addEventListener("click",reorgPurge);
+  el("vacuumBtn").addEventListener("click",vacuum);
+  el("resetBtn").addEventListener("click",reset);
+  el("rowCount").addEventListener("input",updateLabels);
+
+  updateLabels();
+  reset();
+  if("ResizeObserver" in window)new ResizeObserver(reportHeight).observe(document.body);
+  window.addEventListener("load",reportHeight);
+})();
+</script>
+</body>
+</html>

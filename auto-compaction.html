@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Delta table auto compaction</title>
+<script>
+  (() => {
+    const param = new URLSearchParams(window.location.search).get("scoutTheme");
+    const theme =
+      param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+<script>
+  (function(){
+    var qp = new URLSearchParams(window.location.search);
+    if (qp.get("embedded") === "1") {
+      document.documentElement.classList.add("is-embedded");
+      if (qp.get("context") === "1") document.documentElement.classList.add("with-context");
+    }
+  })();
+</script>
+<script>
+  window.addEventListener("message", (event) => {
+    if (event.data?.type === "scout-theme" && ["light", "dark"].includes(event.data.theme)) {
+      document.documentElement.setAttribute("data-theme", event.data.theme);
+    }
+  });
+</script>
+<style>
+:root {
+  color-scheme: light;
+  --cp-bg: #f7f4ef;
+  --cp-bg-elevated: #fcfbf8;
+  --cp-surface: #ffffff;
+  --cp-surface-soft: #f5f5f5;
+  --cp-border: #dedede;
+  --cp-border-strong: #919191;
+  --cp-text: #242424;
+  --cp-text-muted: #5c5c5c;
+  --cp-text-soft: #6f6f6f;
+  --cp-accent: #b11f4b;
+  --cp-accent-hover: #9a1a41;
+  --cp-accent-soft: rgba(177, 31, 75, 0.08);
+  --cp-accent-fg: #ffffff;
+  --cp-success: #16a34a;
+  --cp-danger: #dc2626;
+  --cp-warning: #f59e0b;
+  --cp-link: #0078d4;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+  --cp-overlay: rgba(255, 255, 255, 0.8);
+  --cp-panel: rgba(255, 255, 255, 0.86);
+  --cp-panel-strong: rgba(255, 255, 255, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.55);
+  --cp-highlight: rgba(177, 31, 75, 0.12);
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --cp-bg: #3d3b3a;
+  --cp-bg-elevated: #343231;
+  --cp-surface: #292929;
+  --cp-surface-soft: #2e2e2e;
+  --cp-border: #474747;
+  --cp-border-strong: #5f5f5f;
+  --cp-text: #dedede;
+  --cp-text-muted: #919191;
+  --cp-text-soft: #b0b0b0;
+  --cp-accent: #fd8ea1;
+  --cp-accent-hover: #fb7b91;
+  --cp-accent-soft: rgba(253, 142, 161, 0.14);
+  --cp-accent-fg: #1a1a1a;
+  --cp-success: #4ade80;
+  --cp-danger: #f87171;
+  --cp-warning: #fbbf24;
+  --cp-link: #4da6ff;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --cp-overlay: rgba(41, 41, 41, 0.88);
+  --cp-panel: rgba(41, 41, 41, 0.72);
+  --cp-panel-strong: rgba(41, 41, 41, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.04);
+  --cp-highlight: rgba(253, 142, 161, 0.12);
+}
+html[data-theme="dark"] {
+  --cp-bg: #0d1117;
+  --cp-bg-elevated: #161b22;
+  --cp-surface: #161b22;
+  --cp-surface-soft: #21262d;
+  --cp-border: #30363d;
+  --cp-border-strong: #484f58;
+  --cp-text: #c9d1d9;
+  --cp-text-muted: #8b949e;
+  --cp-text-soft: #8b949e;
+  --cp-overlay: rgba(13, 17, 23, 0.88);
+  --cp-panel: rgba(22, 27, 34, 0.72);
+  --cp-panel-strong: rgba(22, 27, 34, 0.96);
+}
+*{box-sizing:border-box;}
+::selection{background:var(--cp-link);color:var(--cp-surface);}
+html.is-embedded,html.is-embedded body{overflow:hidden;}
+body{margin:0;background:var(--cp-surface);color:var(--cp-text);font:16px/1.55 "Segoe UI",Aptos,Calibri,-apple-system,BlinkMacSystemFont,sans-serif;}
+.wrap{max-width:900px;margin:0 auto;padding:2.5rem 1.25rem 4rem;}
+.is-embedded body{background:transparent;}
+.is-embedded .wrap{padding:0.25rem 0 1rem;}
+.is-embedded.with-context .wrap{padding-top:0;}
+.is-embedded h1,.is-embedded h1 + .sub{display:none;}
+.is-embedded.with-context h1,.is-embedded.with-context h1 + .sub{display:block;}
+h1{font-size:32px;font-weight:600;margin:0 0 4px;}
+h2{font-size:19px;font-weight:600;margin:2.5rem 0 4px;}
+.sub{color:var(--cp-text-muted);font-size:14px;margin:0 0 1.25rem;}
+code,.mono,.cfg .name{font-family:Consolas,"Courier New",Courier,monospace;}
+button{background:var(--cp-surface);border:1px solid var(--cp-border);border-radius:0.625rem;color:var(--cp-text);font-size:14px;font-family:inherit;padding:8px 14px;cursor:pointer;}
+button:hover{background:var(--cp-surface-soft);border-color:var(--cp-link);color:var(--cp-link);}
+button:active{transform:scale(0.98);}
+button.primary{border-color:var(--cp-link);color:var(--cp-link);font-weight:600;}
+button.optimize:hover{border-color:var(--cp-danger);color:var(--cp-danger);}
+button:disabled{cursor:not-allowed;opacity:0.5;}
+button:focus-visible,input:focus-visible{outline:2px solid var(--cp-link);outline-offset:3px;}
+a{color:var(--cp-link);}
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 1rem;}
+.push{margin-left:auto;}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;}
+.card{background:var(--cp-surface);border:1px solid var(--cp-border);border-radius:16px;padding:1rem 1.25rem;box-shadow:0 0 2px var(--cp-border),0 1px 2px var(--cp-border);}
+.card.hi{border:2px solid var(--cp-link);}
+.card h3{font-size:15px;font-weight:600;margin:0 0 2px;}
+.card .desc{font-size:13px;color:var(--cp-text-muted);margin:0 0 12px;}
+.cfg .row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px;}
+.cfg .name{font-size:13px;color:var(--cp-text-muted);}
+.cfg .cur{font-size:16px;font-weight:600;}
+.cfg .hint{margin:6px 0 0;font-size:12px;color:var(--cp-text-soft);}
+input[type=range]{width:100%;accent-color:var(--cp-link);cursor:pointer;}
+.tablehead{display:flex;justify-content:space-between;gap:10px;align-items:start;margin-bottom:2px;}
+.badge{font-size:11px;border:1px solid var(--cp-border);border-radius:99px;padding:2px 8px;color:var(--cp-text-muted);background:var(--cp-surface-soft);white-space:nowrap;}
+.badge.ac{border-color:var(--cp-link);color:var(--cp-link);}
+.statgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 0 12px;}
+.stat{background:var(--cp-surface-soft);border-radius:0.625rem;padding:9px 10px;min-width:0;}
+.stat .lbl{margin:0;font-size:11px;line-height:1.3;color:var(--cp-text-soft);}
+.stat .val{margin:2px 0 0;font-size:19px;font-weight:600;}
+.stat .val.debt{color:var(--cp-danger);}
+.stat .val.rewrite{color:var(--cp-danger);}
+.stat .val.ok{color:var(--cp-success);}
+.files{display:flex;align-items:flex-end;align-content:flex-end;gap:4px;flex-wrap:wrap;min-height:84px;padding:8px;border-radius:0.625rem;background:var(--cp-surface-soft);}
+.file{display:inline-flex;align-items:center;justify-content:center;width:38px;height:var(--h);min-height:24px;border:1px solid var(--cp-success);border-radius:4px;background:var(--cp-surface);color:var(--cp-success);font-size:10px;}
+.file.small{border-color:var(--cp-danger);color:var(--cp-danger);background:var(--cp-highlight);}
+.file.new{outline:2px solid var(--cp-link);outline-offset:1px;}
+.file.compacting{border-color:var(--cp-warning);color:var(--cp-warning);background:var(--cp-accent-soft);outline:2px solid var(--cp-warning);outline-offset:1px;animation:acPulse .6s ease-in-out infinite alternate;}
+.file.enter{animation:acEnter .5s ease-out;}
+@keyframes acPulse{from{opacity:.5;}to{opacity:1;}}
+@keyframes acEnter{from{transform:scale(.3);opacity:0;}to{transform:scale(1);opacity:1;}}
+.empty{font-size:12px;color:var(--cp-text-soft);align-self:center;}
+.filemeta{display:flex;justify-content:space-between;gap:8px;margin-top:8px;font-size:12px;color:var(--cp-text-muted);}
+.filemeta .debt{color:var(--cp-danger);font-weight:600;}
+.filemeta .ok{color:var(--cp-success);font-weight:600;}
+.tableactions{display:flex;justify-content:flex-end;margin-top:10px;}
+.msg{margin:8px 0 0;font-size:12px;color:var(--cp-text-soft);min-height:1.4em;}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--cp-text-muted);flex-wrap:wrap;margin-top:12px;}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;border:1px solid var(--cp-success);background:var(--cp-surface);}
+.sw.small{border-color:var(--cp-danger);background:var(--cp-highlight);}
+.sw.new{outline:2px solid var(--cp-link);}
+.sw.base{border-color:var(--cp-link);background:var(--cp-link);}
+.sw.sync{border-color:var(--cp-danger);background:var(--cp-danger);}
+.chartwrap{overflow-x:auto;}
+.chart{display:block;width:100%;min-width:460px;height:210px;}
+.axis-line{stroke:var(--cp-border-strong);stroke-width:1;}
+.gridline{stroke:var(--cp-border);stroke-width:1;}
+.manual-line{fill:none;stroke:var(--cp-danger);stroke-width:2.5;}
+.ac-line{fill:none;stroke:var(--cp-link);stroke-width:2.5;}
+.dot-manual{fill:var(--cp-danger);}
+.dot-ac{fill:var(--cp-link);}
+.bar-base{fill:var(--cp-link);}
+.bar-sync{fill:var(--cp-danger);}
+.charttext{fill:var(--cp-text-muted);font-size:11px;}
+.axis-label{fill:var(--cp-text-soft);font-size:11px;font-weight:600;}
+.threshold-line{stroke:var(--cp-warning);stroke-width:1.5;stroke-dasharray:4 3;}
+details.alt{margin-top:10px;}
+details.alt summary{cursor:pointer;font-size:12px;color:var(--cp-link);}
+.tablewrap{overflow-x:auto;margin-top:8px;}
+table{border-collapse:collapse;width:100%;font-size:12px;}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--cp-border);}
+th{color:var(--cp-text-muted);font-weight:600;}
+.takeaway{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:12px;}
+.takeaway p{margin:0;padding:11px 12px;border-radius:0.625rem;background:var(--cp-surface-soft);font-size:13px;}
+.takeaway strong{color:var(--cp-link);}
+.takeaway p.manual strong{color:var(--cp-danger);}
+footer{margin-top:3rem;font-size:12px;color:var(--cp-text-soft);border-top:1px solid var(--cp-border);padding-top:1rem;}
+footer a{color:var(--cp-link);}
+.byline{margin:.75rem 0 0;color:var(--cp-text-muted);font-weight:600;}
+@media(max-width:520px){
+  .statgrid{grid-template-columns:1fr 1fr;}
+  .toolbar .push{margin-left:0;}
+}
+@media(prefers-reduced-motion:reduce){button:active{transform:none;}.file.compacting,.file.enter{animation:none;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Delta table auto compaction</h1>
+<p class="sub">Two Delta tables receive identical <code>INSERT INTO</code> commits. One relies on scheduled <code>OPTIMIZE</code>, the other has auto compaction enabled and rewrites eligible small files <em>synchronously</em> after qualifying writes. Compare who pays for fragmentation, and when.</p>
+
+<h2>Write configuration</h2>
+<p class="sub">Each <code>INSERT INTO</code> writes the same files to both tables. Auto compaction triggers only once the number of small files (below half the target size) reaches <code>minNumFiles</code>.</p>
+
+<div class="grid2" style="margin-bottom:1rem;">
+  <div class="card cfg">
+    <div class="row"><span class="name">files written per INSERT</span><span class="cur" id="batchFilesOut">16</span></div>
+    <input type="range" id="batchFiles" min="1" max="30" step="1" value="16" aria-label="Files written per INSERT INTO">
+    <p class="hint">New Parquet files produced by each commit (optimize write is off in this model).</p>
+  </div>
+  <div class="card cfg">
+    <div class="row"><span class="name">size of each file</span><span class="cur" id="fileSizeOut">32 MB</span></div>
+    <input type="range" id="fileSize" min="8" max="256" step="8" value="32" aria-label="Size of each written file in megabytes">
+    <p class="hint">Files below half the target size count as small and are eligible for compaction.</p>
+  </div>
+  <div class="card cfg">
+    <div class="row"><span class="name mono">autoCompact.minNumFiles</span><span class="cur" id="thresholdOut">50</span></div>
+    <input type="range" id="threshold" min="2" max="100" step="1" value="50" aria-label="Minimum small files before auto compaction triggers">
+    <p class="hint">Small-file count that must accumulate before auto compaction fires (Fabric default 50).</p>
+  </div>
+  <div class="card cfg">
+    <div class="row"><span class="name mono">autoCompact.maxFileSize</span><span class="cur" id="targetOut">128 MB</span></div>
+    <input type="range" id="target" min="32" max="512" step="16" value="128" aria-label="Target compacted file size in megabytes">
+    <p class="hint">Target size compaction packs toward; minimum compacted size is half this value.</p>
+  </div>
+</div>
+
+<div class="toolbar">
+  <button class="primary" id="commit"><span class="mono">INSERT INTO</span></button>
+  <button id="commit10">Fast-forward 10× <span class="mono">INSERT</span></button>
+  <button class="push" id="reset">Reset both tables</button>
+</div>
+<p class="sub" style="margin:0 0 1rem;font-size:12px;">Illustrative model — not measured Fabric performance. Base commit latency = 45 + (3 × files added) + (0.06 × MB added) ms. Synchronous auto compaction adds a spike capped at about two-thirds of that commit's base write latency. Manual <code>OPTIMIZE</code> maintenance cost = 80 + (6 × files rewritten) + (0.18 × MB rewritten) ms and is not user-facing.</p>
+
+<h2>Current Delta table snapshots</h2>
+<div class="grid2">
+  <section class="card" aria-labelledby="manualTitle">
+    <div class="tablehead"><div><h3 id="manualTitle">Delta table &middot; scheduled OPTIMIZE</h3><p class="desc">Auto compaction disabled — small files persist until you run maintenance.</p></div><span class="badge">manual</span></div>
+    <div class="statgrid" id="manualCore"></div>
+    <div id="manualFiles" class="files"></div>
+    <div id="manualMeta" class="filemeta"></div>
+    <div class="tableactions"><button class="optimize" id="optimizeManual">Run OPTIMIZE</button></div>
+    <p class="msg" id="manualMsg" aria-live="polite"></p>
+  </section>
+  <section class="card hi" aria-labelledby="acTitle">
+    <div class="tablehead"><div><h3 id="acTitle">Delta table &middot; auto compaction</h3><p class="desc">Qualifying commits synchronously rewrite small files before returning.</p></div><span class="badge ac">auto</span></div>
+    <div class="statgrid" id="acCore"></div>
+    <div id="acFiles" class="files"></div>
+    <div id="acMeta" class="filemeta"></div>
+    <div class="tableactions"><button class="optimize" id="optimizeAc">Run OPTIMIZE</button></div>
+    <p class="msg" id="acMsg" aria-live="polite"></p>
+  </section>
+</div>
+<div class="legend">
+  <span><i class="sw"></i> healthy file (&ge; half the target size)</span>
+  <span><i class="sw small"></i> small file (compaction eligible)</span>
+  <span><i class="sw new"></i> written by the latest commit</span>
+</div>
+
+<h2>Small-file debt over time</h2>
+<p class="sub">Fragmentation the table carries after every commit and compaction. The dashed line marks the auto compaction trigger threshold.</p>
+<div class="card">
+  <div class="chartwrap"><svg id="debtChart" class="chart" role="img" aria-labelledby="debtTitle debtDesc"><title id="debtTitle">Small-file count by event</title><desc id="debtDesc">Scheduled OPTIMIZE table in red, auto compaction table in blue.</desc></svg></div>
+  <details class="alt"><summary>Show data table</summary><div class="tablewrap"><table><thead><tr><th>Event</th><th>Scheduled OPTIMIZE</th><th>Auto compaction</th></tr></thead><tbody id="debtRows"></tbody></table></div></details>
+</div>
+
+<h2>Where write latency is paid</h2>
+<p class="sub">User-facing latency per commit. The scheduled table stays flat because rewrites are deferred; auto compaction spikes on the commits where it synchronously compacts. Manual <code>OPTIMIZE</code> runs are maintenance events and are excluded here.</p>
+<div class="card">
+  <div class="chartwrap"><svg id="latChart" class="chart" role="img" aria-labelledby="latTitle latDesc"><title id="latTitle">Commit latency by event</title><desc id="latDesc">Blue is base write latency, red is synchronous compaction added to the auto compaction table.</desc></svg></div>
+  <div class="legend">
+    <span><i class="sw base"></i> base write latency</span>
+    <span><i class="sw sync"></i> synchronous compaction (auto table only)</span>
+  </div>
+  <details class="alt"><summary>Show data table</summary><div class="tablewrap"><table><thead><tr><th>Commit</th><th>Scheduled (ms)</th><th>Auto base (ms)</th><th>Auto sync (ms)</th><th>Auto total (ms)</th></tr></thead><tbody id="latRows"></tbody></table></div></details>
+</div>
+
+<div class="takeaway">
+  <p class="manual"><strong>Scheduled OPTIMIZE:</strong> every commit returns fast, but small-file debt accumulates between runs and someone has to orchestrate the cleanup.</p>
+  <p><strong>Auto compaction:</strong> fragmentation stays bounded with zero scheduled maintenance, but qualifying commits return slower because compaction is synchronous.</p>
+</div>
+
+<footer>
+  Simplified for illustration: a single unpartitioned table, no optimize-write, and deterministic latency formulas. The minimum compacted file size is modeled as half the target size, matching Fabric's default relationship.
+  Source: <a href="https://learn.microsoft.com/en-us/fabric/data-engineering/table-compaction?tabs=sparksql#auto-compaction" target="_blank" rel="noopener noreferrer">Table compaction — Microsoft Learn</a>
+  <p class="byline">Created by <a href="https://milescole.dev" target="_blank" rel="noopener noreferrer">Miles Cole</a> &middot; <a href="https://milescole.dev" target="_blank" rel="noopener noreferrer">milescole.dev</a></p>
+</footer>
+
+</div>
+<script>
+(function(){
+  "use strict";
+  var manual, ac, events, commitCount, nextFileId, latestIds;
+  var busy=false, pulseIds={}, enterIds={};
+  var qp=new URLSearchParams(window.location.search);
+  var reduceMotion=window.matchMedia&&window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+  var ANIM=qp.get("anim")!=="0"&&!reduceMotion;
+  var STEP_MS=ANIM?1100:0;
+
+  function el(id){ return document.getElementById(id); }
+  function actionEls(){ return ["commit","commit10","reset","optimizeManual","optimizeAc","batchFiles","fileSize","threshold","target"].map(el); }
+  function setBusy(b){ busy=b; actionEls().forEach(function(x){ if(x) x.disabled=b; }); }
+  function n(id,min,max){ return Math.max(min,Math.min(max,parseInt(el(id).value,10)||min)); }
+  function settings(){ return {count:n("batchFiles",1,30),size:n("fileSize",8,256),threshold:n("threshold",2,100),target:n("target",32,512)}; }
+  function freshMetrics(){ return {commitLatency:0,maxCommitLatency:0,rewritten:0,maintenanceLatency:0,syncLatency:0,interventions:0,compactions:0,intervalSum:0,lastCompactCommit:0,smallExposure:0,healthyCommits:0,peakSmall:0,newData:0}; }
+  function scenario(){ return {files:[],metrics:freshMetrics(),message:""}; }
+  function round(v){ return Math.round(v*10)/10; }
+  function fmtMs(v){ return round(v)+" ms"; }
+  function fmtData(v){ return v>=1024?round(v/1024)+" GB":round(v)+" MB"; }
+  function totalData(files){ return files.reduce(function(s,f){ return s+f.size; },0); }
+  function smallFiles(state,target){ return state.files.filter(function(f){ return f.size<target/2; }); }
+  function baseLatency(s){ return round(45+3*s.count+0.06*s.count*s.size); }
+  function maintenanceLatency(count,data){ return round(80+6*count+0.18*data); }
+
+  function addIdenticalFiles(s){
+    var ids=[];
+    for(var i=0;i<s.count;i++){
+      var id=nextFileId++;
+      ids.push(id);
+      manual.files.push({id:id,size:s.size});
+      ac.files.push({id:id,size:s.size});
+    }
+    latestIds=ids;
+  }
+
+  function compactSmall(state,target){
+    var eligible=smallFiles(state,target);
+    if(!eligible.length) return {ran:false,files:0,data:0,outputs:0,latency:0};
+    var data=totalData(eligible), outputs=Math.max(1,Math.ceil(data/target)), selected={};
+    eligible.forEach(function(f){ selected[f.id]=true; });
+    state.files=state.files.filter(function(f){ return !selected[f.id]; });
+    var remaining=data;
+    for(var o=0;o<outputs;o++){
+      var amount=o===outputs-1?round(remaining):round(data/outputs);
+      state.files.push({id:nextFileId++,size:amount});
+      remaining-=amount;
+    }
+    return {ran:true,files:eligible.length,data:data,outputs:outputs,latency:maintenanceLatency(eligible.length,data)};
+  }
+
+  function recordCompaction(m){
+    m.intervalSum+=commitCount-m.lastCompactCommit;
+    m.lastCompactCommit=commitCount;
+    m.compactions+=1;
+  }
+
+  function tallyCommit(state,s,userLatency){
+    var m=state.metrics, small=smallFiles(state,s.target).length;
+    m.commitLatency=round(m.commitLatency+userLatency);
+    m.maxCommitLatency=Math.max(m.maxCommitLatency,userLatency);
+    m.smallExposure+=small;
+    m.healthyCommits+=small<s.threshold?1:0;
+    m.peakSmall=Math.max(m.peakSmall,small);
+    m.newData+=s.count*s.size;
+  }
+
+  function insertPhase(){
+    var s=settings();
+    commitCount+=1;
+    addIdenticalFiles(s);
+    return s;
+  }
+  function settlePhase(s){
+    var base=baseLatency(s);
+    var willCompact=smallFiles(ac,s.target).length>=s.threshold;
+    var beforeIds={}; ac.files.forEach(function(f){ beforeIds[f.id]=true; });
+    var acResult=willCompact?compactSmall(ac,s.target):{ran:false,files:0,data:0,outputs:0,latency:0};
+    if(acResult.ran&&ANIM){ ac.files.forEach(function(f){ if(!beforeIds[f.id]) enterIds["ac"+f.id]=true; }); }
+    var syncSpike=acResult.ran?round(base*Math.min(0.67,0.67*acResult.files/s.threshold)):0;
+    if(acResult.ran){
+      ac.metrics.rewritten+=acResult.data;
+      ac.metrics.syncLatency+=syncSpike;
+      recordCompaction(ac.metrics);
+    }
+    tallyCommit(manual,s,base);
+    tallyCommit(ac,s,base+syncSpike);
+    manual.message="INSERT INTO added "+s.count+" files ("+fmtData(s.count*s.size)+"). No compaction \u2014 small files are now "+smallFiles(manual,s.target).length+".";
+    ac.message=acResult.ran
+      ?"INSERT INTO added "+s.count+" files, then auto compaction synchronously rewrote "+acResult.files+" small files into "+acResult.outputs+" (+"+fmtMs(syncSpike)+" on this commit, about "+Math.round(syncSpike/base*100)+"% of the base write)."
+      :"INSERT INTO added "+s.count+" files. Auto compaction held off \u2014 "+smallFiles(ac,s.target).length+" of "+s.threshold+" small files needed to trigger.";
+    events.push({
+      type:"commit",number:commitCount,filesAdded:s.count,dataAdded:s.count*s.size,threshold:s.threshold,
+      manual:{small:smallFiles(manual,s.target).length,base:base},
+      ac:{small:smallFiles(ac,s.target).length,base:base,sync:syncSpike,total:round(base+syncSpike)}
+    });
+  }
+
+  function runCommit(){
+    if(busy) return;
+    var s=insertPhase();
+    var willCompact=smallFiles(ac,s.target).length>=s.threshold;
+    if(!ANIM||!willCompact){ settlePhase(s); render(); return; }
+    var eligible=smallFiles(ac,s.target);
+    pulseIds={}; eligible.forEach(function(f){ pulseIds["ac"+f.id]=true; });
+    manual.message="INSERT INTO added "+s.count+" files ("+fmtData(s.count*s.size)+"). No compaction \u2014 small files are now "+smallFiles(manual,s.target).length+".";
+    ac.message="INSERT INTO pushed small files to "+eligible.length+" (\u2265 "+s.threshold+" trigger). Auto compaction is running OPTIMIZE synchronously\u2026";
+    setBusy(true); render();
+    setTimeout(function(){ pulseIds={}; settlePhase(s); render(); setBusy(false); }, STEP_MS);
+  }
+
+  function fastForward(){
+    if(busy) return;
+    for(var i=0;i<10;i++){ settlePhase(insertPhase()); }
+    enterIds={};
+    render();
+  }
+
+  function settleOptimize(state,label,key,s){
+    var before=state.files.length;
+    var beforeIds={}; state.files.forEach(function(f){ beforeIds[f.id]=true; });
+    var result=compactSmall(state,s.target);
+    if(result.ran){
+      if(ANIM){ state.files.forEach(function(f){ if(!beforeIds[f.id]) enterIds[key+f.id]=true; }); }
+      state.metrics.rewritten+=result.data;
+      state.metrics.maintenanceLatency+=result.latency;
+      state.metrics.interventions+=1;
+      recordCompaction(state.metrics);
+      state.message="Manual OPTIMIZE rewrote "+result.files+" small files ("+fmtData(result.data)+") into "+result.outputs+"; "+before+" \u2192 "+state.files.length+" files, "+fmtMs(result.latency)+" maintenance (not user-facing).";
+    }else{
+      state.message="Manual OPTIMIZE found no small files to compact \u2014 the "+label+" table is already healthy.";
+    }
+  }
+  function runOptimize(state,label,key){
+    if(busy) return;
+    var s=settings(), eligible=smallFiles(state,s.target);
+    if(!ANIM||!eligible.length){ settleOptimize(state,label,key,s); render(); return; }
+    pulseIds={}; eligible.forEach(function(f){ pulseIds[key+f.id]=true; });
+    state.message="Manual OPTIMIZE selected "+eligible.length+" small files ("+fmtData(totalData(eligible))+") \u2014 rewriting\u2026";
+    setBusy(true); render();
+    setTimeout(function(){ pulseIds={}; settleOptimize(state,label,key,s); render(); setBusy(false); }, STEP_MS);
+  }
+
+  function fileHTML(f,target,key){
+    var small=f.size<target/2, recent=latestIds.indexOf(f.id)>=0;
+    var pulsing=pulseIds[key+f.id], entering=enterIds[key+f.id];
+    var height=Math.max(24,Math.min(72,22+50*Math.min(f.size/target,1)));
+    return '<span class="file'+(small?' small':'')+(recent?' new':'')+(pulsing?' compacting':'')+(entering?' enter':'')+'" style="--h:'+height+'px" title="'+f.size+' MB" aria-label="'+f.size+' megabyte '+(small?'small':'healthy')+' file">'+f.size+'</span>';
+  }
+  function renderFiles(filesId,metaId,state,s,key){
+    var small=smallFiles(state,s.target).length, healthy=small<s.threshold;
+    el(filesId).innerHTML=state.files.map(function(f){ return fileHTML(f,s.target,key); }).join("")||'<span class="empty">No files yet \u2014 run INSERT INTO.</span>';
+    el(metaId).innerHTML='<span>'+state.files.length+' files &middot; '+fmtData(totalData(state.files))+'</span>'+
+      '<span class="'+(healthy?'ok':'debt')+'">'+small+' small'+(healthy?'':' &middot; at/over threshold')+'</span>';
+  }
+  function coreStats(state){
+    var m=state.metrics;
+    var avgInterval=m.compactions?round(m.intervalSum/m.compactions):"\u2014";
+    return '<div class="stat"><p class="lbl">Current file count</p><p class="val">'+state.files.length+'</p></div>'+
+      '<div class="stat"><p class="lbl">Cumulative small-file exposure</p><p class="val">'+m.smallExposure+'</p></div>'+
+      '<div class="stat"><p class="lbl">Avg. commits / compaction</p><p class="val">'+avgInterval+'</p></div>';
+  }
+
+  function debtData(){
+    var rows=[{label:"Start",manual:0,ac:0}];
+    events.forEach(function(e){ rows.push({label:"C"+e.number,manual:e.manual.small,ac:e.ac.small}); });
+    return rows;
+  }
+  function renderDebtChart(){
+    var data=debtData(), s=settings();
+    var width=720,height=200,left=40,right=14,top=18,bottom=30;
+    var max=Math.max(1,s.threshold);
+    data.forEach(function(d){ max=Math.max(max,d.manual,d.ac); });
+    max=Math.ceil(max*1.1);
+    function x(i){ return left+(data.length===1?0:i*(width-left-right)/(data.length-1)); }
+    function y(v){ return top+(max-v)*(height-top-bottom)/max; }
+    var svg='<line class="axis-line" x1="'+left+'" y1="'+top+'" x2="'+left+'" y2="'+(height-bottom)+'"/><line class="axis-line" x1="'+left+'" y1="'+(height-bottom)+'" x2="'+(width-right)+'" y2="'+(height-bottom)+'"/>';
+    [0,0.5,1].forEach(function(p){ var yy=top+p*(height-top-bottom),val=Math.round(max*(1-p)); svg+='<line class="gridline" x1="'+left+'" y1="'+yy+'" x2="'+(width-right)+'" y2="'+yy+'"/><text class="charttext" x="4" y="'+(yy+4)+'">'+val+'</text>'; });
+    var ty=y(s.threshold);
+    svg+='<line class="threshold-line" x1="'+left+'" y1="'+ty+'" x2="'+(width-right)+'" y2="'+ty+'"/><text class="charttext" x="'+(width-right-70)+'" y="'+(ty-4)+'">trigger '+s.threshold+'</text>';
+    function poly(key,cls){ return '<polyline class="'+cls+'" points="'+data.map(function(d,i){ return x(i)+","+y(d[key]); }).join(" ")+'"/>'; }
+    svg+=poly("manual","manual-line")+poly("ac","ac-line");
+    if(data.length<=24){
+      data.forEach(function(d,i){ svg+='<circle class="dot-manual" cx="'+x(i)+'" cy="'+y(d.manual)+'" r="2.5"/><circle class="dot-ac" cx="'+x(i)+'" cy="'+y(d.ac)+'" r="2.5"/>'; });
+    }
+    data.forEach(function(d,i){ if(i===0||i===data.length-1||(data.length<12&&i%2===0)) svg+='<text class="charttext" text-anchor="middle" x="'+x(i)+'" y="'+(height-10)+'">'+d.label+'</text>'; });
+    el("debtChart").setAttribute("viewBox","0 0 "+width+" "+height);
+    el("debtChart").innerHTML='<title id="debtTitle">Small-file count by event</title><desc id="debtDesc">Scheduled OPTIMIZE table in red, auto compaction table in blue. The dashed line is the trigger threshold.</desc>'+svg;
+    el("debtRows").innerHTML=data.map(function(d){ return "<tr><td>"+d.label+"</td><td>"+d.manual+"</td><td>"+d.ac+"</td></tr>"; }).join("");
+  }
+
+  function commitEvents(){ return events.filter(function(e){ return e.type==="commit"; }); }
+  function renderLatChart(){
+    var data=commitEvents();
+    var width=720,height=216,left=26,right=14,top=18,bottom=48;
+    if(!data.length){
+      el("latChart").setAttribute("viewBox","0 0 "+width+" "+height);
+      el("latChart").innerHTML='<title id="latTitle">Commit latency by event</title><desc id="latDesc">No commits yet.</desc><text class="charttext" x="'+(width/2)+'" y="'+(height/2)+'" text-anchor="middle">Run INSERT INTO to chart commit latency.</text>';
+      el("latRows").innerHTML="";
+      return;
+    }
+    var max=1;
+    data.forEach(function(e){ max=Math.max(max,e.manual.base,e.ac.total); });
+    max=Math.ceil(max*1.1);
+    var plot=width-left-right, band=plot/data.length, bw=Math.max(4,Math.min(26,band*0.36)), gap=3;
+    function y(v){ return top+(max-v)*(height-top-bottom)/max; }
+    function bx(i){ return left+i*band+band/2; }
+    var svg='<line class="axis-line" x1="'+left+'" y1="'+top+'" x2="'+left+'" y2="'+(height-bottom)+'"/><line class="axis-line" x1="'+left+'" y1="'+(height-bottom)+'" x2="'+(width-right)+'" y2="'+(height-bottom)+'"/>';
+    [0,0.5,1].forEach(function(p){ var yy=top+p*(height-top-bottom); svg+='<line class="gridline" x1="'+left+'" y1="'+yy+'" x2="'+(width-right)+'" y2="'+yy+'"/>'; });
+    var midY=(top+(height-bottom))/2;
+    svg+='<text class="axis-label" text-anchor="middle" transform="rotate(-90 12 '+midY+')" x="12" y="'+midY+'">latency (ms)</text>';
+    var baseY=height-bottom, labelY=baseY+16;
+    data.forEach(function(e,i){
+      var cx=bx(i), mx=cx-bw-gap/2, ax=cx+gap/2;
+      var mh=baseY-y(e.manual.base);
+      svg+='<rect class="bar-base" x="'+mx+'" y="'+y(e.manual.base)+'" width="'+bw+'" height="'+mh+'" rx="1.5"><title>Commit '+e.number+' scheduled: '+fmtMs(e.manual.base)+'</title></rect>';
+      var abh=baseY-y(e.ac.base);
+      svg+='<rect class="bar-base" x="'+ax+'" y="'+y(e.ac.base)+'" width="'+bw+'" height="'+abh+'" rx="1.5"><title>Commit '+e.number+' auto base: '+fmtMs(e.ac.base)+'</title></rect>';
+      if(e.ac.sync>0){
+        var syncTop=y(e.ac.total), syncH=y(e.ac.base)-y(e.ac.total);
+        svg+='<rect class="bar-sync" x="'+ax+'" y="'+syncTop+'" width="'+bw+'" height="'+syncH+'" rx="1.5"><title>Commit '+e.number+' synchronous compaction: '+fmtMs(e.ac.sync)+'</title></rect>';
+      }
+      if(data.length<=16||i===0||i===data.length-1) svg+='<text class="charttext" text-anchor="middle" x="'+cx+'" y="'+labelY+'">C'+e.number+'</text>';
+    });
+    svg+='<text class="axis-label" text-anchor="middle" x="'+(left+(width-right-left)/2)+'" y="'+(height-6)+'">Commit number</text>';
+    el("latChart").setAttribute("viewBox","0 0 "+width+" "+height);
+    el("latChart").innerHTML='<title id="latTitle">Commit latency by event</title><desc id="latDesc">Left bar per commit is the scheduled table, right bar is the auto compaction table with synchronous compaction stacked in red.</desc>'+svg;
+    el("latRows").innerHTML=data.map(function(e){ return "<tr><td>C"+e.number+"</td><td>"+round(e.manual.base)+"</td><td>"+round(e.ac.base)+"</td><td>"+round(e.ac.sync)+"</td><td>"+round(e.ac.total)+"</td></tr>"; }).join("");
+  }
+
+  function syncControls(s){
+    el("batchFilesOut").textContent=s.count;
+    el("fileSizeOut").textContent=s.size+" MB";
+    el("thresholdOut").textContent=s.threshold;
+    el("targetOut").textContent=s.target+" MB";
+  }
+  function render(){
+    var s=settings();
+    syncControls(s);
+    renderFiles("manualFiles","manualMeta",manual,s,"manual");
+    renderFiles("acFiles","acMeta",ac,s,"ac");
+    el("manualCore").innerHTML=coreStats(manual);
+    el("acCore").innerHTML=coreStats(ac);
+    renderDebtChart();
+    renderLatChart();
+    el("manualMsg").textContent=manual.message;
+    el("acMsg").textContent=ac.message;
+    enterIds={};
+    reportHeight();
+  }
+  function reset(){
+    if(busy) return;
+    manual=scenario(); ac=scenario(); events=[]; commitCount=0; nextFileId=1; latestIds=[];
+    pulseIds={}; enterIds={};
+    manual.message="Ready. Run INSERT INTO to write identical files to both tables.";
+    ac.message="Ready. Auto compaction will fire once small files reach the trigger threshold.";
+    render();
+  }
+
+  ["batchFiles","fileSize","threshold","target"].forEach(function(id){ el(id).addEventListener("input",render); });
+  el("commit").addEventListener("click",runCommit);
+  el("commit10").addEventListener("click",fastForward);
+  el("optimizeManual").addEventListener("click",function(){ runOptimize(manual,"scheduled OPTIMIZE","manual"); });
+  el("optimizeAc").addEventListener("click",function(){ runOptimize(ac,"auto compaction","ac"); });
+  el("reset").addEventListener("click",reset);
+
+  function reportHeight(){
+    if(window.parent===window) return;
+    window.parent.postMessage({type:"interactive-resize",height:document.documentElement.scrollHeight},"*");
+  }
+  reset();
+  if("ResizeObserver" in window) new ResizeObserver(reportHeight).observe(document.body);
+  window.addEventListener("load",reportHeight);
+})();
+</script>
+</body>
+</html>
