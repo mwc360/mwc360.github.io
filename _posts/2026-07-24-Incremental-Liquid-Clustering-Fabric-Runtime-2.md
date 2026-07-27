@@ -171,8 +171,8 @@ My default guidance:
 - Choose **one to four columns** commonly used in `WHERE` predicates.
 - Prefer columns that materially narrow the data read.
 - Do not use column order to express priority; order does not affect the multidimensional layout.
-- Avoid combining Liquid Clustering with Hive partitioning or Z-Order.
 - Expect each additional key to dilute the skipping benefit available to every individual dimension.
+- Avoid selecting high cardinality keys with low cardinality.
 
 For a sales table, `(order_date, region)` can be reasonable when most queries constrain time and geography. Adding customer, product, channel, promotion, and every other filterable column is not automatically better.
 
