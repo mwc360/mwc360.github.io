@@ -300,7 +300,7 @@ CLUSTER BY (order_date, region);
 -- Or change clustering on an existing table
 ALTER TABLE my_table CLUSTER BY (order_date, region);</code></pre>
     </div>
-    <div class="cfg-block" data-lang="python" data-label="PySpark">
+    <div class="cfg-block" data-lang="python" data-label="Python">
       <pre><code># Incremental clustering and auto reclustering are on by default.
 # Disable auto reclustering only (diagnostic):
 spark.conf.set(

@@ -325,12 +325,9 @@ footer a{color:var(--cp-link);}
   <h2>Enable auto compaction</h2>
   <p class="sub">Auto compaction is off by default. Turn it on for every write in your Spark session, or per table with a table property.</p>
   <section class="enablement">
-    <div class="cfg-block" data-lang="python" data-label="PySpark">
+    <div class="cfg-block" data-lang="python" data-label="Python">
       <pre><code># Compact small files synchronously after writes in this session
-spark.conf.set("spark.databricks.delta.autoCompact.enabled", "true")
-
-# Pair with Optimized Write to avoid writing small files in the first place
-spark.conf.set("spark.databricks.delta.optimizeWrite.enabled", "true")</code></pre>
+spark.conf.set("spark.databricks.delta.autoCompact.enabled", "true")</code></pre>
     </div>
     <div class="cfg-block" data-lang="sql" data-label="SQL">
       <pre><code>-- Enable on an existing table
