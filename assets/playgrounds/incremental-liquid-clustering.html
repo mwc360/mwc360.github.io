@@ -188,6 +188,14 @@ footer a{color:var(--cp-link);}
 .cfg-tok-o{color:var(--base08)}
 .cfg-tok-p{color:var(--base05)}
 .cfg-note{margin:0;color:var(--cp-text);font-size:1em;line-height:1.7;overflow-wrap:anywhere}
+.note{margin:0 0 1.25rem;padding:.75rem 1rem;border-left:2px solid var(--cp-link);background:var(--cp-link-soft);color:var(--cp-text);font-size:1em;line-height:1.7}
+.tipwrap{position:relative;display:inline-block;margin-left:4px;vertical-align:text-bottom}
+.info{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;padding:0;border:1px solid var(--cp-border-strong);border-radius:50%;background:none;color:var(--cp-text-soft);font-family:var(--cp-font);font-size:10px;font-weight:700;line-height:1;cursor:help}
+.info:hover{border-color:var(--cp-link);color:var(--cp-link)}
+.info:focus-visible{outline:2px solid var(--cp-link);outline-offset:2px}
+.tip{position:absolute;right:0;bottom:calc(100% + 7px);z-index:5;width:min(17rem,68vw);padding:.55rem .7rem;border:1px solid var(--cp-border);border-radius:10px;background:var(--cp-panel-strong);box-shadow:var(--cp-shadow-soft);color:var(--cp-text);font-size:11px;font-weight:400;line-height:1.6;text-align:left;opacity:0;visibility:hidden;transition:opacity .12s ease}
+.tipwrap:hover .tip,.info:focus-visible+.tip{opacity:1;visibility:visible}
+@media (prefers-reduced-motion:reduce){.tip{transition:none}}
 </style>
 </head>
 <body>
@@ -238,8 +246,10 @@ footer a{color:var(--cp-link);}
   <span><span class="sw" style="background:var(--cp-highlight);border:1px solid var(--cp-danger);"></span> clustered file being rewritten</span>
 </div>
 
-<h2>Auto reclustering</h2>
-<p class="sub">Each bar is a file's min–max value range on the clustering column. Two separate things happen during <code>OPTIMIZE</code>: <strong>new (unclustered) files are always selected</strong> for clustering — no thresholds involved — while <strong>auto reclustering</strong> decides whether to additionally pull in <em>already-clustered</em> files whose ranges overlap, gated by the two configs below. Skipping effectiveness = 1 − max(0, expected scans − 1) / (total files − 1): the fraction of avoidable scans a random point query actually skips. Expected scans = unclustered files (always scanned, no stats) + average clustered cover depth. A perfect non-overlapping layout scores 100%; overlap or unclustered files drag it toward 0%.</p>
+<h2>Why incremental alone isn’t enough</h2>
+<p class="sub">Incremental <code>OPTIMIZE</code> is cheap because it only rewrites files that are new. But a new file is only clustered <em>within itself</em> — nothing makes its value range line up with the files already on disk. Every append lays down another band across ranges the table already covers, and those bands accumulate. The end state is a table where every file is clustered and the layout is still bad: a query filtering on a single day has to open most of the files, because most of them claim to contain that day.</p>
+<p class="sub"><strong>Auto reclustering</strong> is the counterweight. New (unclustered) files are always selected for clustering — no thresholds involved. Auto reclustering decides whether to <em>additionally</em> pull in already-clustered files whose ranges overlap, and the two configs below set how bad that overlap has to get before it’s worth paying to fix. Each bar below is one file’s min–max range on the clustering column: append overlapping files, run <code>OPTIMIZE</code>, and watch the thresholds trade write cost against file skipping.</p>
+<p class="note">Incremental selection alone minimizes write cost. Auto reclustering is what keeps that saving from being quietly repaid in degraded read performance.</p>
 
 <div class="grid2" style="margin-bottom:1rem;">
   <div class="card cfg">
@@ -272,7 +282,7 @@ footer a{color:var(--cp-link);}
   <div class="axis"><span>Jan</span><span>Apr</span><span>Jul</span><span>Oct</span><span>Dec</span></div>
   <div class="statgrid">
     <div class="stat"><p class="lbl">Max overlap depth</p><p class="val" id="grpOut">1 file</p></div>
-    <div class="stat"><p class="lbl">Skipping effectiveness</p><p class="val" id="scOut">0%</p></div>
+    <div class="stat"><p class="lbl">Skipping effectiveness<span class="tipwrap"><button type="button" class="info" aria-label="How skipping effectiveness is calculated" aria-describedby="seTip">i</button><span class="tip" id="seTip" role="tooltip">The share of avoidable file reads a random point query actually skips: 1 − max(0, expected scans − 1) ÷ (total files − 1), where expected scans = unclustered files (always read — no stats yet) + average clustered cover depth. A perfectly disjoint layout scores 100%.</span></span></p><p class="val" id="scOut">0%</p></div>
   </div>
   <p class="verdict" id="verdict"></p>
 </div>
