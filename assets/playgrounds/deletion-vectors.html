@@ -206,6 +206,17 @@ footer a{color:var(--cp-link)}
 @media(max-width:640px){.flow{grid-template-columns:1fr}.arrow{justify-self:center;transform:rotate(90deg)}.toolbar .push{margin-left:0}}
 @media(max-width:380px){.wrap{padding-left:8px;padding-right:8px}.toolbar button{flex:1 1 100%}.card{padding:10px}.rows{grid-template-columns:repeat(10,minmax(0,1fr));gap:2px}.filetop{align-items:start;flex-direction:column;gap:2px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+.enablement{display:grid;gap:1rem;margin:0 0 1.5rem}
+.cfg-block{border:1px solid var(--cp-border);border-radius:12px;overflow:hidden;background:var(--cp-surface)}
+.cfg-head{display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.5rem .5rem .5rem .85rem;background:var(--cp-surface-soft);border-bottom:1px solid var(--cp-border)}
+.cfg-lang{font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--cp-text-muted)}
+.cfg-copy{display:inline-flex;align-items:center;gap:.35rem;padding:.32rem .6rem;border:1px solid var(--cp-border);border-radius:8px;background:var(--cp-surface);color:var(--cp-text);font:inherit;font-size:.78rem;cursor:pointer;transition:border-color .15s ease,color .15s ease}
+.cfg-copy:hover{border-color:var(--cp-link);color:var(--cp-link)}
+.cfg-copy:focus-visible{outline:2px solid var(--cp-link);outline-offset:2px}
+.cfg-copy.copied{border-color:var(--cp-success);color:var(--cp-success)}
+.cfg-block pre{margin:0;padding:.85rem 1rem;overflow-x:auto;background:var(--cp-bg-elevated)}
+.cfg-block code{font-family:Consolas,"Courier New",Courier,monospace;font-size:.84rem;line-height:1.55;color:var(--cp-text);white-space:pre;display:block}
+.cfg-note{margin:0;color:var(--cp-text-muted);font-size:.9rem;line-height:1.5}
 </style>
 </head>
 <body>
@@ -301,7 +312,27 @@ footer a{color:var(--cp-link)}
     </div>
   </section>
 
-  <footer>
+  <h2>Enable deletion vectors</h2>
+  <p class="sub">Deletion vectors are opt-in. Default them on for new tables in your Spark session, or set the table property on an existing table.</p>
+  <section class="enablement">
+    <div class="cfg-block">
+      <div class="cfg-head"><span class="cfg-lang">PySpark</span><button type="button" class="cfg-copy" aria-live="polite"><span class="cfg-copy-label">Copy</span></button></div>
+      <pre><code># New tables created in this session default to deletion vectors
+spark.conf.set(
+    "spark.databricks.delta.properties.defaults.enableDeletionVectors",
+    "true"
+)</code></pre>
+    </div>
+    <div class="cfg-block">
+      <div class="cfg-head"><span class="cfg-lang">SQL</span><button type="button" class="cfg-copy" aria-live="polite"><span class="cfg-copy-label">Copy</span></button></div>
+      <pre><code>-- Enable on an existing table
+ALTER TABLE your_table
+SET TBLPROPERTIES ('delta.enableDeletionVectors' = 'true');</code></pre>
+    </div>
+    <p class="cfg-note">Available in Fabric Runtime 1.3+ (Delta 3.2+). Once enabled, DELETE, UPDATE, and MERGE write compact deletion-vector sidecars instead of rewriting whole Parquet files.</p>
+  </section>
+
+<footer>
     Simplified deterministic model: two 128 MB Parquet files, each modeled as ~20 logical rows shown through a 19-row sample window (the &#8943; box stands in for the rest). Copy-on-write rewrites an entire 128 MB file per change, while a deletion vector stores only the deleted row positions as an immutable RoaringBitmap sidecar (tens of bytes) &mdash; changing a file's DV retires the old bin and writes a new one with the cumulative positions. OPTIMIZE evaluates each file's deleted-row ratio against Delta's 5% <code>maxDeletedRowsRatio</code> default; UPDATE and APPEND write tiny new Parquet files. VACUUM uses a notional two-operation retention window, and unrelated small-file compaction is omitted so the maintenance actions isolate DV purge behavior.
     Reference: <a href="https://learn.microsoft.com/en-us/fabric/data-engineering/delta-lake-deletion-vectors" target="_blank" rel="noopener noreferrer">Deletion vectors for Delta tables in Microsoft Fabric</a>.
     <p class="byline">Created by <a href="https://milescole.dev" target="_blank" rel="noopener noreferrer">Miles Cole</a> &middot; <a href="https://milescole.dev" target="_blank" rel="noopener noreferrer">milescole.dev</a></p>
@@ -866,6 +897,45 @@ footer a{color:var(--cp-link)}
   reset();
   if("ResizeObserver" in window)new ResizeObserver(reportHeight).observe(document.body);
   window.addEventListener("load",reportHeight);
+})();
+</script>
+<script>
+(function(){
+  "use strict";
+  function copyText(text){
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      return navigator.clipboard.writeText(text).catch(function(){ return fallback(text); });
+    }
+    return fallback(text);
+  }
+  function fallback(text){
+    return new Promise(function(resolve,reject){
+      try{
+        var ta=document.createElement("textarea");
+        ta.value=text; ta.setAttribute("readonly","");
+        ta.style.position="fixed"; ta.style.top="-1000px"; ta.style.opacity="0";
+        document.body.appendChild(ta); ta.select();
+        var ok=document.execCommand("copy");
+        document.body.removeChild(ta);
+        ok?resolve():reject();
+      }catch(e){ reject(e); }
+    });
+  }
+  document.querySelectorAll(".cfg-copy").forEach(function(btn){
+    btn.addEventListener("click",function(){
+      var block=btn.closest(".cfg-block");
+      var code=block?block.querySelector("code"):null;
+      if(!code) return;
+      var label=btn.querySelector(".cfg-copy-label")||btn;
+      copyText(code.innerText).then(function(){
+        btn.classList.add("copied"); label.textContent="Copied";
+        setTimeout(function(){ btn.classList.remove("copied"); label.textContent="Copy"; },1600);
+      }).catch(function(){
+        label.textContent="Press Ctrl+C";
+        setTimeout(function(){ label.textContent="Copy"; },1600);
+      });
+    });
+  });
 })();
 </script>
 </body>

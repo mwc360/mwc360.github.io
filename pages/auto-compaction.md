@@ -7,4 +7,4 @@ hide: true
 hide_title: true
 ---
 
-{% include interactive.html src="/auto-compaction.html?embedded=1&context=1" open_src="/auto-compaction.html" title="Auto compaction simulator" height="1200" class="playground-embed" %}
+{% include interactive.html src="/assets/playgrounds/auto-compaction.html?embedded=1&context=1" open_src="/assets/playgrounds/auto-compaction.html" title="Auto compaction simulator" height="1200" class="playground-embed" %}

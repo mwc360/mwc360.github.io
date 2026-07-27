@@ -92,7 +92,7 @@ The interactive model below runs the same append pattern against two simplified 
 
 Append a few batches and run `OPTIMIZE`, then use **Fast-forward 20×** to see how repeated small writes compound. The second half lets you add overlapping files and adjust the auto-reclustering thresholds.
 
-{% include interactive.html src="/incremental-liquid-clustering.html?embedded=1" open_src="/incremental-liquid-clustering.html" title="Interactive incremental liquid clustering simulator" height="1400" class="playground-embed" %}
+{% include interactive.html src="/assets/playgrounds/incremental-liquid-clustering.html?embedded=1" open_src="/assets/playgrounds/incremental-liquid-clustering.html" title="Interactive incremental liquid clustering simulator" height="1400" class="playground-embed" %}
 
 The model intentionally simplifies file selection and overlap scoring so the behavior is visible. The real engine evaluates file statistics across all clustering dimensions and makes additional decisions about target file sizes, deletion vectors, and clustering health.
 

@@ -11,13 +11,13 @@ Inspect these files before editing:
 
 - `_includes/interactive.html`
 - `assets/js/code-blocks.js`
-- An existing root playground HTML file
+- An existing playground HTML file in `assets/playgrounds/`
 - Its hidden `pages/*.md` detail page
 - `pages/concept-playground.md`
 
 ## Deliverables
 
-1. Put the standalone artifact at the repository root as `<slug>.html`.
+1. Put the standalone artifact in `assets/playgrounds/` as `<slug>.html`.
 2. Add `pages/<slug>.md` with `layout: page`, `hide: true`, and permalink `/playground/<slug>/`.
 3. Add a matching gallery card to `pages/concept-playground.md`.
 4. Optionally embed the same artifact in a related article.
@@ -190,7 +190,7 @@ html[data-theme="dark"] {
 ## Embed contract
 
 ```liquid
-{% include interactive.html src="/<slug>.html?embedded=1" open_src="/<slug>.html" title="<descriptive title>" height="1200" class="playground-embed" %}
+{% include interactive.html src="/assets/playgrounds/<slug>.html?embedded=1" open_src="/assets/playgrounds/<slug>.html" title="<descriptive title>" height="1200" class="playground-embed" %}
 ```
 
 Report height after load and content changes:
@@ -222,7 +222,7 @@ Run these before claiming completion. Concrete harness that works in this repo:
 
 1. **Inline script syntax:** extract every `<script>` body into one temp `.js` and run `node --check`. PowerShell:
    ```powershell
-   $html=[IO.File]::ReadAllText('<slug>.html'); $s=[regex]::Matches($html,'(?s)<script>(.*?)</script>'); $c=($s|%{$_.Groups[1].Value}) -join "`n"; [IO.File]::WriteAllText("$env:TEMP\pg.check.js",$c); node --check "$env:TEMP\pg.check.js"
+   $html=[IO.File]::ReadAllText('assets/playgrounds/<slug>.html'); $s=[regex]::Matches($html,'(?s)<script>(.*?)</script>'); $c=($s|%{$_.Groups[1].Value}) -join "`n"; [IO.File]::WriteAllText("$env:TEMP\pg.check.js",$c); node --check "$env:TEMP\pg.check.js"
    ```
 2. **Color audit:** strip the three mandatory variable blocks, then confirm no `#hex`/`rgb(a)` remains in component CSS (charts included).
 3. **Jekyll 4 build:** `bundle exec jekyll build --future --destination _site-check` (repo's normal bundle). Delete the scratch output after.

@@ -329,7 +329,7 @@ you can edit it in the config file (`_config.yml > color_image`). If you want an
 Markdown posts can embed self-contained interactive HTML without MDX. Place the HTML file in the repository and use:
 
 ```liquid
-{% include interactive.html src="/incremental-liquid-clustering.html" title="Incremental liquid clustering" height="1200" %}
+{% include interactive.html src="/assets/playgrounds/incremental-liquid-clustering.html" title="Incremental liquid clustering" height="1200" %}
 ```
 
 The interactive runs in a sandboxed iframe and includes a link to open it in a separate tab.

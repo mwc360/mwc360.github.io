@@ -7,4 +7,4 @@ hide: true
 hide_title: true
 ---
 
-{% include interactive.html src="/deletion-vectors.html?embedded=1&context=1" open_src="/deletion-vectors.html" title="Deletion vectors simulator" height="1200" class="playground-embed" %}
+{% include interactive.html src="/assets/playgrounds/deletion-vectors.html?embedded=1&context=1" open_src="/assets/playgrounds/deletion-vectors.html" title="Deletion vectors simulator" height="1200" class="playground-embed" %}
