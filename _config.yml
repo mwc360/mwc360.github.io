@@ -4,12 +4,12 @@ url: "https://milescole.dev"
 
 # THEME-SPECIFIC CONFIGURATION
 title: Miles Cole                                      # site's title
-description: "An opinionated data engineering blog"   # used by search engines
+description: "Miles Cole's personal data engineering blog covering data systems, performance, and the details that matter."   # used by search engines
 avatar: # assets/img/Untitled.png                         # Empty for no avatar in navbar
 favicon: assets/mcole.ico                             # Icon displayed in the tab
 
 # Header and footer text
-header_text: an opinionated data engineering blog  # Change Blog header text
+header_text: data systems, performance, and the details that matter  # Change Blog header text
 header_feature_image: assets/img/header/pexels-siarhei-nester-318033361-13646614.jpeg
 header_feature_image_responsive: true
 footer_text: >

@@ -16,8 +16,7 @@ What engineers won't always sing the same tune on is how and when to perform tab
 1. **Post-Write Manual Compaction**: As part of your jobs you've coded an `OPTIMIZE` (and possibly a `VACUUM`) operation to run after every table that is written to. 
 1. **Scheduled Compaction (Manual)**: Just as it sounds, you schedule a job, maybe on a weekly basis, that will loop through all tables and run `OPTIMIZE`.
 1. **Automatic Compaction**: A feature of the log structured table that will automatically evaluate if compaction is needed and run it syncronously (or async in the case of Hudi) following write operations.
-    - **Delta Lake**: [Auto Compaction](https://docs.delta.io/latest/optimizations-oss.html#auto-compaction) is disabled by default but can be enabled to run syncronously, as needed, after writes. Here's a all the basics on Auto Compaction in Delta Lakes:
-    ![Auto Compaction TL/DR](/assets/img/posts/Compaction/auto-compaction.excalidraw.png)
+    - **Delta Lake**: [Auto Compaction](https://docs.delta.io/latest/optimizations-oss.html#auto-compaction) is disabled by default but can be enabled to run syncronously, as needed, after writes. The [next section](#how-does-auto-compaction-work) covers the mechanics, with an interactive model to go with it.
     - **Hudi**: [Compaction](https://hudi.apache.org/docs/next/compaction/#ways-to-trigger-compaction) runs automatically (async) by default, as needed, after writes.
     - **Iceberg**: [Compaction](https://iceberg.apache.org/docs/latest/maintenance/#compact-data-files) in Iceberg is only supported as a user executed operation, there's no support for automatic maintenance here. Ironically, the Iceberg docs even list compaction under _Optional Mainenance_, this seems a bit shortsighted as there's no technical reason why Iceberg users wouldn't suffer from small file issues just like Delta and Hudi.
 
@@ -25,8 +24,19 @@ What engineers won't always sing the same tune on is how and when to perform tab
 
 So, there's plenty of options for ensuring tables are appropriately sized. But, is there a best practice option when using Fabric Spark and Delta Lake? Lets find out.
 
+## How does auto compaction work?
+Of everything listed above, auto compaction is the hardest to reason about, because it's driven by thresholds rather than by a schedule you control. After a write commits, Delta counts the active files that fall below `minFileSize` — unset by default and derived as half of `maxFileSize`, so 64Mb out of the box. If that count reaches `minNumFiles` (50 by default), Delta immediately runs a mini-`OPTIMIZE` that packs those files up toward the 128Mb `maxFileSize` target. The detail that matters most is that this runs _synchronously_, inside the write: the commit that trips the threshold is the commit that pays to fix it.
+
+So the real question isn't whether you pay for fragmentation, it's _when_ you pay and how predictable that cost is. The model below runs a manually optimized table and an auto-compacted table against an identical stream of commits so you can watch that difference accumulate.
+
+Each `INSERT INTO` writes the same files to both tables; the left one only compacts when you click **Run OPTIMIZE**, the right one has auto compaction enabled. Use **Fast-forward 10× INSERT** to build up fragmentation and watch the _Small-file debt over time_ chart climb toward the dashed trigger line — the auto-compacted table snaps back every time it crosses, while the scheduled table keeps climbing until you intervene. Then compare the _Where write latency is paid_ chart: the scheduled table's commits stay flat and fast, while auto compaction spikes on exactly the commits where compaction fires since it's a synchronous operation. Dragging `autoCompact.minNumFiles` shows how that one threshold sets both the frequency of the spikes and the ceiling on fragmentation.
+
+{% include interactive.html src="/assets/playgrounds/auto-compaction.html?embedded=1" open_src="/assets/playgrounds/auto-compaction.html" title="Auto compaction simulator" height="1400" class="playground-embed" %}
+
+The model is deliberately simplified — a single unpartitioned table, deterministic latency formulas, and optimized write left off so that small-file accumulation stays visible. It shows the shape of the tradeoff, not its magnitude. For that, the rest of this post replaces the formulas with measurements from a real benchmark.
+
 # The Case Study
-To study the efficiency and performance implications of various compaction methods, I formed a benchmark to study the effects of the following 4 scenarios:
+To study the efficiency and performance implications of various compaction methods, I formed a benchmark run on the following 4 scenarios:
 1. **No Compaction**
 1. **Pre-Write Compaction (a.k.a Optimized Write)**
 1. **Scheduled Compaction**
@@ -103,7 +113,7 @@ With compaction scheduled to run every 20th iteration, the final file count is 1
 ![Scheduled Compaction File Counts 1k Batch](/assets/img/posts/Compaction/scheduled-compaction-files-1k.png)
 
 ### Automatic Compaction
-With Auto Compaction, based on this workload, we see that every 4 iterations results in the background, syncronously run, min-compaction job. After 200 iterations we have 47 files, this makes sense as by default auto-compaction triggers whenever there is 50 or more files below 128MB.
+With Auto Compaction, based on this workload, we see that every 4 iterations results in the background, syncronously run, min-compaction job. After 200 iterations we have 47 files, this makes sense as by default auto-compaction triggers whenever there is 50 or more files below the small file threshold.
 ![Auto Compaction File Counts 1k Batch](/assets/img/posts/Compaction/auto-compaction-files-1k.png)
 
 Automatic compaction certainly produces the most optimal file layout after 200 iterations, it has by far the lowest standard devation of file count which will result in more consistency in both write and read performance.
@@ -162,7 +172,7 @@ See below for a comparison of only enabling Optimized Write vs enabling the feat
 ## What about larger batch sizes?
 I performed testing at both 100K and 1M row batch sizes. At 100K row batches the results are nearly identical to the 1K row batches. At 1M rows, Auto Compaction appeared to be running too frequently which resulted in much less of a performance benefit.
 
-With auto compaction we now see that as our data volume increases we start to accumulate files that are right sized (> 128Mb). The active file count no longer returns to 1 file every 4 batches, instead it increases linearly and ends with 42 total files. The frequency of mini-compactions that are runs adapts as the data volume changes, based on the count of small files below a max file count threshold (explained later).
+With auto compaction we now see that as our data volume increases we start to accumulate files that are right sized (> 128Mb). The active file count no longer returns to 1 file every 4 batches, instead it increases linearly and ends with 42 total files. The frequency of mini-compactions that are runs adapts as the data volume changes, based on the count of small files below a max file count threshold (the `minNumFiles` trigger described earlier).
 
 > _Note: the below chart is on a zoomed-in Y-axis scale to better illustrate the bug._
 

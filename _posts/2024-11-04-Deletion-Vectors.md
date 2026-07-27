@@ -13,9 +13,7 @@ Since Delta 2.3, deletion vectors have been available, but only recently have we
 # What Are Deletion Vectors?
 [Deletion vectors](https://delta.io/blog/2023-07-05-deletion-vectors/) are an optimization within the Delta format that shifts data changes from a _copy-on-write_ strategy to _merge-on-read_, aimed at greatly reducing the time to process changes or deletions in Delta tables.
 
-![Deletion vector guidance](/assets/img/posts/Deletion-Vectors/deletion-vectors-tldr2.excalidraw.png)
-
-Before I dive into some benchmarks to illustrate why nearly every Fabric customer should be enabling deletion vectors, let's start by reviewing these core concepts and how the feature works.
+Before I dive into some benchmarks to illustrate why nearly every Fabric customer should be enabling deletion vectors, let's start by reviewing these core concepts and how the feature works, then put the two strategies side by side in an interactive model.
 
 ## Copy-on-Write vs. Merge-on-Read
 
@@ -45,8 +43,6 @@ user_data/
 │   ├── 00000000000000000000.json
 │   ├── 00000000000000000001.json
 │   └── _commits/
-├── _metadata/
-│   └── table.json.gz
 ├── part-00000-486c5435-19f6-4a1a-be00-ebbac3258b0c-c000.snappy.parquet
 └── part-00001-613f4bca-4626-4c16-8498-d9a6ede96af8-c000.snappy.parquet
 ```
@@ -84,8 +80,6 @@ user_data/
 │   ├── 00000000000000000000.json
 │   ├── 00000000000000000001.json
 │   └── _commits/
-├── _metadata/
-│   └── table.json.gz
 ├── deletion_vector_7dca5871-aa93-423d-bd1f-490d4263536a.bin
 └── part-00000-486c5435-19f6-4a1a-be00-ebbac3258b0c-c000.snappy.parquet
 ```
@@ -138,6 +132,15 @@ VACUUM user_data RETAIN 0 HOURS
 ```
 
 > ⚠️ The retention period check should normally be left enabled; this is in place to prevent potential corruption to Delta tables that can occur if VACUUM is run while another writer is writing to the same table.
+
+## Run Both Strategies Side by Side
+The folder listings above show the end state of each strategy; the interactive model below shows how each one gets there. Both panels start from the same logical table — two 128 MB Parquet files — and receive identical data changes, so every difference in bytes written comes purely from the write strategy.
+
+Start with **DELETE 1 row** and compare the _Bytes written_ tiles: copy-on-write invalidates and rebuilds an entire 128 MB file, while merge-on-read writes a deletion-vector sidecar measured in bytes. The _Write amplification_ tile puts a number on that — physical bytes written per byte of data actually changed. Then try **UPDATE**, which writes both a sidecar and a small file holding the new row versions, and **APPEND**, which costs the same on both paths because appends never invalidate an existing file.
+
+{% include interactive.html src="/assets/playgrounds/deletion-vectors.html?embedded=1" open_src="/assets/playgrounds/deletion-vectors.html" title="Deletion vector simulator" height="1400" class="playground-embed" %}
+
+Two behaviors are worth exercising before moving on, because both shape the maintenance guidance later in this post. First, `.bin` sidecars are immutable: deleting from the same source file a second time retires the existing sidecar and writes a new one carrying the cumulative positions. Second, `OPTIMIZE` only materializes a deletion vector once its file crosses Delta's 5% `maxDeletedRowsRatio` — below that threshold the sidecar survives, and readers keep paying to reconcile it. `REORG TABLE ... APPLY (PURGE)` forces the rewrite regardless of ratio, and `VACUUM` is what finally removes the invalidated artifacts once they age past the retention window.
 
 ## Perforance Impact of Deletion Vectors
 Now that we understand how deletion vectors conceptually work, let’s look at the actual performance impact.

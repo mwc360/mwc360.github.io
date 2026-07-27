@@ -9,7 +9,7 @@ wide: true
 ---
 
 <div class="playground-intro">
-  <p class="playground-kicker">See. experience. learn.</p>
+  <p class="playground-kicker">Build intuition through interaction.</p>
   <p>These small, interactive models make data engineering behavior visible. Adjust the inputs, run the operation, and watch what happens under the hood or on disk.</p>
 </div>
 

@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Mastering Fabric Spark: How Incremental Liquid Clustering Works"
+title: "How Incremental Liquid Clustering Works"
 description: Learn how Fabric Spark Runtime 2.0 incrementally clusters Delta tables, limits write amplification, and maintains file-skipping quality.
 tags: [Fabric, Spark, Delta Lake, Liquid Clustering]
 categories: Data-Engineering
@@ -9,17 +9,17 @@ thumbnail: "assets/img/thumbnails/feature-img/pexels-googledeepmind-25626521.jpe
 published: True
 ---
 
-Liquid clustering was already a better abstraction than static partitioning. Fabric Spark Runtime 2.0 fixes the part that previously made me reluctant to recommend it for frequently updated tables: the cost of maintaining the layout.
+Liquid Clustering was already a better abstraction than static partitioning due to it's flexible nature. Fabric Spark Runtime 2.0 fixes the part that had me actively cautioning customers to reconsider blindly adopting it: the cost of maintaining the layout.
 
-In Runtime 1.3, a small append followed by `OPTIMIZE` could rewrite every file in a partial Z-Cube. In Runtime 2.0, the incremental strategy normally touches only the files that need work. That changes liquid clustering from an occasional, potentially expensive maintenance operation into something that can reasonably follow regular batch or streaming writes.
+In Runtime 1.3 (Delta 3.2) a small append followed by `OPTIMIZE` would rewrite every file in a partial Z-Cube. In Runtime 2.0, the incremental strategy only touches files that are unclustered, small files, and files having a high density of deletion vectors. That changes Liquid Clustering from an occasional, potentially expensive maintenance operation into something that works beautifully with workloads of any shape and with adjacent layout optimizations. Batch or streaming writes. Auto Compaction and/or Fast Optimize. With the new Incremental strategy, Liquid Clustering is highly compatible and highly efficient, and should now take it's rightful place as the defacto new data layout strategy.
 
-> Runtime 2.0 makes clustering cost follow the amount of new or unhealthy data much more closely than the total size of the table.
+> Runtime 2.0 introduces a tigh realtionship between clustering cost and the amount of new or unhealthy data.
 
-# Liquid clustering in one sentence
+# Liquid Clustering in one sentence
 
-Liquid clustering stores rows with similar clustering-column values in files with tight value ranges. When a query filters on those columns, Delta file statistics allow Spark to skip files whose ranges cannot contain matching rows.
+Liquid Clustering stores rows with similar clustering-column values in files with tight value ranges. When a query filters on those columns, Delta file statistics allow Spark to skip files whose ranges cannot contain matching rows.
 
-You declare the desired layout in table metadata:
+You declare the desired layout as table metadata:
 
 ```sql
 CREATE TABLE dbo.sales (
@@ -36,30 +36,30 @@ Unlike Hive-style partitioning, this does not create a directory for every value
 | Strategy | Physical organization | Changing columns | Ongoing maintenance |
 | --- | --- | --- | --- |
 | Hive partitioning | Directories by value | Usually requires a rewrite | Writers must target partitions |
-| Z-Order | File ranges produced by an `OPTIMIZE ZORDER` run | Specify columns on each run | Manually scope repeated optimization |
-| Liquid clustering | Metadata-driven file ranges | `ALTER TABLE ... CLUSTER BY` | `OPTIMIZE` uses the stored definition |
+| Z-Order | Column value min/max ranges stored as Delta commit metadata | Specify columns on each run | Manually scope repeated optimization |
+| Liquid Clustering | Column value min/max ranges stored as Delta commit metadata | `ALTER TABLE ... CLUSTER BY` | `OPTIMIZE` uses the stored definition |
 
-For one clustering column, liquid clustering uses a Z-Order curve. For two or more columns, Fabric uses a Hilbert curve to preserve locality across dimensions.
+Based on the OSS implemention, for one clustering column, Liquid Clustering uses a Z-Order curve. For two or more columns, the Hilbert curve is used to preserve locality across dimensions.
 
 # Why Runtime 1.3 could become expensive
 
-A **Z-Cube** is the logical group of files that shares a clustering definition. The earlier strategy selected every file in a partial Z-Cube whenever clustering ran. A Z-Cube smaller than the stability threshold could therefore be rewritten repeatedly.
+A **Z-Cube** is the logical group of files that shares a clustering definition. The earlier strategy from OSS Delta Lake selected every file in a partial Z-Cube whenever clustering ran. A Z-Cube smaller than the stability threshold would therefore be rewritten repeatedly.
 
-Imagine a table with 80 GB in a partial Z-Cube:
+Imagine a table with 99 GB in a partial Z-Cube:
 
-1. Append 4 GB.
+1. Append 1 KB.
 2. Run `OPTIMIZE`.
-3. Rewrite the existing 80 GB plus the new 4 GB.
-4. Append another 4 GB.
+3. Rewrite the existing 99 GB plus the new 1 KB of data.
+4. Append another 1 KB.
 5. Rewrite the same existing data again.
 
-The new data is small, but the maintenance cost grows with the partial Z-Cube. This is write amplification: repeatedly rewriting healthy data to incorporate a relatively small change.
+The new data is small, but the maintenance cost grows with the partial Z-Cube. This is write amplification: rewriting more data than required to incorporate a relatively small change.
 
-That behavior is why frequent `OPTIMIZE` or auto compaction was risky for liquid-clustered tables in Runtime 1.3.
+That behavior is why frequent `OPTIMIZE` was risky for liquid-clustered tables in Runtime 1.3. For Auto Compaction, I'd argue that Liquid Clustering was incompatible by design, but not blocked by protocol. Since Auto Compaction runs synchronously, a tiny write that could take 2 seconds could now run for dozens of minutes as it reclusters the new data into a large partial Z-Cube.
 
 # What incremental clustering changes
 
-Starting with **Fabric Spark Runtime 2.0 and Delta 4.1**, incremental liquid clustering is enabled by default. The important change is file selection.
+We built Incremental Liquid Clustering into **Fabric Spark Runtime 2.0** to unlock the this optimized, simplified, and more flexible data layout strategy for customers, and it's enabled by default. The important change is file selection.
 
 Instead of selecting every file in each partial Z-Cube, `OPTIMIZE` looks for files with a reason to be processed:
 
@@ -71,28 +71,30 @@ Instead of selecting every file in each partial Z-Cube, `OPTIMIZE` looks for fil
 
 Already clustered, appropriately sized, healthy files remain untouched.
 
+To see the clustering time impact between the standard strategy and incremental mode, see my [feature announcement blog](https://community.fabric.microsoft.com/t5/Fabric-Updates-Blog/Incremental-Liquid-Clustering-in-Microsoft-Fabric-Faster-smarter/ba-p/5189122).
+
 ## The clustering pipeline
 
 Once the engine selects files, the overall process is still recognizable:
 
 1. **Select candidates** that need clustering or compaction.
 2. **Bin-pack candidates** into appropriately sized groups.
-3. **Repartition rows** using Z-Order or a Hilbert curve.
+3. **Range partition rows** using Z-Order or a Hilbert curve.
 4. **Write replacement files** with tighter clustering-column ranges.
 5. **Commit metadata** to the Delta log and remove the replaced files from the active snapshot.
 
-The optimization is not a new sorting algorithm. It is a smarter decision about which existing files need to participate.
+The optimization is not a new sorting algorithm. It is a smarter decision about which existing files need to participate and how to maintain high file-skipping potential over a tables life cycle.
 
 # Try the write-amplification model
 
 The interactive model below runs the same append pattern against two simplified tables:
 
-- **Standard strategy:** rewrites files in partial Z-Cubes.
+- **Standard strategy from OSS Delta Lake:** rewrites files in partial Z-Cubes.
 - **Incremental strategy:** clusters the new files and leaves healthy clustered files alone.
 
 Append a few batches and run `OPTIMIZE`, then use **Fast-forward 20×** to see how repeated small writes compound. The second half lets you add overlapping files and adjust the auto-reclustering thresholds.
 
-{% include interactive.html src="/assets/playgrounds/incremental-liquid-clustering.html?embedded=1" open_src="/assets/playgrounds/incremental-liquid-clustering.html" title="Interactive incremental liquid clustering simulator" height="1400" class="playground-embed" %}
+{% include interactive.html src="/assets/playgrounds/incremental-liquid-clustering.html?embedded=1" open_src="/assets/playgrounds/incremental-liquid-clustering.html" title="Interactive incremental Liquid Clustering simulator" height="1400" class="playground-embed" %}
 
 The model intentionally simplifies file selection and overlap scoring so the behavior is visible. The real engine evaluates file statistics across all clustering dimensions and makes additional decisions about target file sizes, deletion vectors, and clustering health.
 
@@ -100,7 +102,7 @@ The model intentionally simplifies file selection and overlap scoring so the beh
 
 Only clustering new files would minimize writes, but it could gradually reduce query performance. New files can overlap existing value ranges, causing a predicate to touch more files than necessary.
 
-Runtime 2.0 addresses that with **auto reclustering**. During `OPTIMIZE`, the engine detects groups of overlapping files and can pull the affected clustered files into the rewrite alongside new files.
+Runtime 2.0 addresses that with **Auto Reclustering**. During `OPTIMIZE`, the engine detects groups of overlapping files and can pull the affected clustered files into the rewrite alongside new files.
 
 Two session settings control how aggressively this happens:
 
@@ -109,7 +111,7 @@ Two session settings control how aggressively this happens:
 | `spark.microsoft.delta.optimize.clustering.strategy.incremental.autoRecluster.minOffendingFiles` | `4` | Minimum number of overlapping files needed to trigger reclustering |
 | `spark.microsoft.delta.optimize.clustering.strategy.incremental.autoRecluster.minOverlapThreshold` | `0.75` | Minimum overlap score for a pair of files to count as overlapping |
 
-Lowering either threshold makes the engine more aggressive. That can improve file skipping sooner, but it also increases write amplification. The defaults are where I would start unless quality metrics show a specific problem.
+Lowering either threshold makes the engine more aggressive. That can improve file skipping sooner, but it also increases write amplification. The defaults are highly tuned so I wouldn't recommend changing these unless you've done extensive testing for your workload.
 
 You can disable auto reclustering independently:
 
@@ -147,7 +149,7 @@ Use `FULL` when the table needs a broader layout reset:
 OPTIMIZE dbo.sales FULL;
 ```
 
-`OPTIMIZE FULL` reclusters partial Z-Cubes and Z-Cubes whose clustering keys or provider no longer match the current table definition. Stable Z-Cubes that already use the current definition can still be retained. It is broader and more expensive than ordinary incremental maintenance, but it is not a reason to routinely rewrite healthy data.
+`OPTIMIZE FULL` reclusters partial Z-Cubes and Z-Cubes whose clustering keys or provider no longer match the current table definition. Stable Z-Cubes that already use the current definition will still be retained. It is broader and more expensive than ordinary incremental maintenance, but it is not a reason to routinely rewrite healthy data.
 
 The clearest use case is after changing clustering columns:
 
@@ -169,7 +171,7 @@ My default guidance:
 - Choose **one to four columns** commonly used in `WHERE` predicates.
 - Prefer columns that materially narrow the data read.
 - Do not use column order to express priority; order does not affect the multidimensional layout.
-- Avoid combining liquid clustering with Hive partitioning or Z-Order.
+- Avoid combining Liquid Clustering with Hive partitioning or Z-Order.
 - Expect each additional key to dilute the skipping benefit available to every individual dimension.
 
 For a sales table, `(order_date, region)` can be reasonable when most queries constrain time and geography. Adding customer, product, channel, promotion, and every other filterable column is not automatically better.
@@ -201,15 +203,21 @@ These metrics estimate file-skipping potential. They do not replace measuring re
 
 # A practical operating pattern
 
-For a Runtime 2.0 liquid-clustered table, I would use this lifecycle:
+For a Runtime 2.0 liquid-clustered table, I would split the life-cycle based on development and ongoing maintenance:
 
-1. Define clustering keys from common query filters.
-2. Write data normally with optimize write enabled where appropriate.
-3. Run `OPTIMIZE` after meaningful batches or on a schedule.
-4. Let incremental selection and auto reclustering handle routine maintenance.
-5. Monitor clustering quality and actual files scanned.
-6. Use `OPTIMIZE FULL` after a key change or when evidence justifies a broader reset.
+Development:
+1. Use `SHALLOW CLONE` to fork a table for perf testing
+1. Use `ALTER TABLE` to apply clustering based on common query filters.
+1. Manually run `OPTIMIZE` to apply the clustering.
+1. Run A/B performance testing to confirm the impact on common queries that filter on the clustering keys.
+1. Optional - use the clustering quality method to evaluate the file skipping potential from various candidate clustering strategies.
+
+Production:
+1. Enable Liquid Clustering strategy.
+1. Run `OPTIMIZE` on a schedule or preferrable enable Auto Compaction.
+1. Let incremental selection and auto reclustering handle routine maintenance.
+1. Use `OPTIMIZE FULL` after a key change.
 
 The opinionated takeaway is simple: **do not schedule full reclustering because it feels safer**. Runtime 2.0 is designed to tolerate small imperfections in exchange for dramatically lower write cost. Optimize the change, measure the layout, and reserve full rewrites for situations that actually require them.
 
-For the complete configuration reference and supported data types, see [Liquid clustering in Microsoft Fabric](https://learn.microsoft.com/en-us/fabric/data-engineering/liquid-clustering).
+For the complete configuration reference and supported data types, see [Liquid Clustering in Microsoft Fabric](https://learn.microsoft.com/en-us/fabric/data-engineering/liquid-clustering).

@@ -780,6 +780,10 @@ details,
   background: var(--surface);
   transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 
+  &[hidden] {
+    display: none;
+  }
+
   &:hover {
     border-color: var(--link);
     box-shadow: 0 8px 24px var(--surface-shadow);

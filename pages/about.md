@@ -4,6 +4,7 @@ title: About
 permalink: /about/
 feature-img: "assets/img/pexels/travel.jpeg"
 tags: [Page]
+no_toc: true
 ---
 
 <p align="center">
