@@ -9,11 +9,11 @@ thumbnail: "assets/img/thumbnails/feature-img/pexels-googledeepmind-25626521.jpe
 published: True
 ---
 
-Liquid Clustering was already a better abstraction than static partitioning due to it's flexible nature. Fabric Spark Runtime 2.0 fixes the part that had me actively cautioning customers to reconsider blindly adopting it: the cost of maintaining the layout.
+Liquid Clustering was already a better abstraction than static partitioning due to its flexible nature. Fabric Spark Runtime 2.0 fixes the part that had me actively cautioning customers to reconsider blindly adopting it: the cost of maintaining the layout.
 
-In Runtime 1.3 (Delta 3.2) a small append followed by `OPTIMIZE` would rewrite every file in a partial Z-Cube. In Runtime 2.0, the incremental strategy only touches files that are unclustered, small files, and files having a high density of deletion vectors. That changes Liquid Clustering from an occasional, potentially expensive maintenance operation into something that works beautifully with workloads of any shape and with adjacent layout optimizations. Batch or streaming writes. Auto Compaction and/or Fast Optimize. With the new Incremental strategy, Liquid Clustering is highly compatible and highly efficient, and should now take it's rightful place as the defacto new data layout strategy.
+In Runtime 1.3 (Delta 3.2) a small append followed by `OPTIMIZE` would rewrite every file in a partial Z-Cube. In Runtime 2.0, the incremental strategy only touches files that are unclustered, small, or carrying a high density of deletion vectors. That changes Liquid Clustering from an occasional, potentially expensive maintenance operation into something that works beautifully with workloads of any shape and with adjacent layout optimizations. Batch or streaming writes. Auto Compaction and/or Fast Optimize. With the new incremental strategy, Liquid Clustering is highly compatible and highly efficient, and should now take its rightful place as the de facto new data layout strategy.
 
-> Runtime 2.0 introduces a tigh realtionship between clustering cost and the amount of new or unhealthy data.
+> Runtime 2.0 introduces a tight relationship between clustering cost and the amount of new or unhealthy data.
 
 # Liquid Clustering in one sentence
 
@@ -39,7 +39,7 @@ Unlike Hive-style partitioning, this does not create a directory for every value
 | Z-Order | Column value min/max ranges stored as Delta commit metadata | Specify columns on each run | Manually scope repeated optimization |
 | Liquid Clustering | Column value min/max ranges stored as Delta commit metadata | `ALTER TABLE ... CLUSTER BY` | `OPTIMIZE` uses the stored definition |
 
-Based on the OSS implemention, for one clustering column, Liquid Clustering uses a Z-Order curve. For two or more columns, the Hilbert curve is used to preserve locality across dimensions.
+Based on the OSS implementation, for one clustering column, Liquid Clustering uses a Z-Order curve. For two or more columns, the Hilbert curve is used to preserve locality across dimensions.
 
 # Why Runtime 1.3 could become expensive
 
@@ -59,7 +59,7 @@ That behavior is why frequent `OPTIMIZE` was risky for liquid-clustered tables i
 
 # What incremental clustering changes
 
-We built Incremental Liquid Clustering into **Fabric Spark Runtime 2.0** to unlock the this optimized, simplified, and more flexible data layout strategy for customers, and it's enabled by default. The important change is file selection.
+We built Incremental Liquid Clustering into **Fabric Spark Runtime 2.0** to unlock this optimized, simplified, and more flexible data layout strategy for customers, and it's enabled by default. The important change is file selection.
 
 Instead of selecting every file in each partial Z-Cube, `OPTIMIZE` looks for files with a reason to be processed:
 
@@ -67,11 +67,11 @@ Instead of selecting every file in each partial Z-Cube, `OPTIMIZE` looks for fil
 - **Small files** that should be compacted into healthier output files.
 - **Unhealthy files** whose layout no longer provides sufficient clustering quality.
 - **Deletion-vector files** whose accumulated deletes exceed the cleanup threshold.
-- **Overlapping clustered files** selected by auto reclustering.
+- **Overlapping clustered files** selected by Auto Reclustering.
 
 Already clustered, appropriately sized, healthy files remain untouched.
 
-To see the clustering time impact between the standard strategy and incremental mode, see my [feature announcement blog](https://community.fabric.microsoft.com/t5/Fabric-Updates-Blog/Incremental-Liquid-Clustering-in-Microsoft-Fabric-Faster-smarter/ba-p/5189122).
+To see the clustering time difference between the standard and incremental strategies, see my [feature announcement blog](https://community.fabric.microsoft.com/t5/Fabric-Updates-Blog/Incremental-Liquid-Clustering-in-Microsoft-Fabric-Faster-smarter/ba-p/5189122).
 
 ## The clustering pipeline
 
@@ -83,7 +83,7 @@ Once the engine selects files, the overall process is still recognizable:
 4. **Write replacement files** with tighter clustering-column ranges.
 5. **Commit metadata** to the Delta log and remove the replaced files from the active snapshot.
 
-The optimization is not a new sorting algorithm. It is a smarter decision about which existing files need to participate and how to maintain high file-skipping potential over a tables life cycle.
+The optimization is not a new sorting algorithm. It is a smarter decision about which existing files need to participate and how to maintain high file-skipping potential over a table's life cycle.
 
 # Try the write-amplification model
 
@@ -92,13 +92,13 @@ The interactive model below runs the same append pattern against two simplified 
 - **Standard strategy from OSS Delta Lake:** rewrites files in partial Z-Cubes.
 - **Incremental strategy:** clusters the new files and leaves healthy clustered files alone.
 
-Append a few batches and run `OPTIMIZE`, then use **Fast-forward 20×** to see how repeated small writes compound. The second half lets you add overlapping files and adjust the auto-reclustering thresholds.
+Append a few batches and run `OPTIMIZE`, then use **Fast-forward 20×** to see how repeated small writes compound. The second half lets you add overlapping files and adjust the Auto Reclustering thresholds.
 
 {% include interactive.html src="/assets/playgrounds/incremental-liquid-clustering.html?embedded=1" open_src="/assets/playgrounds/incremental-liquid-clustering.html" title="Interactive incremental Liquid Clustering simulator" height="1400" class="playground-embed" %}
 
 The model intentionally simplifies file selection and overlap scoring so the behavior is visible. The real engine evaluates file statistics across all clustering dimensions and makes additional decisions about target file sizes, deletion vectors, and clustering health.
 
-# Auto reclustering protects query performance
+# Auto Reclustering protects query performance
 
 Only clustering new files would minimize writes, but it could gradually reduce query performance. New files can overlap existing value ranges, causing a predicate to touch more files than necessary.
 
@@ -113,7 +113,7 @@ Two session settings control how aggressively this happens:
 
 Lowering either threshold makes the engine more aggressive. That can improve file skipping sooner, but it also increases write amplification. The defaults are highly tuned so I wouldn't recommend changing these unless you've done extensive testing for your workload.
 
-You can disable auto reclustering independently:
+You can disable Auto Reclustering independently:
 
 ```python
 spark.conf.set(
@@ -141,7 +141,7 @@ Normal maintenance should use:
 OPTIMIZE dbo.sales;
 ```
 
-This applies the incremental strategy and processes the files selected by clustering, compaction, deletion-vector, and auto-reclustering rules.
+This applies the incremental strategy and processes the files selected by clustering, compaction, deletion-vector, and Auto Reclustering rules.
 
 Use `FULL` when the table needs a broader layout reset:
 
@@ -203,19 +203,19 @@ These metrics estimate file-skipping potential. They do not replace measuring re
 
 # A practical operating pattern
 
-For a Runtime 2.0 liquid-clustered table, I would split the life-cycle based on development and ongoing maintenance:
+For a Runtime 2.0 liquid-clustered table, I would split the life cycle based on development and ongoing maintenance:
 
 Development:
-1. Use `SHALLOW CLONE` to fork a table for perf testing
+1. Use `SHALLOW CLONE` to fork a table for perf testing.
 1. Use `ALTER TABLE` to apply clustering based on common query filters.
 1. Manually run `OPTIMIZE` to apply the clustering.
 1. Run A/B performance testing to confirm the impact on common queries that filter on the clustering keys.
-1. Optional - use the clustering quality method to evaluate the file skipping potential from various candidate clustering strategies.
+1. Optional: use the clustering quality method to evaluate the file-skipping potential from various candidate clustering strategies.
 
 Production:
 1. Enable Liquid Clustering strategy.
-1. Run `OPTIMIZE` on a schedule or preferrable enable Auto Compaction.
-1. Let incremental selection and auto reclustering handle routine maintenance.
+1. Run `OPTIMIZE` on a schedule, or preferably enable Auto Compaction.
+1. Let incremental selection and Auto Reclustering handle routine maintenance.
 1. Use `OPTIMIZE FULL` after a key change.
 
 The opinionated takeaway is simple: **do not schedule full reclustering because it feels safer**. Runtime 2.0 is designed to tolerate small imperfections in exchange for dramatically lower write cost. Optimize the change, measure the layout, and reserve full rewrites for situations that actually require them.
