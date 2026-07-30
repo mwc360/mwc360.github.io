@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Sandboxed iframe has no allow-top-navigation; external links must open a new tab. -->
+<base target="_blank">
 <title>Incremental liquid clustering — Fabric Runtime 2.0</title>
 <script>
   (() => {
@@ -329,7 +331,7 @@ spark.conf.set(
 
 <footer>
   Simplified for illustration: overlap is shown on one dimension and scored as intersection ÷ smaller range. The real engine scores overlap across all clustering dimensions (Hilbert curve for 2+ columns).
-  Sources: <a href="https://learn.microsoft.com/en-us/fabric/data-engineering/liquid-clustering">Liquid clustering — Microsoft Learn</a>
+  Source: <a href="https://learn.microsoft.com/en-us/fabric/data-engineering/liquid-clustering" target="_blank" rel="noopener noreferrer">Liquid clustering — Microsoft Learn</a>
   <p class="byline">Created by Miles Cole &middot; <a href="https://milescole.dev" target="_blank" rel="noopener noreferrer">milescole.dev</a></p>
 </footer>
 

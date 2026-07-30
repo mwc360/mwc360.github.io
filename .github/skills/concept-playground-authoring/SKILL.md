@@ -327,6 +327,24 @@ identical on both.
 {% include interactive.html src="/assets/playgrounds/<slug>.html?embedded=1" open_src="/assets/playgrounds/<slug>.html" title="<descriptive title>" height="1200" class="playground-embed" %}
 ```
 
+### Outbound links
+
+The embed sandbox is `allow-scripts allow-forms allow-popups allow-downloads` — it deliberately omits
+`allow-top-navigation`. A link without a target therefore navigates the **iframe itself**, and most
+external sites (Microsoft Learn included) send `X-Frame-Options`/`frame-ancestors` and render a
+"refused to connect" error in place of the artifact.
+
+Put this in the `<head>` of every artifact so a forgotten attribute can't reintroduce the bug:
+
+```html
+<!-- Sandboxed iframe has no allow-top-navigation; external links must open a new tab. -->
+<base target="_blank">
+```
+
+Still write `target="_blank" rel="noopener noreferrer"` explicitly on each external anchor. Artifacts
+must not use same-page `href="#..."` anchors, since `<base target="_blank">` would open those in a new
+tab as well.
+
 Report height after load and content changes:
 
 ```html
