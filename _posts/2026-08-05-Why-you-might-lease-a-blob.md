@@ -68,7 +68,7 @@ Start with a URI that represents the logical process, not a particular run:
 
 ```python
 lock_uri = (
-    "abfss://<workspace-id>@onelake.dfs.fabric.microsoft.com/
+    "abfss://<workspace-id>@onelake.dfs.fabric.microsoft.com/"
     "<lakehouse-id>/Files/locks/customer-360-refresh.lock"
 )
 ```
