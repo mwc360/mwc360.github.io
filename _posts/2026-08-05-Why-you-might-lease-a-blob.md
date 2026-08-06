@@ -68,7 +68,8 @@ Start with a URI that represents the logical process, not a particular run:
 
 ```python
 lock_uri = (
-    "abfss://<workspace-id>@onelake.dfs.fabric.microsoft.com/<lakehouse-id>/Files/locks/customer-360-refresh.lock"
+    "abfss://<workspace-id>@onelake.dfs.fabric.microsoft.com/
+    "<lakehouse-id>/Files/locks/customer-360-refresh.lock"
 )
 ```
 
@@ -170,7 +171,7 @@ display(lock_status)
 
 The resulting DataFrame would look something like this:
 
-| acquired_at | currentNotebookName | currentWorkSpaceName | isForInteractive | isForPipeline | userName |
+| acquired_at | currentNotebookName | currentWorkspaceName | isForInteractive | isForPipeline | userName |
 | --- | --- | --- | --- | --- | --- |
 | 2026-08-05T23:42:17.481920+00:00 | Customer 360 Refresh | Production Data Engineering | false | true | Miles Cole |
 
@@ -266,7 +267,8 @@ from job_locks.blob_lease import job_lock
 
 lock_name = "customer-360-refresh"
 lock_uri = (
-    f"abfss://<workspace-id>@onelake.dfs.fabric.microsoft.com/<lakehouse-id>/Files/locks/{lock_name}.lock"
+    "abfss://<workspace-id>@onelake.dfs.fabric.microsoft.com/"
+    f"<lakehouse-id>/Files/locks/{lock_name}.lock"
 )
 
 with job_lock(lock_uri):
