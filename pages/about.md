@@ -11,9 +11,15 @@ no_toc: true
   <img src="/assets/img/milesPicSmall.PNG" />
 </p>
 
-My name is Miles, I'm a Principal Program Manager at Microsoft. While a Spark specialist by role, I have deep knowledge and experience with everything lakehouse to data warehouse design, tuning, CI/CD automation, data modeling, visualization, and API development. I started off my career writing VB script to automate business processes and reporting then eventually Power BI was released and I quickly became shadow IT. After successfully implementing Power BI and starting a BI center of excellence, I was on-boarded into IT and given the opportunity of building my companies’ first cloud data warehouse. Now after dozens of implementations, I love to share what I’ve learned and talk modern data architectures.
+My name is Miles, I'm a Principal Product Manager at Microsoft where I own Fabric Spark performance and compute features. 
 
-I'm a husband and father of 3 and in my free time I love trail running, tennis, homebrewing, baking sourdough, sausage making, reading, and home remodeling.
+After getting my bachelor's degree in Economics, I started my career with a short stint in Finance (which was extremely boring) where I learned that I enjoyed automation and learning data systems through automating our month-end financial reporting. Power BI came out and I quickly became shadow IT through using unapproved tooling with source data processes that were held together via duck-tape and vibes. That eventually turned into a formal BI Developer role where I later got approval to build my company's first data warehouse in Azure (with zero prior experience). After a very successful implementation, I joined a consulting company so that I could keep building.
+
+I was a die hard cloud data warehouse guy and ironically was one of the most anti-Spark people on our delivery team. After being forced to use Spark Structured Streaming for a customer use case, I was blown away by the capabilities, started exclusively using Apache Spark, and repented of my former strong opinions.
+
+Dozens of implementations later, I have no shortage of strong opinions. I love to talk lakehouse architecture, everything Delta Lake, streaming architectures, pro-dev habits, and help people experience everything that Apache Spark and the best of OSS have to offer.
+
+On the personal side, I'm a husband and father of 3 and in my free time I do a lot of reading, house remodeling, I brew beer, make sausage, sourdough bread, smoke all sorts of meats, and try to exercise enough to compensate for all of my food hobbies.
 
 <script type="text/javascript" src="https://sessionize.com/api/speaker/sessions/8ebd5c28-05e4-420a-a6d9-aa757a315619/0x1x0072b5x"></script>
 
