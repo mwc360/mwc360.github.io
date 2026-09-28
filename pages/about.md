@@ -17,7 +17,7 @@ After getting my bachelor's degree in Economics, I started my career with a shor
 
 I was a die hard cloud data warehouse guy and ironically was one of the most anti-Spark people on our delivery team. After being forced to use Spark Structured Streaming for a customer use case, I was blown away by the capabilities, started exclusively using Apache Spark, and repented of my former strong opinions.
 
-Dozens of implementations later, I have no shortage of strong opinions. I love to talk lakehouse architecture, everything Delta Lake, streaming architectures, pro-dev habits, and help people experience everything that Apache Spark and the best of OSS have to offer.
+Dozens of implementations later, and after a shift from consulting to product management, I have no shortage of new opinions and lessons learned along the way. I love talking about lakehouse architecture, everything Delta Lake, streaming architectures, pro-dev habits, and helping people get the most out of Apache Spark and the best of OSS.
 
 On the personal side, I'm a husband and father of 3 and in my free time I do a lot of reading, house remodeling, I brew beer, make sausage, sourdough bread, smoke all sorts of meats, and try to exercise enough to compensate for all of my food hobbies.
 
