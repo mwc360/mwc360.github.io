@@ -1,0 +1,10 @@
+{% if include.post.content_tracks.size > 0 %}
+<div class="content-badges" aria-label="Article tracks">
+  {% for track_id in include.post.content_tracks %}
+    {% assign track = site.data.content_tracks[track_id] %}
+    {% if track %}
+      <a class="content-badge" href="{{ '/articles/' | relative_url }}?track={{ track_id | url_encode }}" title="{{ track.description | escape }}">{{ track.label | escape }}</a>
+    {% endif %}
+  {% endfor %}
+</div>
+{% endif %}

@@ -2,5 +2,5 @@
 layout: categories
 title: Categories
 permalink: /categories/
-hide: false
+hide: true
 ---

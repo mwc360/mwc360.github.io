@@ -1,0 +1,12 @@
+{% assign document = include.document %}
+{% assign date_format = site.data.language.str_date_format | default: '%B %-d, %Y' %}
+{% capture track_labels %}{% for track_id in document.content_tracks %}{% assign track = site.data.content_tracks[track_id] %}{% if track %}{{ track.label }} {% endif %}{% endfor %}{% endcapture %}
+"title": {{ document.title | strip_newlines | escape | jsonify }},
+"category": {{ document.category | default: '' | escape | jsonify }},
+"tags": {{ document.tags | join: ', ' | prepend: ' ' | escape | jsonify }},
+"url": {{ document.url | relative_url | escape | jsonify }},
+"date": {{ document.date | date: date_format | default: 'N/A' | escape | jsonify }},
+"excerpt": {{ document.content | strip_html | strip_newlines | strip | truncate: 250 | escape | jsonify }},
+"content": {{ document.content | strip_html | strip_newlines | strip | escape | jsonify }},
+"content_tracks": {{ document.content_tracks | join: ' ' | jsonify }},
+"track_labels": {{ track_labels | normalize_whitespace | escape | jsonify }}

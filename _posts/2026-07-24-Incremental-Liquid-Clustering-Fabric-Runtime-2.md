@@ -1,8 +1,10 @@
 ---
 layout: post
+content_tracks: [fabric]
+context_note: "Fabric Runtime 2.0-specific implementation, configuration defaults, and maintenance semantics, described from the author's work on Fabric. Shared Delta layout concepts do not imply identical OSS Delta or Databricks behavior; the simulator is illustrative, not an engine validation."
 title: "How Incremental Liquid Clustering Works"
 description: Learn how Fabric Spark Runtime 2.0 incrementally clusters Delta tables, limits write amplification, and maintains file-skipping quality.
-tags: [Fabric, Spark, Delta Lake, Liquid Clustering]
+tags: [Delta Lake, Liquid Clustering, Data Layout, Table Maintenance]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-googledeepmind-25626521.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-googledeepmind-25626521.jpeg"
@@ -11,7 +13,7 @@ published: True
 
 Liquid Clustering was already a better abstraction than static partitioning due to its flexible nature. Fabric Spark Runtime 2.0 fixes the part that had me actively cautioning customers to reconsider blindly adopting it: the cost of maintaining the layout.
 
-In Runtime 1.3 (Delta 3.2) a small append followed by `OPTIMIZE` would rewrite every file in a partial Z-Cube. In Runtime 2.0, the incremental strategy only touches files that are unclustered, small, or carrying a high density of deletion vectors. That changes Liquid Clustering from an occasional, potentially expensive maintenance operation into something that works beautifully with workloads of any shape and with adjacent layout optimizations. Batch or streaming writes. Auto Compaction and/or Fast Optimize. With the new incremental strategy, Liquid Clustering is highly compatible and highly efficient, and should now take its rightful place as the de facto new data layout strategy.
+In Fabric Spark Runtime 1.3 (Delta 3.2) a small append followed by `OPTIMIZE` would rewrite every file in a partial Z-Cube. In Runtime 2.0, the incremental strategy only touches files that are unclustered, small, or carrying a high density of deletion vectors. That changes Liquid Clustering from an occasional, potentially expensive maintenance operation into something that works beautifully with workloads of any shape and with adjacent layout optimizations. Batch or streaming writes. Auto Compaction and/or Fast Optimize. With the new incremental strategy, Liquid Clustering is highly compatible and highly efficient, and should now take its rightful place as the de facto new data layout strategy.
 
 > Runtime 2.0 introduces a tight relationship between clustering cost and the amount of new or unhealthy data.
 
@@ -59,7 +61,7 @@ That behavior is why frequent `OPTIMIZE` was risky for liquid-clustered tables i
 
 # What incremental clustering changes
 
-We built Incremental Liquid Clustering into **Fabric Spark Runtime 2.0** to unlock this optimized, simplified, and more flexible data layout strategy for customers, and it's enabled by default. The important change is file selection.
+Incremental Liquid Clustering was created in **Fabric Spark Runtime 2.0** to unlock this optimized, simplified, and more flexible data layout strategy for customers, and it's enabled by default. The important change is file selection.
 
 Instead of selecting every file in each partial Z-Cube, `OPTIMIZE` looks for files with a reason to be processed:
 

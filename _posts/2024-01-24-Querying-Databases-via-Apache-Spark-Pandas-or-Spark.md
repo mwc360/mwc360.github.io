@@ -1,7 +1,9 @@
 ---
 layout: post
+content_tracks: [oss,databricks,fabric]
+context_note: "Reusable database-access APIs compared in the original compute environment. Timings are workload-specific, not a current cross-platform performance guarantee."
 title: "Querying Databases in Apache Spark: Pandas vs. Spark API vs. Pandas-on-Spark"
-tags: [Microsoft Fabric, Azure Databricks, Lakehouse, Benchmark]
+tags: [Apache Spark, Pandas, SQL, Benchmarking]
 categories: Optimization
 feature-img: "assets/img/feature-img/pexels-suki-lee-16200703.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-suki-lee-16200703.jpeg"

@@ -1,7 +1,9 @@
 ---
 layout: post
+content_tracks: [databricks, azure-other]
+context_note: "January 2024 Azure Databricks and Power BI examples. The original preview-era recommendation is historical; see the dated documentation update below for current runtime and access-mode restrictions. Security examples have not been re-executed."
 title: "RLS in Databricks Unity Catalog and Power BI"
-tags: [Azure Databricks, Lakehouse, Security, Power BI]
+tags: [SQL, Data Governance, Access Control, Row-Level Security]
 categories: Security
 feature-img: "assets/img/feature-img/pexels-manuel-geissinger-325229.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-manuel-geissinger-325229.jpeg"
@@ -131,7 +133,9 @@ Functionally this is much better than the Dynamic Views which were the only opti
 - We no longer need to block access to underlying Delta tables just to prevent users from circumventing Dynamic View row filtering.
 - User Defined Functions (UDFs) can be reused across many tables to create modular row filtering logic. As logic may slightly change, you may only need to update one UDF rather than a host of tables that reference it.
 
->⚠️ **IMPORTANT:** UDF Row Filtering (and column masks) are in **_public preview_** at the time of writing this post. While this is a fantastic new direction, there are serious limitations which would prevent this from being used in a production capacity. See the [feature limitations](https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/row-and-column-filters#limitations) for specifics. Until this is GA, I recommend using the Dynamic Row Filtering previously discussed.
+> **Historical recommendation (January 2024):** Row filters and column masks were in public preview when I wrote this article. I recommended dynamic views because of the limitations I encountered then. That is not a current blanket production restriction.
+>
+> **Documentation check — October 15, 2026:** The [current row-filter and column-mask reference](https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/filters-and-masks/) documents runtime- and access-mode-specific restrictions: runtimes below 12.2 LTS do not support these controls; dedicated access mode requires DBR 15.4 LTS or later and a serverless-enabled workspace, with additional write restrictions by version. Choose table policies or dynamic views based on the required access path and supported operations, not this article's old preview label. I have not rerun the examples.
 
 
 ## Implementing UDF Row Filtering
@@ -141,7 +145,7 @@ To implement UDF Row Filtering there are 2 basic steps:
 1. Create a Function with an expression which returns a boolean result
 1. Alter the table you want to control and map in the relevant columns to be evaluated in the function
 
->⚠️ _Undocumented Limitation:_ UDF Row Filtering doesn't seem to support joins within a subquery so we can't produce the exact filtering as with Dynamic Row Filtering. This limits the ability filter fact tables based on the attributes of a dimension table. The below does not filter the rows of the fact table:
+> ⚠️ **Historical observation, not a verified engine limitation:** The following example did not filter as I expected in January 2024. It does not establish that joins in row filters are generally unsupported. In particular, `s.Supplier_SK = Supplier_SK` is an ambiguous-looking correlation: the unqualified name must not accidentally resolve to the inner column rather than the function parameter. Treat this as a diagnostic example, not a production security policy, and test both allowed and denied users against the current documented restrictions.
 
 ```sql
 CREATE OR REPLACE FUNCTION supplier_manager_row_filter (Supplier_SK INT)
@@ -174,4 +178,4 @@ Now we can query the base Delta table, dim_supplier and our row filtering is app
 ![Filtered Dimension](/assets/img/posts/RLS-In-Databricks-Unity-Catalog/filteredDim.png)
 
 # Closing Thoughts
-Overall, UDF based row filtering will provide much greater scalability and agility to managing RLS in Databricks. I look forward using this more post-GA and hopefully seeing some of the big limitations removed. Until then, for most use cases, especially where you want to unify your approach to RLS between Databricks and Power BI, you will need to continue using Dynamic Views to provide dynamic row filtering.
+At publication in January 2024, I saw UDF-based row filtering as a promising way to scale RLS and preferred dynamic views for the scenarios described here. That preview-era recommendation is historical, not a requirement to keep using views today. Evaluate the current runtime/access-mode restrictions and test enforcement in Databricks and Power BI separately; imported Power BI data still needs its own correctly configured RLS policy.

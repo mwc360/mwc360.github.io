@@ -1,7 +1,9 @@
 ---
 layout: post
+content_tracks: [fabric]
+context_note: "Historical Microsoft Build 2024 announcement recap. Preview labels, runtime versions, comparisons, and release expectations reflect May 2024, not current availability or roadmap commitments."
 title: "Fabric Announcements at Build '24"
-tags: [Fabric, Spark, Lakehouse, Delta Lake]
+tags: [Apache Spark, Delta Lake, Query Optimization, Orchestration]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-googledeepmind-17483907.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-googledeepmind-17483907.jpeg"
@@ -21,8 +23,6 @@ The biggest difference between Fabric's NEE and Photon is that the NEE is compos
 A bit of background on both technologies:
 - **[Velox](https://github.com/facebookincubator/velox)**: Velox is a pluggable or standalone accelerator engine written in C++ that aims to accelerate workloads via not having JVM overhead and performing transformations on columnar data rather than row data. Velox was created by Meta and is currently being developed in partnership with a few other companies including Intel.
 - **[Apache Gluten (Incubating)](https://gluten.apache.org/#:~:text=Apache%20Gluten%20%28incubating%29%20is%20a%20middle%20layer%20responsible,offloading%20JVM-based%20SQL%20engines%E2%80%99%20execution%20to%20native%20engines.)**: Gluten is effectively the glue (that's why it's named _gluten_) that binds JVM-based SQL engines (i.e. Apache Spark) with native execution engines. Gluten is effectively the integration between Spark and Velox since Velox. Gluten was developed by Intel and has since been donated to the Apache software foundation.
-
-For background on Photon, I wrote a blog on [Photon and important cost considerations](https://milescole.dev/data-engineering/2024/04/30/Is-Databricks-Photon-A-NoBrainer.html).
 
 I will write a blog comparing the performance of Photon vs. NEE later, for now, I'll highlight that enabling the Fabric NEE provided an average of **~30% improvement in query execution times** for a sampling of queries that contained a few 100M row tables. Higher volumes of data should result in more improvement since the NEE uses columnar storage for data transformations. I would expect that the improvement will get faster and closer to Photon by GA.
 
@@ -87,4 +87,3 @@ User functions in Fabric are Azure Functions but with a super simple and low-fri
 
 # Data Workflows
 I haven't gotten a chance to play around with Data Workflows yet, however, the concept is super exciting: Apache Airflow with an ADF-like wrapper for monitoring. 
-

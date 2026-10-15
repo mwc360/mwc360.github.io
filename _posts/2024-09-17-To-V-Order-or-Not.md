@@ -1,18 +1,28 @@
 ---
 layout: post
+content_tracks: [fabric]
+context_note: "September 2024 Fabric analysis written during the author's Microsoft employment. Measurements remain historical. Current documentation disables V-Order by default in new workspaces; check the session and table settings rather than assuming the original default."
 title: "To V-Order or Not: Making the Case for Selective Use of V-Order in Fabric Spark"
-tags: [Fabric, Spark, Lakehouse, Delta Lake]
+tags: [Data Layout, Query Optimization, Benchmarking]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-kevin-ku-92347-577585.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-kevin-ku-92347-577585.jpeg"
 published: true
 ---
 
-Fabric Spark Runtimes currently enable V-Order optimization by default as a Spark configuration. V-Order is a Parquet write optimization that seeks to logically organize data based on the same storage algorithm used in Power BI's VertiPaq engine.
+In the Fabric Spark environment used for this September 2024 article, V-Order was enabled
+by default as a Spark configuration. V-Order is a Parquet write optimization that seeks to
+logically organize data based on the same storage algorithm used in Power BI's VertiPaq
+engine.
+
+> **Default-setting update — October 15, 2026:** The
+> [official documentation](https://learn.microsoft.com/en-us/fabric/data-engineering/delta-optimization-and-v-order)
+> now states that V-Order is **disabled by default in newly created Fabric workspaces**.
+> Resource profiles and session, table, or write settings can affect its use. Check your
+> actual configuration; the measurements below have not been rerun.
 
 The goal of this blog post is to explore V-Order optimization and the implications it has on various workloads to help inform the decision of when it should be enabled.
 
-> While I'm a Microsoft employee, all thoughts and opinions on this topic are my own. Any performance related references should only be considered directionally accurate and confirmed via your own organizations data, query patterns, and workload architecture. Results are highly variable depending on various factors including data cardinality, row counts, file sizes, query patterns, and compute size / scale.
 
 ## What is V-Order?
 

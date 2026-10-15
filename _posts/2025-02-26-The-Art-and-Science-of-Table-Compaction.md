@@ -1,7 +1,9 @@
 ---
 layout: post
+content_tracks: [oss, fabric, databricks]
+context_note: "General Delta compaction concepts with a February 2025 Fabric case study. Measurements, platform defaults, and comparative pricing assertions reflect that context and have not been re-benchmarked or repriced."
 title: "Mastering Spark: The Art and Science of Table Compaction"
-tags: [Fabric, Spark, Lakehouse, Delta Lake]
+tags: [Delta Lake, Compaction, Table Maintenance, Benchmarking]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-googledeepmind-17485680.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-googledeepmind-17485680.jpeg"

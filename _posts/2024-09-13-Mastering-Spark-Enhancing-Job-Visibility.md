@@ -1,7 +1,8 @@
 ---
 layout: post
+content_tracks: [oss,fabric,databricks]
 title: "Mastering Spark: Enhancing Job Visibility"
-tags: [Fabric, Spark, Lakehouse, Delta Lake]
+tags: [Apache Spark, Observability]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-stephendn-131018.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-stephendn-131018.jpeg"
@@ -13,6 +14,8 @@ One of the most critical challenges in large-scale data processing with Apache S
 In this blog, we'll explore a couple spark settings which allow for improving visibility in the Spark UI, making it easier to identify jobs, debug, optimize, and manage your applications. You’ll learn how to annotate your jobs with meaningful descriptions, organize related tasks into groups, and leverage these features to streamline your debugging and performance-tuning efforts. 
 
 # The Challenge of Job Visibility in Spark
+The examples use SparkContext APIs in a classic Spark session. Check API availability before adapting them to Spark Connect, restricted access modes, or managed serverless compute; a common Spark concept does not guarantee the same context API is exposed.
+
 While Spark tends to be very flexible in terms of the lazy evalutation model resulting in highly efficient execution plans, when things do run longer than expected or things fail, it can be very challenging to triage.
 
 While the Spark UI makes a massive amount of telemetry accessible, which platforms like Microsoft Fabric surface much of this information via native tooling, understanding what you are looking at is often quite daunting and confusing. Even if you understand the concepts of Jobs, Stages, Tasks, etc., the first step in troubleshooting is often identifying the specific job associated with the issue or correlating something that’s slow in the Spark UI back to meaningful code.

@@ -1,7 +1,9 @@
 ---
 layout: post
+content_tracks: [oss, fabric, databricks]
+context_note: "Spark SQL fundamentals with Fabric-specific onboarding and tuning. Spark/Delta 4.0 feature expectations and Fabric availability statements reflect October 2024 and have not been revalidated as current release guidance."
 title: "Breaking the Myth: Spark Isn’t as Scary as You'd Think (And Yes, It Supports SQL!)"
-tags: [Fabric, Spark, Lakehouse]
+tags: [Apache Spark, SQL, Query Optimization]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-googledeepmind-17485738.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-googledeepmind-17485738.jpeg"

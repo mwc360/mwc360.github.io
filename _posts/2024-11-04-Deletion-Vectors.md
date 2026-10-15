@@ -1,7 +1,9 @@
 ---
 layout: post
+content_tracks: [oss, fabric, databricks]
+context_note: "Delta deletion-vector concepts with the original Fabric benchmark and configuration context. Performance results, default settings, and cross-engine support statements have not been rerun or fully revalidated."
 title: "Unlock Faster Writes in Delta Lake with Deletion Vectors"
-tags: [Fabric, Spark, Lakehouse, Delta Lake]
+tags: [Delta Lake, Deletion Vectors, Table Maintenance, Benchmarking]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-pixabay-235990.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-pixabay-235990.jpeg"

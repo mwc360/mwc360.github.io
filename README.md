@@ -40,6 +40,42 @@ Check out this tutorial: [Use as Ruby Gem](#use-as-ruby-gem-)
 	- GitHub Page: [update `_config.yml`](#site-configuration)
 5. Run the Jekyll server: `bundle exec jekyll serve`
 
+## Article tracks and tags
+
+`content_tracks` describes platform and applicability using `_data/content_tracks.yml`.
+`tags` describes technologies and technical subjects using `_data/article_tags.yml`.
+Do not repeat platforms such as Fabric, Databricks, or Azure as tags, and do not use
+the retired catch-all `Lakehouse` tag.
+
+Each published article must have **2-5 unique canonical tag labels**, selected for
+substantive coverage rather than passing mentions. Preserve registered spelling,
+capitalization, and pluralization; use `Apache Spark`, `Delta Lake`, and `Benchmarking`,
+not `Spark`, `DeltaLake`, or `Benchmark`. A tag does not certify cross-platform portability.
+
+```yaml
+content_tracks: [oss, fabric]
+tags: [Delta Lake, Compaction, Table Maintenance, Benchmarking]
+```
+
+Before adding a tag, reuse an existing subject when appropriate. New entries need a
+stable kebab-case `id`, reader-facing `label`, and scope `description`. Optional `aliases`
+preserve former topic-tag anchors; they are not valid front-matter labels. Keep retired
+platform/catch-all links in `_data/legacy_tags.yml`, separate from the active taxonomy.
+Undated drafts are validated when prepared for publication, not published automatically.
+
+The article archive combines **any selected track AND any selected tag AND keywords**.
+Tag counts show matches for each tag within the selected tracks and keywords.
+URLs use stable IDs, for example `/articles/?track=fabric&tag=delta-lake&tag=compaction`.
+Keep IDs stable when editing display labels.
+
+Validate before publishing:
+
+```shell
+ruby _scripts/validate-content.rb
+node --test tests/*.test.js
+bundle exec jekyll build --future
+```
+
 ## Structure
 
 Here are the main files of the template

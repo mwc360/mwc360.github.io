@@ -3,6 +3,7 @@ layout: page
 ---
 
 <div class="home">
+    <p>Tags describe technologies and technical subjects. Combine them with platform tracks in the <a href="{{ '/articles/' | relative_url }}">article archive</a>.</p>
 
     <!-- cycles through posts to get tags -->
     {% assign rawtags = "" %}
@@ -34,6 +35,10 @@ layout: page
     <!-- Displays the posts and pages that contains the tag-->
     <div class="posts">
         {% for tag in tags %}
+        {% assign canonical_tag = site.data.article_tags | where: "label", tag | first %}
+        {% for alias in canonical_tag.aliases %}
+        <span id="{{ alias | cgi_escape }}" aria-hidden="true"></span>
+        {% endfor %}
         <h3 id="{{ tag | cgi_escape }}" class="tag-anchor">
             <a href="#{{ tag | cgi_escape }}"><i class="fas fa-tag fa-fw fa-sm"></i> {{ tag }}</a>
             <a href="#{{ page.title }}" style="float: right"><i class="fas fa-chevron-up fa-lg" aria-hidden="true"> </i> </a>
@@ -85,6 +90,18 @@ layout: page
             {% endfor %}
 
         </div>
+        {% endfor %}
+
+        {% for entry in site.data.legacy_tags %}
+        <section>
+            <h3 id="{{ entry[0] | cgi_escape }}" class="tag-anchor">{{ entry[0] | escape }} (former tag)</h3>
+            {% if entry[1].track %}
+            {% assign track = site.data.content_tracks[entry[1].track] %}
+            <p>Platform tags are now content tracks. Browse <a href="{{ '/articles/' | relative_url }}?track={{ entry[1].track | uri_escape }}">{{ track.label | escape }} articles</a>, then narrow by technology or topic.</p>
+            {% else %}
+            <p>This broad tag has been retired. Browse the <a href="{{ '/articles/' | relative_url }}">article archive</a> using specific technology and topic tags.</p>
+            {% endif %}
+        </section>
         {% endfor %}
 
     </div>

@@ -1,7 +1,9 @@
 ---
 layout: post
+content_tracks: [fabric]
+context_note: "March 2025 Fabric packaging workflow. The blanket Resource-folder Git limitation is corrected below: current documentation supports opt-in built-in notebook Resources, but not Environment resources. Private-feed installation examples have not been re-executed."
 title: "Elevate Your Code: Creating Python Libraries Using Microsoft Fabric (Part 2 of 2: Packaging, Distribution, and Consumption)"
-tags: [Fabric, Spark, Lakehouse, SDLC]
+tags: [Python, Python Packaging, Production Engineering]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-thisisengineering-3861972.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-thisisengineering-3861972.jpeg"

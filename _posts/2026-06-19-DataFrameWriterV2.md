@@ -1,7 +1,9 @@
 ---
 layout: post
+content_tracks: [oss, fabric, databricks]
+context_note: "Spark DataFrameWriterV2 and Delta examples with Fabric-specific default-format assumptions. Version gates and open-PR status reflect June 2026; API/provider support and preview availability have not been revalidated for current releases."
 title: "Mastering Spark: DataFrameWriterV2 vs. DataFrameWriterV1"
-tags: [Fabric, Spark, Lakehouse, Delta Lake]
+tags: [Apache Spark, Delta Lake, Schema Management, Liquid Clustering]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-googledeepmind-25626435.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-googledeepmind-25626435.jpeg"

@@ -1,7 +1,9 @@
 ---
 layout: post
+content_tracks: [fabric, databricks]
+context_note: "Historical interoperability reference with later runtime additions of unrecorded review date. The matrices and preview/EPP labels are not a current certification. Feature-drop behavior has changed; read the safety update before using history-truncation examples."
 title: "Decoding Delta Lake Compatibility Between Fabric and Databricks"
-tags: [Fabric, Databricks, Delta Lake, Spark]
+tags: [Delta Lake, Interoperability, Migration]
 categories: Integration
 feature-img: "assets/img/feature-img/pexels-google-deepmind-17483874.jpeg"
 thumbnail: "assets/img/feature-img/pexels-google-deepmind-17483874.jpeg"
@@ -48,13 +50,16 @@ The table below contains the three Delta table features (plus one that requires 
 > †† Databricks enables V2 Checkpoints by default when using Liquid Clustering. However, Liquid Clustering by itself is a writer table protocol and not a reader protocol, that means we can drop V2 Checkpoints after enabling Liquid Clustering to allow Fabric Runtimes prior to 1.3 to read from Liquid Clustered tables. This not a straightforward process, see [how to drop V2 Checkpoints](#How-to-Drop-V2-Checkpoints).
 
 ### Dropping Table Features to Enable Read OR Write Compatibility
-There are currently two Delta table features that can be dropped:
+In the original runtime context, this article focused on dropping two table features:
 - `v2Checkpoints` (available since Delta Lake 3.0)
 - `deletionVectors` (available since Delta Lake 2.3)
 
-Given that Delection Vectors are available in Delta Lake 2.3.0, I will only be highlighting dropping V2 Checkpoints, however the process is exactly the same.
+The legacy example below highlights V2 Checkpoints. Do not assume every feature or
+current runtime uses the same downgrade process.
 
 #### How to Drop V2 Checkpoints
+> **Update — October 15, 2026:** The steps below are a **historical procedure**, not the recommended default for current runtimes. The [current Databricks feature-drop documentation](https://learn.microsoft.com/en-us/azure/databricks/tables/features/drop-feature) describes newer `DROP FEATURE` behavior with protected checkpoints and the writer feature `checkpointProtection`. External writers must support the resulting protocol. `TRUNCATE HISTORY` removes transaction-log history older than 24 hours and prevents access to the removed historical versions/time travel. It is not a routine prerequisite for read compatibility. Feature drops conflict with concurrent writes and require stream coordination. Test a copy and dependent readers/writers, and assess retention and recovery requirements before changing a production table. The matrices above and below, including preview/EPP labels, have not been revalidated against current releases.
+
 Since the transaction log contains transaction history which contains V2 Checkpoints, we must first drop the feature which will stop future transactions from using the feature, and then drop with the feature from historical transactions.
 
 Steps:
@@ -70,7 +75,7 @@ OR
 
 2. Wait until the Delta log retention duration has passed. This setting is 30 days by default. 
 
-At this time it is not possible to disable V2 Checkpoints on creation of a Liquid Clustered table. However, after following these steps we will be able to successfuly shortcut a Liquid Clustered table into Fabric and read it natively.
+In the historical environment described here, disabling V2 Checkpoints on creation was not available. The downgrade was used to make a liquid-clustered table readable through a Fabric shortcut in that environment. Neither restriction nor outcome is a guarantee for current runtimes or tables with additional features.
 
 # Delta Writer Feature Compatability
 The below table contains the Delta table features which not all [Apache Spark Runtimes in Fabric](https://learn.microsoft.com/en-us/fabric/data-engineering/runtime) can write to.
@@ -115,4 +120,3 @@ df = CompatibilityChecker(
 display(df)
 ```
 ![Dataframe Results](/assets/img/posts/Decoding-Delta-Lake-Compatibility/results.png)
-

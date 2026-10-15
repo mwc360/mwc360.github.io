@@ -1,7 +1,9 @@
 ---
 layout: post
+content_tracks: [oss,fabric,databricks]
+context_note: "An April 2024 architecture opinion grounded in the author's experience, not a universal cost or performance comparison across today's compute offerings."
 title: "Confessions of a Spark Convert"
-tags: [Fabric, Databricks, Delta Lake, Spark]
+tags: [Apache Spark, Architecture, Cost Optimization]
 categories: Architecture
 feature-img: "assets/img/feature-img/pexels-messalaciulla-942873.jpeg"
 thumbnail: "assets/img/feature-img/pexels-messalaciulla-942873.jpeg"

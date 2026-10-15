@@ -1,7 +1,8 @@
 ---
 layout: post
+content_tracks: [oss,databricks,fabric]
 title: "Delta Table Maintenance 101"
-tags: [Azure Synapse, Azure Databricks, Lakehouse, Fabric, Delta Lake]
+tags: [Delta Lake, Table Maintenance, Compaction, Liquid Clustering]
 categories: Optimization
 feature-img: "assets/img/feature-img/pexels-suntorn-somtong-delta.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-suntorn-somtong-delta.jpeg"

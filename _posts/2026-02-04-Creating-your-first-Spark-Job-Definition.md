@@ -1,7 +1,8 @@
 ---
 layout: post
+content_tracks: [fabric]
 title: "Creating your first Spark Job Definition"
-tags: [Fabric, Spark, Lakehouse, Delta Lake]
+tags: [Apache Spark, Python, Configuration, Orchestration, Production Engineering]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-googledeepmind-25626517.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-googledeepmind-25626517.jpeg"

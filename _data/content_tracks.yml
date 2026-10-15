@@ -1,0 +1,12 @@
+oss:
+  label: 'OSS & fundamentals'
+  description: 'Reusable open-source concepts, libraries, and engineering techniques; not a guarantee that every example runs unchanged on every platform.'
+fabric:
+  label: 'Microsoft Fabric'
+  description: 'Substantive Microsoft Fabric implementations, workflows, configurations, product behavior, and benchmark environments.'
+databricks:
+  label: 'Databricks'
+  description: 'Substantive Databricks compute, governance, workflows, product behavior, and interoperability guidance.'
+azure-other:
+  label: 'Azure & other'
+  description: 'Azure services outside Fabric and Databricks, including Synapse and Data Factory, plus other platform-specific material.'

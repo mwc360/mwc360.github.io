@@ -1,7 +1,9 @@
 ---
 layout: post
+content_tracks: [oss, fabric, databricks]
+context_note: "July 2025 LakeBench v0.3 announcement with Fabric-focused examples. Release capabilities and dependencies describe that version, not a verification of the latest package."
 title: "Announcing: 🌊 LakeBench"
-tags: [Fabric, Spark, Lakehouse, Delta Lake, DuckDB, Polars, Daft]
+tags: [Python, Benchmarking, Developer Tooling]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-danielspase-2091351.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-danielspase-2091351.jpeg"

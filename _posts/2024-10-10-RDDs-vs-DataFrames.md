@@ -1,7 +1,8 @@
 ---
 layout: post
+content_tracks: [oss,databricks,fabric]
 title: "Mastering Spark: RDDs vs. DataFrames"
-tags: [Fabric, Spark]
+tags: [Apache Spark, Python]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-googledeepmind-25626446.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-googledeepmind-25626446.jpeg"

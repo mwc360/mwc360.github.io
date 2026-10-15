@@ -1,7 +1,8 @@
 ---
 layout: post
+content_tracks: [fabric]
 title: "Automating V-Order: A Targeted Approach for Direct Lake Models"
-tags: [Fabric, Spark, Lakehouse, Delta Lake]
+tags: [Data Layout, Metadata, Automation]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-pixabay-262438.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-pixabay-262438.jpeg"

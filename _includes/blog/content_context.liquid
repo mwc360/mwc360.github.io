@@ -1,0 +1,7 @@
+{% if include.post.tested_on or include.post.context_note or include.post.last_reviewed %}
+<aside class="article-context" aria-label="Article context">
+  {% if include.post.tested_on %}<p><strong>Environment:</strong> {{ include.post.tested_on | escape }}</p>{% endif %}
+  {% if include.post.context_note %}<p>{{ include.post.context_note | escape }}</p>{% endif %}
+  {% if include.post.last_reviewed %}<p><strong>Last technically reviewed:</strong> <time datetime="{{ include.post.last_reviewed | date: '%Y-%m-%d' }}">{{ include.post.last_reviewed | date: "%B %-d, %Y" }}</time></p>{% endif %}
+</aside>
+{% endif %}

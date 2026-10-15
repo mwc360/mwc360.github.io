@@ -1,7 +1,9 @@
 ---
 layout: post
+content_tracks: [azure-other]
+context_note: "Synapse Dedicated SQL Pool case study using the original workload and measurements; results have not been rerun on current infrastructure."
 title: "Synapse Optimization Series: Table Distributions"
-tags: [Azure Synapse, Dedicated SQL Pools, Optimization, Benchmark]
+tags: [SQL, Query Optimization, Data Layout, Benchmarking]
 categories: Optimization
 feature-img: "assets/img/feature-img/circuit.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/circuit.jpeg"

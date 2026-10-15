@@ -1,7 +1,9 @@
 ---
 layout: post
+content_tracks: [fabric, oss]
+context_note: "General write-layout concepts measured in Fabric in August 2024. Defaults and benchmark results describe that environment, not every Spark or Delta implementation; current defaults have not been revalidated."
 title: "Optimizing Spark: A Deep Dive into Optimized Write in Microsoft Fabric"
-tags: [Fabric, Spark, Lakehouse, Delta Lake]
+tags: [Apache Spark, Delta Lake, Data Layout, Benchmarking]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-technobulka-2908984.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-technobulka-2908984.jpeg"

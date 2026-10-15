@@ -1,7 +1,8 @@
 ---
 layout: post
+content_tracks: [oss,databricks,fabric]
 title: "The SQL Decoder Ring for Replatforming to Fabric and Databricks"
-tags: [Fabric, Databricks, Delta Lake, Spark]
+tags: [SQL, Python, Migration]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-cottonbro-7319068.jpeg"
 thumbnail: "assets/img/feature-img/pexels-cottonbro-7319068.jpeg"

@@ -1,7 +1,10 @@
 ---
 layout: post
+content_tracks: [oss, fabric]
+tested_on: "Fabric Runtime 1.3 (Spark 3.5, Delta Lake 3.2), with Native Execution Engine; engine versions listed in the article"
+context_note: "June/July 2025 benchmark restricted to engines available in Fabric, not a Photon comparison or vanilla OSS Spark test. Measurements are unchanged; roadmap comments reflect the author's Microsoft role at publication and are not current commitments. Current engine limitations have not been fully revalidated."
 title: "The Small Data Showdown '25: Is it Time to Ditch Spark Yet??"
-tags: [Fabric, Spark, Lakehouse, Delta Lake, DuckDB, Polars, Daft]
+tags: [Apache Spark, DuckDB, Polars, Daft, Benchmarking]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-pixabay-248547.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-pixabay-248547.jpeg"

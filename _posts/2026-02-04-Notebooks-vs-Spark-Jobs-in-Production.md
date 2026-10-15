@@ -1,7 +1,9 @@
 ---
 layout: post
+content_tracks: [oss, fabric]
+context_note: "General engineering tradeoffs illustrated with Microsoft Fabric Spark Job Definitions. The Microsoft workload anecdote describes the author's work there at the time; reliability depends on testing and governance, not the notebook or job artifact alone."
 title: "Notebooks, Spark Jobs, and the Hidden Cost of Convenience"
-tags: [Fabric, Spark, Lakehouse, Delta Lake]
+tags: [Apache Spark, Python, Production Engineering, Resilience]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-googledeepmind-25626522.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-googledeepmind-25626522.jpeg"
@@ -77,7 +79,7 @@ If your transformation logic, shared utilities, or dataframe operators are worth
 
 This section hits closest to home for me.
 
-I run a low-risk internal Spark workload at Microsoft where the use case requires frequently adjusting input parameters. For a long time, I ran it via notebooks, even after I had already refactored all logic into Python packages. The notebook was just the entry point.
+While working at Microsoft, I ran a low-risk internal Spark workload whose use case required frequently adjusting input parameters. For a long time, I ran it via notebooks, even after I had already refactored all logic into Python packages. The notebook was just the entry point.
 
 But notebooks made it too easy to be lazy:
 

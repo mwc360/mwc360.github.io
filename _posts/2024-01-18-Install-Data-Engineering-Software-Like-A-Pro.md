@@ -1,7 +1,8 @@
 ---
 layout: post
+content_tracks: [oss]
 title: "Install Data Software Like a Pro"
-tags: [Tools]
+tags: [Developer Tooling, Automation]
 categories: Automation
 feature-img: "assets/img/feature-img/pexels-pixabay-65882.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-pixabay-65882.jpeg"

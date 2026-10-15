@@ -1,7 +1,8 @@
 ---
 layout: post
+content_tracks: [azure-other]
 title: "Azure Synapse / SQL User Provisioning the Right Way"
-tags: [Azure Synapse, Dedicated SQL Pools, Security, Automation, RBAC]
+tags: [SQL, Access Control, Automation]
 categories: Automation
 feature-img: "assets/img/feature-img/pexels-scott-webb-cameras.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-scott-webb-cameras.jpeg"

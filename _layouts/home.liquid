@@ -23,6 +23,13 @@ layout: default
     <div id="main" class="call-out call-out_img">
         <h1> {{ site.header_text | default: "Change <code>header_text</code> in <code>_config.yml</code>"}} </h1>
     </div>
+    <nav class="article-discovery" aria-label="Browse articles">
+        <a class="articles-link" href="{{ '/articles/' | relative_url }}">All articles</a>
+        {% assign track_order = "oss,databricks,fabric,azure-other" | split: "," %}
+        {% for track_id in track_order %}
+          <a href="{{ '/articles/' | relative_url }}?track={{ track_id | url_encode }}">{{ site.data.content_tracks[track_id].label | escape }}</a>
+        {% endfor %}
+    </nav>
     {% capture _blog %}{% include blog/blog.liquid %}{% endcapture %}
     {{ _blog | split: " " | join: " "}}
 </div>

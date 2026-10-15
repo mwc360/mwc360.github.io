@@ -1,7 +1,8 @@
 ---
 layout: post
+content_tracks: [azure-other, databricks]
 title: "Linked Service Property Magic"
-tags: [Azure Synapse, Azure Data Factory, Orchestration, Azure Databricks]
+tags: [Orchestration, Configuration, Access Control]
 categories: Integration
 feature-img: "assets/img/feature-img/pexels-zachary-debottis-1888883.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-zachary-debottis-1888883-small.jpeg"

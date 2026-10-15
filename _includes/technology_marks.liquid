@@ -1,0 +1,10 @@
+{% assign technology_ids = include.technologies | split: "," %}
+<span class="technology-marks" role="group" aria-label="Related technologies">
+  {% for technology_id in technology_ids %}
+    {% assign technology = site.data.technology_marks[technology_id] %}
+    <span class="technology-mark" title="{{ technology.label | escape }}">
+      <img src="{{ technology.image | relative_url }}" alt="" width="24" height="24">
+      <span class="sr-only">{{ technology.label }}</span>
+    </span>
+  {% endfor %}
+</span>

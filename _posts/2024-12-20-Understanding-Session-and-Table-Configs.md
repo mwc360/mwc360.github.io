@@ -1,7 +1,9 @@
 ---
 layout: post
+content_tracks: [oss, fabric]
+context_note: "Configuration-scope concepts illustrated with Fabric and Delta settings from December 2024. Defaults and precedence can depend on the specific feature and runtime; examples have not been revalidated across current platforms."
 title: "Mastering Spark: Session vs. DataFrameWriter vs. Table Configs"
-tags: [Fabric, Spark, Lakehouse, Delta Lake]
+tags: [Apache Spark, Delta Lake, Configuration]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-andreea-ch-371539-4178808.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-andreea-ch-371539-4178808.jpeg"

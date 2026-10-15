@@ -1,7 +1,9 @@
 ---
 layout: post
+content_tracks: [oss, fabric, databricks]
+context_note: "General concurrency concepts with Fabric and Databricks examples from February 2024. Platform execution, isolation, and billing assumptions have not been revalidated for current compute options."
 title: "Cluster Configuration Secrets for Spark: Unlocking Parallel Processing Power"
-tags: [Fabric, Databricks, Spark, Optimization, Benchmark]
+tags: [Apache Spark, Python, Concurrency, Orchestration]
 categories: Optimization
 feature-img: "assets/img/feature-img/pexels-kelly-2544989.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-kelly-2544989.jpeg"

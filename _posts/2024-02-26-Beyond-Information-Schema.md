@@ -1,7 +1,9 @@
 ---
 layout: post
+content_tracks: [fabric, oss]
+context_note: "Fabric metadata-access limitations and roadmap hopes describe February 2024. The reusable Spark alternatives remain the subject; current Fabric metadata coverage has not been revalidated."
 title: "Beyond Information Schema: Metadata Mastery in a Fabric Lakehouse"
-tags: [Fabric, Spark]
+tags: [Apache Spark, SQL, Metadata]
 categories: Data-Engineering
 feature-img: "assets/img/pexels/search-map.jpeg"
 thumbnail: "assets/img/pexels/search-map.jpeg"

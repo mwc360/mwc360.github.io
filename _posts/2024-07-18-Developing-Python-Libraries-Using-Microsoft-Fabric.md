@@ -1,7 +1,9 @@
 ---
 layout: post
+content_tracks: [fabric]
+context_note: "July 2024 Fabric library-development workflow. UI and integration limitations are historical; see the linked source-control update below for opt-in built-in notebook Resources support. Environment resources have different support boundaries."
 title: "Elevate Your Code: Creating Python Libraries Using Microsoft Fabric (Part 1 of 2: Development)"
-tags: [Fabric, Spark, Lakehouse, SDLC]
+tags: [Python, Python Packaging, Developer Tooling, Production Engineering]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-koprivakart-5914531.jpeg"
 thumbnail: "assets/img/feature-img/pexels-koprivakart-5914531.jpeg"

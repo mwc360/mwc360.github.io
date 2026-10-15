@@ -1,8 +1,9 @@
 ---
 layout: post
+content_tracks: [oss, fabric, databricks]
 title: "Why you might lease a blob: an intro to job locks"
 description: Use blob leases to build a reusable, globally coordinated job lock for data engineering workloads.
-tags: [Fabric, Spark, DeltaLake, Python]
+tags: [Python, Concurrency, Distributed Locking, Orchestration, Resilience]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-googledeepmind-17483869.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-googledeepmind-17483869.jpeg"

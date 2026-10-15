@@ -53,6 +53,26 @@ header {
 }
 
 /* --- Post info --- */
+.title-padder > .content-badges {
+  justify-content: center;
+}
+
+.article-context {
+  padding: 1rem 1.25rem;
+  border-left: 3px solid var(--link);
+  background: var(--surface-hover);
+  margin-bottom: 2rem;
+  font-size: 0.95rem;
+
+  p {
+    margin: 0 0 0.65rem;
+  }
+
+  p:last-child {
+    margin-bottom: 0;
+  }
+}
+
 .post-info {
   /* For border in author
   border: 1px solid var(--border);

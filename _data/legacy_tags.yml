@@ -1,0 +1,18 @@
+Fabric:
+  track: fabric
+Microsoft Fabric:
+  track: fabric
+Databricks:
+  track: databricks
+Azure Databricks:
+  track: databricks
+Azure Synapse:
+  track: azure-other
+Azure Data Factory:
+  track: azure-other
+Dedicated SQL Pools:
+  track: azure-other
+Power BI:
+  track: azure-other
+Lakehouse:
+  all: true

@@ -1,7 +1,8 @@
 ---
 layout: post
+content_tracks: [oss,databricks]
 title: "Generative AI and Spark: Leveraging LLMs for Accelerated Migrations"
-tags: [Fabric, Spark, Lakehouse, Databricks]
+tags: [Python, LLMs, Migration]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-googledeepmind-17485743.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-googledeepmind-17485743.jpeg"
@@ -243,5 +244,3 @@ for f in files:
 ```
 
 The above script would execute in a couple of minutes at most for 200 input scripts... _in a real-world migration project where we have to parse and transpile code, this could translate to **hundreds of hours saved**_.
-
-

@@ -18,6 +18,9 @@
     <!-- Main JS (navbar.js, katex_init.js and masonry_init.js)-->
     <script defer src="{{ '/assets/js/main.min.js' | relative_url }}"></script>
     <script defer src="{{ '/assets/js/code-blocks.js' | relative_url }}"></script>
+    {% if page.content_browser %}
+    <script defer src="{{ '/assets/js/content-browser.js' | relative_url }}"></script>
+    {% endif %}
 
     <!-- CSS -->
     <link rel="preload" href="{{ '/assets/fonts/source-sans-3/SourceSans3-Latin.woff2' | relative_url }}" as="font" type="font/woff2" crossorigin>

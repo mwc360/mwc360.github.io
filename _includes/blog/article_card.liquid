@@ -1,0 +1,49 @@
+{% assign post = include.post %}
+{% assign post_words = post.content | strip_html | number_of_words %}
+{% assign read_minutes = post_words | plus: 149 | divided_by: 150 %}
+{% assign article_summary = post.summary | default: post.description | default: post.excerpt | strip_html | normalize_whitespace %}
+{% capture article_tag_ids %}{% for tag_label in post.tags %}{% assign tag = site.data.article_tags | where: "label", tag_label | first %}{{ tag.id }} {% endfor %}{% endcapture %}
+<article class="post-entry"{% if include.filterable %} data-article data-tracks="{{ post.content_tracks | join: ' ' | escape }}" data-title="{{ post.title | escape }}" data-summary="{{ article_summary | escape }}" data-tags="{{ post.tags | join: ' ' | escape }}" data-tag-ids="{{ article_tag_ids | normalize_whitespace | escape }}"{% endif %}>
+  <div class="post-entry-heading{% if post.thumbnail %} has-thumbnail{% endif %}">
+    <p class="post-entry-meta">
+      {% if post.categories.first %}
+        <span class="post-entry-category">{{ post.categories.first | replace: "-", " " }}</span>
+        <span aria-hidden="true">·</span>
+      {% endif %}
+      <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%B %-d, %Y" }}</time>
+      <span aria-hidden="true">·</span>
+      <span>{{ read_minutes }} min read</span>
+    </p>
+    <header class="post-entry-header">
+      <h2><a class="post-link" href="{{ post.url | relative_url }}">{{ post.title | escape }}</a></h2>
+    </header>
+    {% include blog/content_badges.liquid post=post %}
+    {% if include.filterable %}
+    <p class="article-topic-tags" aria-label="Article tags">
+      <span>Tags:</span>
+      {% for tag_label in post.tags %}
+        {% assign tag = site.data.article_tags | where: "label", tag_label | first %}
+        <a href="{{ '/articles/' | relative_url }}?tag={{ tag.id | uri_escape }}">{{ tag_label | escape }}</a>
+      {% endfor %}
+    </p>
+    {% endif %}
+    {% if post.thumbnail %}
+    <div class="post-entry-image">
+      <a aria-label="{{ post.title | escape }}" href="{{ post.url | relative_url }}">
+        <img alt="" src="{{ post.thumbnail | relative_url }}" loading="lazy" decoding="async">
+      </a>
+    </div>
+    {% endif %}
+  </div>
+  <div class="post-entry-summary">
+    {% if site.excerpt or site.theme_settings.excerpt %}
+      <div class="excerpt">
+        {% if site.excerpt == "truncate" %}
+          {{ post.content | strip_html | truncate: 250 | escape }}
+        {% else %}
+          {{ article_summary | escape }}
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+</article>

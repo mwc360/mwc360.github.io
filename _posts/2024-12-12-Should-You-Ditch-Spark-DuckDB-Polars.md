@@ -1,7 +1,10 @@
 ---
 layout: post
+content_tracks: [oss, fabric]
+tested_on: "Fabric Runtime 1.3 (Spark 3.5, Delta Lake 3.2), with Native Execution Engine"
+context_note: "December 2024 benchmark of engines running in Fabric. Spark here includes Fabric's Native Execution Engine, not vanilla OSS Spark. Original measurements and version-specific limitations are preserved; see the linked 2025 follow-up rather than treating these as current engine rankings."
 title: "Should You Ditch Spark for DuckDb or Polars?"
-tags: [Fabric, Spark, Lakehouse, Delta Lake, DuckDB, Polars]
+tags: [Apache Spark, DuckDB, Polars, Delta Lake, Benchmarking]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/spark-duckdb-polars-new.png"
 thumbnail: "assets/img/feature-img/spark-duckdb-polars-new.png"

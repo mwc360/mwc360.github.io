@@ -1,7 +1,9 @@
 ---
 layout: post
+content_tracks: [fabric, databricks]
+context_note: "August 2024 migration viewpoint comparing classic Azure Databricks clusters/pools with Fabric capacity-backed Spark. West Central US rates and Edsv5 assumptions are historical. Fabric CU consumption is not the capacity invoice or marginal job cost; this is not a current serverless pricing comparison."
 title: "From Databricks to Fabric: A Deep Dive into Spark Cluster Differences"
-tags: [Fabric, Databricks, Spark, Lakehouse, Delta Lake]
+tags: [Apache Spark, Configuration, Cost Optimization, Migration]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-alex-andrews-271121-1203808.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-alex-andrews-271121-1203808.jpeg"
@@ -78,52 +80,17 @@ There are 4 primary differences between Fabric and Databricks that should be con
 This one is obvious and well known, likely because it is admittedly counterintuitive for data engineers coming from Azure services that have true pay-per-consumption models. Building on its Power BI platform heritage, Fabric uses a Capacity model. In this model, you purchase a certain amount of compute power, measured in Capacity Units (CUs). These CUs can be utilized across any Fabric workload within the converged data platform, including Spark, data warehousing, real-time streaming, reporting, machine learning, custom APIs, and more. Fabric SKUs purchased via the Azure portal operate in pay-as-you-go mode, meaning that you can create a capacity, run a workload, and then pause your capacity.
 
 ## Databricks
-Databricks operates on a pure pay-as-you-go model, you pay for the compute used plus a licensing multiplier. If you run a cluster for 5 minutes, you pay for 5 minutes, no need to pause a capacity. Depending on the feature used, the multiplier will vary. As a general rule of thumb, anytime you deviate from open source capabilities and use Databricks propriatary tech (i.e. Photon, Delta Live Tables, and Serverless Compute), the licensing multiplier is significantly higher. Licensing multipliers are important to consider in designing a solution as it may change how you actually organize and orchestrate your processes, see my post on [the TCO of Photon in Databricks](https://milescole.dev/data-engineering/2024/04/30/Is-Databricks-Photon-A-NoBrainer.html) for more details.
+The classic Databricks compute compared here bills Azure infrastructure plus DBUs for the applicable workload and runtime. You don't need to pause a Fabric-style capacity, but provisioned or idle resources can still cost money. The historical rates below differ by compute type and Photon selection; proprietary functionality alone does not establish the total cost or price/performance of a job.
 
 ## 2. Billing Rates
-People often want to know which is cheaper. The answer however, is extremely complicated because both operate on completely different billing models and each has it's situational nuances. 
+People often want to know which is cheaper. The answer however, is extremely complicated because both operate on completely different billing models and each has it's situational nuances.  For current rates see each respective pricing calculator.
 
-### Cost per vCore Hour
-To evaluate the cost of each, I prefer to look at an atomical job and compare the effective cost of that single job. After understanding this cost, I then extrapolate it as part of an all-up platform cost. To do this we need to know the job duration, cluster size, and the vCore cost per hour including any licensing fees. The follow rates are from the West Central US Azure region, using my go-to VM SKU family in Databricks as the benchmark: Edsv5. _Microsoft doesn't publish the VM SKU used in Fabric as it can vary by region and will change over time (which is reflected in the Fabric F SKU pricing), however the Edsv5 or Easv5 VM families match the most important VM specs._
-
-| Workload                                 | Total Cost per vCore Hour | Hardware Cost per vCore Hour (Edsv5) | Licensing Cost per vCore Hour |
-|------------------------------------------|---------------------------|--------------------------------------|-------------------------------|
-| Fabric Spark                             | $0.10                     | $0.09                                | $0.01                         |
-| Fabric Spark w/ Native Execution Engine  | $0.10                     | $0.09                                | $0.01                         |
-| Databricks Jobs Compute                  | $0.20                     | $0.09                                | $0.11                         |
-| Databricks Jobs Compute w/ Photon        | $0.37                     | $0.09                                | $0.28                         |
-| Databricks All-Purpose Compute           | $0.30                     | $0.09                                | $0.21                         |
-| Databricks All-Purpose Compute w/ Photon | $0.50                     | $0.09                                | $0.41                         |
-
-> ⚠️ These are point-in-time costs at the time this blog was written, rounded to the nearest hundreth of a cent, subject to change, and for illustration only. Neither Microsoft Fabric nor Databricks advertise costs per vCore hour, this is an attempt to standardize billing models for comparison purposes at the lowest compute grain, 1 vCore used for 1 hour.
-
-### Interactive vs. Scheduled Rates
-As illustrated above, your vCore cost per hour is dependent on various factors, some of which I didn't consider for sake of not boiling the ocean (DLT, interactive serverless compute, automated serverless compute, serverless SQL, etc.). However, a major billing difference between the platforms comes down to how the code is being executed.
-
-In Databricks, if you are running a notebook interactively (All-Purpose Compute) for development or to share compute across jobs via a high-concurrency cluster, you pay more in licensing compared to if it was an automated scheduled job (Jobs Compute). Yes, even with the exact same cluster size and run duration, a Notebook executed interactively or jobs run in high-concurrency mode, costs ~47% more for non-Photon and ~35% more for Photon compared to the same job that was scheduled or submitted as a standlone non-interactive job.
-
-In Fabric, there's no deliniating between an interactive and scheduled job, both emit the same CU consumption rate, $0.10 per vCore hour.
-
-## 3. When Billing Meters Start
-Another key difference between Fabric and Databricks Spark is when billing meters start to run.
-
-### Fabric’s Approach to Billing Meters
-If the fact that starter pools starting in about 15 seconds isn't just the bees knees, consider that these pools don't consume capacity units (CUs) when not in use, CUs are only consumed once your Spark Session starts. That's right, even when the starter pool nodes are being personalized with custom libraries, etc., CUs are not consumed/billed. 
-
-The [documentation](https://learn.microsoft.com/en-us/fabric/data-engineering/spark-compute#spark-pools) has a great illustration for this:
-![Starter Pool Billing](https://learn.microsoft.com/en-us/fabric/data-engineering/media/spark-compute/starter-pool-billing-states-high-level.png)
-
-For Custom Pools, it's the same: you are only billed once your Spark Session begins:
-![Starter Pool Billing](https://learn.microsoft.com/en-us/fabric/data-engineering/media/spark-compute/custom-pool-billing-states-high-level.png)
-
-### Databricks’ Approach to Billing Meters
-In Databricks, you start paying for VMs as soon as they are provisioned, which is reasonable given that the VM is active. Additionally, once the Spark context is initiated (which typically takes 40+ seconds), Databricks charges licensing fees (DBUs). If you have a pool of VMs sitting idle, you are billed for the hardware every second they remain in the pool.
-
-## 4. Billing Reservations
+## 3. Billing Reservations
 Fabric currently offers one year reservations on Fabric SKUs that provides a 40% discount on pay-as-you-go pricing. Note, just like other reservation models, purchasing a reservation only makes sense if intending to keep the capacity enabled 24/7. That said, Fabric capacities have a feature called _smoothing_ where capacity demand is spread forward across a rolling 24 hours window to reduce job contention and scheduling concerns. 
 
 With Databricks you can separately purchase one or three year virtual machine reservations (~41% and ~62% respective savings), however this really only makes sense if you have VMs running 24/7 as the Azure VM reservation model is designed for truly consistent hardware needs. For Databricks licensings fees known as DBUs (Databricks Units), you can prepurchase DBUs with volume discounting that is valid for a one or three years. If prepurchasing DBUs, just like Fabric Capacities, it is a use it or lose it model, so plan accordingly.
 
+Databricks also gives you the ability to leverage spot instances which decrease the VM cost by around 80% when a spot instance is available. Workloads with mission critical SLAs may be better with on-demand compute (non-spot) so that you can't have periodic added latency due to worker node eviction.
+
 # Closing Thoughts
 Understanding the differences in how Spark clusters works between Fabric and Databricks is essential for making informed decisions about your architecture. Fabric’s approach of separating hardware configuration (Spark Pools) from software customization (Environments) offers a flexible and modular system that can adapt to various needs and with the opportunity for greatly improved developer productivity via access to low latency starter pools.
-

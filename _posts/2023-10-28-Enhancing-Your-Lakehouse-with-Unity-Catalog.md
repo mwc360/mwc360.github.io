@@ -1,7 +1,9 @@
 ---
 layout: post
+content_tracks: [databricks]
+context_note: "Azure Databricks setup and migration guidance from October 2023, not OSS Unity Catalog instructions. Selected permissions and lineage claims are corrected below; migration code and setup steps have not been re-executed against current releases."
 title: "Enhancing Your Lakehouse with Unity Catalog"
-tags: [Azure Databricks, Data Governance]
+tags: [Data Governance, Access Control, Migration]
 categories: Architecture
 feature-img: "assets/img/feature-img/unifiedLakehouseDALLE.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/unifiedLakehouseDALLE-small.jpeg"
@@ -41,7 +43,7 @@ One of the key aspects of Unity Catalog is its federated authentication model. I
 Without Unity Catalog, tracking data lineage and maintaining data dictionaries is often manual, error-prone, time-consuming, and becomes out-of-date nearly as soon as it's initially created.
 
 With Unity Catalog, these processes are automated:
-- **Lineage**: Unity Catalog captures and retains data flow lineage automatically for 90 days, irrespective of the programming language used.
+- **Lineage (original October 2023 scope)**: I described automatic data-flow capture with 90-day retention. **Update — October 15, 2026:** The [current lineage documentation](https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/data-lineage) distinguishes Catalog Explorer retention from the rolling one-year window in lineage system tables. Catalog Explorer retains captured lineage after September 1, 2024 indefinitely. Capture has interface and operation limitations, including no RDD lineage, so "irrespective of programming language" must not be read as every code path.
 ![Unity Catalog Lineage](/assets/img/posts/Enhancing-Your-Lakehouse-with-Unity-Catalog/unityCatalogLineage.PNG)
 
 - **Data Dictionary**: Unity Catalog leverages generative AI to provide initial descriptions for data objects and fields, simplifying data documentation.
@@ -74,8 +76,10 @@ After creating External Locations, Catalogs, and Databases, assign permissions a
 
 As an example, for a user to read data from a table within a given schema, the user must have the following permissions:
 - _USE CATALOG_ on the parent catalog
+- _USE SCHEMA_ on the parent schema
 - _SELECT_ on either Catalog, Schema, or Table
-- _READ FILES_ on the External Location the data exists in
+
+**Permissions correction — October 15, 2026:** For a registered table queried by name, `SELECT` plus the parent `USE CATALOG` and `USE SCHEMA` privileges are required. `READ FILES` governs direct file access to an external location; it is **not** an additional requirement for selecting from that table. Granting it unnecessarily can undermine the intended table-access boundary. See the [Unity Catalog privileges reference](https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/access-control/privileges-reference).
 
 > **Tip:** Assign permissions to Databricks Account groups rather than individual users. I.e. you could have _data_admin_, _data_contributor_, and _data_reader_ groups and then assign permissions to those groups instead of named users.
 
@@ -88,7 +92,8 @@ See the following for implementing the SCIM connector: [Provision identities to 
 
 When you have tables stored as *EXTERNAL TABLES* rather than *MANAGED TABLES*, your migration journey is smoother. For *EXTERNAL TABLES*, migrating into the Unity Catalog (UC) is primarily a metadata operation, with no physical data movement required. This process retains all transaction logs, table properties, and other metadata. In contrast, migrating *MANAGED TABLES* involves copying the physical data to create a new table (transaction log is not maintained).
 
-> **Tip:** Opt for EXTERNAL TABLES over MANAGED TABLES. This can save significant time and effort during migrations to new Spark platforms or when adapting to major architectural changes, like the shift to Unity Catalog.
+> **Historical migration preference, not a universal table-design recommendation:**
+> I preferred external tables for this 2023 Hive-metastore migration because keeping data in place simplified that move. Managed tables are preferable to external as it empowers the platform to be responsible for managing table maintenance and lifecycle instead of it being a user burden.
 
 To migrate Delta tables into your new catalog, you can use the following Python script:
 

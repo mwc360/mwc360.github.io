@@ -1,7 +1,9 @@
 ---
 layout: post
+content_tracks: [oss, fabric, databricks]
+context_note: "General schema-inference guidance measured in the Fabric environment described below. Original benchmark results are preserved and have not been rerun on other runtimes or workloads."
 title: "Mastering Spark: Should You Infer Schema in Production?"
-tags: [Fabric, Spark, Lakehouse, Delta Lake]
+tags: [Apache Spark, Schema Management, Benchmarking]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-aqin-26245904.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-aqin-26245904.jpeg"

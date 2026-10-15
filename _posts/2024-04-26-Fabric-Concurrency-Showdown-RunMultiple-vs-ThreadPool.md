@@ -1,7 +1,9 @@
 ---
 layout: post
+content_tracks: [fabric]
+context_note: "Fabric-specific notebook orchestration benchmark from April 2024. Original measurements are preserved; current runMultiple behavior and limits have not been re-benchmarked."
 title: "The Fabric Concurrency Showdown: RunMultiple vs. ThreadPools"
-tags: [Fabric, Spark, Lakehouse, Benchmark]
+tags: [Apache Spark, Concurrency, Orchestration, Benchmarking]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-gratisography-4417.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-gratisography-4417.jpeg"

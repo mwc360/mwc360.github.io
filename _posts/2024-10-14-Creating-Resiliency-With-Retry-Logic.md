@@ -1,7 +1,8 @@
 ---
 layout: post
+content_tracks: [oss]
 title: "Mastering Spark: Creating Resiliency with Retry Logic"
-tags: [Fabric, Spark, Lakehouse, Optimization]
+tags: [Python, Resilience]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-padrinan-2882552.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-padrinan-2882552.jpeg"

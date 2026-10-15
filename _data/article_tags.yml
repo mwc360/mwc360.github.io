@@ -1,0 +1,115 @@
+- id: access-control
+  label: Access Control
+  description: Authentication, identities, permissions, and role membership.
+  aliases: [Security, RBAC]
+- id: spark
+  label: Apache Spark
+  description: Spark APIs, execution, and distributed processing.
+  aliases: [Spark]
+- id: architecture
+  label: Architecture
+  description: System design and architectural tradeoffs.
+- id: automation
+  label: Automation
+  description: Automating repeatable development and operational tasks.
+- id: benchmarking
+  label: Benchmarking
+  description: Benchmark tools, methods, and measured comparisons.
+  aliases: [Benchmark]
+- id: compaction
+  label: Compaction
+  description: Consolidating small files and managing file-size tradeoffs.
+- id: concurrency
+  label: Concurrency
+  description: Coordinating parallel tasks, threads, and jobs.
+- id: configuration
+  label: Configuration
+  description: Runtime settings, table properties, and configuration precedence.
+- id: cost-optimization
+  label: Cost Optimization
+  description: Compute costs, billing models, and cost-performance tradeoffs.
+- id: daft
+  label: Daft
+  description: Data processing with Daft.
+- id: data-governance
+  label: Data Governance
+  description: Catalogs, lineage, and governed data access.
+- id: data-layout
+  label: Data Layout
+  description: Physical data organization, file layout, and write optimization.
+- id: deletion-vectors
+  label: Deletion Vectors
+  description: Delta Lake deletion vectors and merge-on-read tradeoffs.
+- id: delta-lake
+  label: Delta Lake
+  description: Delta tables, transaction logs, and table features.
+  aliases: [DeltaLake]
+- id: developer-tooling
+  label: Developer Tooling
+  description: Tools and workflows for developing data solutions.
+  aliases: [Tools]
+- id: diagramming
+  label: Diagramming
+  description: Creating and maintaining technical diagrams.
+- id: distributed-locking
+  label: Distributed Locking
+  description: Coordinating exclusive ownership across processes and jobs.
+- id: duckdb
+  label: DuckDB
+  description: Data processing with DuckDB.
+- id: interoperability
+  label: Interoperability
+  description: Compatibility and integration across engines and interfaces.
+- id: liquid-clustering
+  label: Liquid Clustering
+  description: Clustering keys, incremental reclustering, and data skipping.
+- id: llms
+  label: LLMs
+  description: Using language models in data engineering workflows.
+- id: metadata
+  label: Metadata
+  description: Inspecting and using catalog, table, and operational metadata.
+- id: migration
+  label: Migration
+  description: Replatforming workloads and translating code or configurations.
+- id: observability
+  label: Observability
+  description: Understanding and monitoring job execution.
+- id: orchestration
+  label: Orchestration
+  description: Scheduling, parameterizing, and coordinating workloads.
+- id: pandas
+  label: Pandas
+  description: Data processing and database access with Pandas.
+- id: polars
+  label: Polars
+  description: Data processing with Polars.
+- id: production-engineering
+  label: Production Engineering
+  description: Reliable deployment, testing, modularity, and operational practices.
+- id: python
+  label: Python
+  description: Python programming, libraries, and application patterns.
+- id: python-packaging
+  label: Python Packaging
+  description: Developing, packaging, and distributing Python libraries.
+  aliases: [SDLC]
+- id: query-optimization
+  label: Query Optimization
+  description: Query execution plans, tuning, and engine performance.
+  aliases: [Optimization]
+- id: resilience
+  label: Resilience
+  description: Failure handling, retries, and reliable execution.
+- id: row-level-security
+  label: Row-Level Security
+  description: Filtering access to individual rows through policies or views.
+- id: schema-management
+  label: Schema Management
+  description: Schema inference, explicit schemas, and schema evolution.
+- id: sql
+  label: SQL
+  description: SQL language, database access, and SQL development.
+- id: table-maintenance
+  label: Table Maintenance
+  description: Vacuuming, optimizing, and maintaining table storage over time.

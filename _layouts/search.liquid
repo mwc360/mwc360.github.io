@@ -3,7 +3,9 @@ layout: page
 ---
 
 <!-- Html Elements for Search -->
-<input type="text" id="search-input" placeholder="Enter keywords..." class="search-bar" autofocus>
+<p>Search articles, pages, and the rest of the site. To combine article tracks, tags, and keywords, use the <a href="{{ '/articles/' | relative_url }}">article archive</a>.</p>
+<label for="search-input">Search the whole site</label>
+<input type="search" id="search-input" placeholder="Enter keywords or a content track..." class="search-bar" autofocus>
 <br>
 <br>
 <ul id="results-container"></ul>
@@ -14,7 +16,7 @@ layout: page
             searchInput: document.getElementById('search-input'),
             resultsContainer: document.getElementById('results-container'),
             json: '{{ "/assets/data/search.liquid" | relative_url }}',
-            searchResultTemplate: '<div class="search-title"><a href="{url}"><h3> {title}</h3></a><div class="meta">{date} <div class="right"><i class="fas fa-tag"></i> {tags}</div></div><p>{excerpt}</p></div><hr> ',
+            searchResultTemplate: '<li class="search-title"><a href="{url}"><h3>{title}</h3></a><div class="meta">{date} <div class="right"><i class="fas fa-tag"></i> {tags}</div></div><p>{excerpt}</p></li>',
             noResultsText: '{{ site.data.language.str_no_result_found | default: "No result found" }}',
             limit: 10,
             fuzzy: false,

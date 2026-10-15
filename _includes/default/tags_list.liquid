@@ -10,7 +10,8 @@
       {% endif %}
 
       {% for tag in tags %}
-        <li><a class="button" href="{% unless 'Tags' == page.title %}{{ site.baseurl }}/tags{% endunless %}#{{ tag | cgi_escape }}">
+        {% assign canonical_tag = site.data.article_tags | where: "label", tag | first %}
+        <li><a class="button" href="{% if canonical_tag %}{{ '/articles/' | relative_url }}?tag={{ canonical_tag.id | uri_escape }}{% else %}{% unless 'Tags' == page.title %}{{ site.baseurl }}/tags{% endunless %}#{{ tag | cgi_escape }}{% endif %}">
           <p><i class="fas fa-tag fa-fw fa-sm"></i> {{ tag }}</p>
         </a></li>
       {% endfor %}

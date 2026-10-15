@@ -1,7 +1,9 @@
 ---
 layout: post
+content_tracks: [oss, fabric, databricks]
+context_note: "Reusable parallelism patterns with Fabric and OneLake benchmark examples. The original timings and RDD-based code are not a guarantee of API availability on every access mode or serverless runtime."
 title: "Mastering Spark: Parallelizing API Calls and Other Non-Distributed Tasks"
-tags: [Fabric, Spark, Lakehouse, Optimization]
+tags: [Apache Spark, Python, Concurrency, Benchmarking]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-cookiecutter-1148820.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-cookiecutter-1148820.jpeg"

@@ -1,7 +1,9 @@
 ---
 layout: post
+content_tracks: [fabric]
+context_note: "Fabric SQL endpoint authentication and connectivity examples from September 2024. Driver, token, and runtime assumptions have not been re-executed against current releases."
 title: "Yet Another Way to Connect to the SQL Endpoint / Warehouse via Python"
-tags: [Fabric, Spark, Lakehouse, Delta Lake]
+tags: [Python, SQL, Pandas, Interoperability]
 categories: Data-Engineering
 feature-img: "assets/img/feature-img/pexels-alex-andrews-271121-821754.jpeg"
 thumbnail: "assets/img/thumbnails/feature-img/pexels-alex-andrews-271121-821754.jpeg"

@@ -1,7 +1,7 @@
 ---
 layout: default
 ---
-<article class="{% if page.feature-img %}feature-image{% endif %}{% if page.hide_title %} hide-title{% endif %}">
+<article class="{% if page.feature-img %}feature-image{% endif %}{% if page.hide_title %} hide-title{% endif %}{% if page.content_browser %} content-browser-page{% endif %}">
     <header id="main" style="background-image: url('{{ page.feature-img | relative_url }}')">
         <div class="title-padder">
             {% if page.hide_title %}

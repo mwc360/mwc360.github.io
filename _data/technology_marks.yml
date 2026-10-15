@@ -1,0 +1,12 @@
+fabric:
+  label: Microsoft Fabric
+  image: /assets/img/technology/fabric.png
+databricks:
+  label: Databricks
+  image: /assets/img/technology/databricks.png
+delta:
+  label: Delta Lake
+  image: /assets/img/technology/delta-lake.png
+spark:
+  label: Apache Spark
+  image: /assets/img/technology/spark.png
