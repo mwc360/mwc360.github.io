@@ -11,7 +11,7 @@ no_toc: true
   <img src="/assets/img/milesPicSmall.PNG" />
 </p>
 
-My name is Miles, I'm a Principal Product Manager at Microsoft where I own Fabric Spark performance and compute features. 
+My name is Miles, I'm a Staff Product Manager at Databricks. 
 
 After getting my bachelor's degree in Economics, I started my career with a short stint in Finance (which was extremely boring) where I learned that I enjoyed automation and learning data systems through automating our month-end financial reporting. Power BI came out and I quickly became shadow IT through using unapproved tooling with source data processes that were held together via duck-tape and vibes. That eventually turned into a formal BI Developer role where I later got approval to build my company's first data warehouse in Azure (with zero prior experience). After a very successful implementation, I joined a consulting company so that I could keep building.
 
